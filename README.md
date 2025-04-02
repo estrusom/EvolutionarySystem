@@ -1,0 +1,1 @@
+This is a concept to generate an experimental evolutionary system. The draft provides a description of a possible set up to generate a process that can self-evolve by creating new semantics and that can communicate with similar systems, setting the basis for a likely electronic social ecosystem
