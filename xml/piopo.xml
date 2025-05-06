@@ -1,0 +1,129 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Database xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <DatabaseId>3</DatabaseId>
+  <DatabaseName>piopo</DatabaseName>
+  <Tables>
+    <Table>
+      <TableId>1</TableId>
+      <TableName>piopoTbl0</TableName>
+      <Fields>
+        <Field>
+          <Id>2</Id>
+          <FieldName>piopoTbl0Fld0</FieldName>
+          <Key>true</Key>
+          <TableName>piopoTbl0</TableName>
+          <DataType>Int32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>3</Id>
+          <FieldName>piopoTbl0Fl1</FieldName>
+          <Key>false</Key>
+          <TableName>piopoTbl0</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>4</Id>
+          <FieldName>piopoTbl0Fld2</FieldName>
+          <Key>false</Key>
+          <TableName>piopoTbl0</TableName>
+          <DataType>DateTime</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+      </Fields>
+      <DataRecords>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>piopoTbl0Fld0</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>piopoTbl0Fl1</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">piopo</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>piopoTbl0Fld2</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">6/5/2025 21:45:21</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>piopoTbl0Fld0</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>piopoTbl0Fl1</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">piopoa</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>piopoTbl0Fld2</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">3/5/2025 12:02:23</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+      </DataRecords>
+    </Table>
+    <Table>
+      <TableId>2</TableId>
+      <TableName>piopoTbl1</TableName>
+      <Fields>
+        <Field>
+          <Id>1</Id>
+          <FieldName>piopoTbl0Fld0</FieldName>
+          <Key>true</Key>
+          <TableName>piopoTbl1</TableName>
+          <DataType>Int32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>2</Id>
+          <FieldName>piopoTbl0Fld1</FieldName>
+          <Key>false</Key>
+          <TableName>piopoTbl1</TableName>
+          <DataType>DateTime</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+      </Fields>
+      <DataRecords />
+    </Table>
+  </Tables>
+</Database>

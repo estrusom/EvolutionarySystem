@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Database xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <DatabaseId>2</DatabaseId>
+  <DatabaseName>piopoa</DatabaseName>
+  <Tables>
+    <Table>
+      <TableId>1</TableId>
+      <TableName>piopoaTbl0</TableName>
+      <Fields>
+        <Field>
+          <Id>1</Id>
+          <FieldName>piopoaTbl0Fld0</FieldName>
+          <Key>true</Key>
+          <TableName>piopoaTbl0</TableName>
+          <DataType>Int32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>2</Id>
+          <FieldName>piopoaTbl0Fld1</FieldName>
+          <Key>false</Key>
+          <TableName>piopoaTbl0</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+      </Fields>
+      <DataRecords>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>piopoaTbl0Fld0</string>
+            </key>
+            <value>
+              <anyType xsi:nil="true" />
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>piopoaTbl0Fld1</string>
+            </key>
+            <value>
+              <anyType xsi:nil="true" />
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>piopoaTbl0Fld0</string>
+            </key>
+            <value>
+              <anyType xsi:nil="true" />
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>piopoaTbl0Fld1</string>
+            </key>
+            <value>
+              <anyType xsi:nil="true" />
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+      </DataRecords>
+    </Table>
+    <Table>
+      <TableId>2</TableId>
+      <TableName>piopoaTbl1</TableName>
+      <Fields>
+        <Field>
+          <Id>1</Id>
+          <FieldName>piopoaTbl1Fld0</FieldName>
+          <Key>true</Key>
+          <TableName>piopoaTbl1</TableName>
+          <DataType>Int32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>2</Id>
+          <FieldName>pipoaTbl1Fld1</FieldName>
+          <Key>false</Key>
+          <TableName>piopoaTbl1</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+      </Fields>
+      <DataRecords />
+    </Table>
+  </Tables>
+</Database>

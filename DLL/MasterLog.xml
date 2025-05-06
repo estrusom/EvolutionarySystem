@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<doc>
+  <assembly>
+    <name>MasterLog</name>
+  </assembly>
+  <members>
+    <member name="T:MasterLog.LogLevel">
+      <summary>
+            Indica il livello della riga di log, verra scritto nel file
+            </summary>
+    </member>
+    <member name="F:MasterLog.LogLevel.INFO">
+      <summary>
+            bit 0 (1)
+            </summary>
+    </member>
+    <member name="F:MasterLog.LogLevel.WARNING">
+      <summary>
+            bit 6 (64)
+            </summary>
+    </member>
+    <member name="F:MasterLog.LogLevel.ERROR">
+      <summary>
+            bit 11 (2048)
+            </summary>
+    </member>
+    <member name="F:MasterLog.LogLevel.DEBUG">
+      <summary>
+            bit 1 (2)
+            </summary>
+    </member>
+    <member name="T:MasterLog.LogLevels">
+      <summary>
+            Classe per la determinazione dei livelli di log
+            </summary>
+    </member>
+    <member name="P:MasterLog.LogLevels.LevelName">
+      <summary>
+            Nome del livello da visualizzare
+            </summary>
+    </member>
+    <member name="P:MasterLog.LogLevels.LogLevelToShow">
+      <summary>
+            peso in bit del livello di logs
+            </summary>
+    </member>
+    <member name="P:MasterLog.LogLevels.LogIndex">
+      <summary>
+            indice enum del log da visualizzare
+            </summary>
+    </member>
+    <member name="T:MasterLog.Logger">
+      <summary>
+            Classe per la gestione dei essaggi di log nei programmi
+            </summary>
+    </member>
+    <member name="P:MasterLog.Logger.LOG_INFO">
+      <summary>
+             bit 0 LOG_INFO
+            </summary>
+    </member>
+    <member name="P:MasterLog.Logger.LOG_DEBUG">
+      <summary>
+            bit 1 LOG_DEBUG 
+            </summary>
+    </member>
+    <member name="P:MasterLog.Logger.LOG_WARNING">
+      <summary>
+            bit log 6 LOG_WARNING
+            </summary>
+    </member>
+    <member name="P:MasterLog.Logger.LOG_ERROR">
+      <summary>
+            bit log 11 LOG_ERROR
+            </summary>
+    </member>
+    <member name="P:MasterLog.Logger.SwLogLevel">
+      <summary>
+            Determina il livello dei log da visualizzare
+            </summary>
+    </member>
+    <member name="M:MasterLog.Logger.#ctor(System.String,System.String,System.Threading.Mutex,System.Int32)">
+      <summary>
+      </summary>
+      <param name="percorso">
+      </param>
+      <param name="nome">
+      </param>
+      <param name="SyncLogMutex">
+      </param>
+      <param name="numeroStorico">
+      </param>
+    </member>
+    <member name="P:MasterLog.Logger.SeparatoreCampi">
+      <summary>
+            determina il tipo di separatore da usare nella costruzione della stringa di log, il valore predefinito è '-'
+            </summary>
+    </member>
+    <member name="M:MasterLog.Logger.GetPercorsoCompleto">
+      <summary>
+            Restituisce il percorso compreso il nome del file.
+            </summary>
+      <returns>
+      </returns>
+    </member>
+    <member name="M:MasterLog.Logger.GetPercorso">
+      <summary>
+            Restituisce il percorso senza il nome del file.
+            </summary>
+      <returns>
+      </returns>
+    </member>
+    <member name="M:MasterLog.Logger.GetNome">
+      <summary>
+            Restituisce solo il nome del file.
+            </summary>
+      <returns>
+      </returns>
+    </member>
+    <member name="M:MasterLog.Logger.GetNomeEseguibile">
+      <summary>
+            Restituisce il nome dell'eseguibile del software, se non riesce a recuperarlo allora assegna il nome del file di log.
+            </summary>
+    </member>
+    <member name="M:MasterLog.Logger.DeleteFileByDate(System.String,System.String,System.Int32)">
+      <summary>
+            Cancellazione dei file per data
+            Si cancellano tutti i file precedenti al numero di giorni indicato in NumDay
+            </summary>
+      <param name="FolderSpec">Directory da cui cancellare i file più vecchi</param>
+      <param name="PatternSearc">Sequenza di caratteri di cui cercare i file (esmpio: "WinTTab*.*") </param>
+      <param name="NumDay">Numero di giorni a dietro da cancellare</param>
+    </member>
+    <member name="M:MasterLog.Logger.Log(MasterLog.LogLevel,System.String)">
+      <summary>
+            Scrive la riga nel file di log
+            </summary>
+      <param name="livello">Livello del messaggio di log</param>
+      <param name="message">Contenuto da scrivere</param>
+    </member>
+  </members>
+</doc>

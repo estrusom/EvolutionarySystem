@@ -1,0 +1,10 @@
+Nome utente: russom psw: A240732p!
+L'esempio funzionante si trova in: /home/russom/Shared/deploy/WinRaspberry48
+il programma si chiama: WinRaspberry48.exe
+si lancia in una finestra terminal entrando nella directory del programma lanciando: ./WinRaspberry48.exe
+
+avvio tramite comando "dotnet"
+Il socket server si trova in: /home/russom/Shared/deploy/SocketServer
+il programma si chiama: SocketServer.dll
+per eseguirlo bisogna entrare nella cartella sopra indicata e poi lanciare il comando: dotnet SocketServer.dll
+L'indirizzo del server attualmente è 192.168.1.122 e la porta è la 11551

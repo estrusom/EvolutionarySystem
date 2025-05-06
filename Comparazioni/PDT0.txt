@@ -1,0 +1,33 @@
+/// <summary>
+            /// Popola la TreeView con la struttura del database corrente (currentDatabase).
+            /// (Assumendo che tu abbia un controllo TreeView chiamato 'dbTreeView')
+            /// </summary>
+            private void PopulateDatabaseTreeView()
+            {
+                 if (dbTreeView != null)
+                 {
+                    dbTreeView.Nodes.Clear();
+
+                    if (currentDatabase != null)
+                    {
+                        TreeNode dbNode = new TreeNode(currentDatabase.DatabaseName);
+                        dbNode.Tag = currentDatabase; // Associa l'oggetto Database al nodo
+                        dbTreeView.Nodes.Add(dbNode);
+
+                        foreach (var table in currentDatabase.Tables)
+                        {
+                            TreeNode tableNode = new TreeNode(table.TableName);
+                            tableNode.Tag = table; // Associa l'oggetto Table al nodo
+                            dbNode.Nodes.Add(tableNode);
+
+                             foreach (var field in table.Fields)
+                             {
+                                 TreeNode fieldNode = new TreeNode($"{field.FieldName} ({field.DataType})");
+                                 fieldNode.Tag = field; // Associa l'oggetto Field al nodo
+                                 tableNode.Nodes.Add(fieldNode);
+                             }
+                        }
+                        dbNode.ExpandAll(); // Espandi tutti i nodi per mostrare l'intera struttura
+                    }
+                 }
+            }

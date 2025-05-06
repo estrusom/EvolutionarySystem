@@ -1,0 +1,216 @@
+using System;
+using System.Collections.Generic;
+using System.IO; // Necessario per FileStream, StringWriter, ecc.
+using System.Xml.Serialization; // Necessario per XmlSerializer
+using EvolutiveSystem.SemanticData; // Assicurati che questo namespace sia corretto (contiene Database, Table, Field, SerializableDictionary)
+using System.Text; // Necessario per StringBuilder
+using System.Xml; // Necessario per XmlReader, XmlWriter
+
+namespace EvolutiveSystem.Serialization
+{
+    /// <summary>
+    /// Classe statica per gestire la serializzazione e deserializzazione
+    /// degli oggetti Database in formato XML.
+    /// </summary>
+    public static class DatabaseSerializer
+    {
+        /// <summary>
+        /// Restituisce un array di tipi noti per la serializzazione.
+        /// Questo è necessario per serializzare proprietà di tipo 'object' (come Field.Value)
+        /// e per la classe SerializableDictionary che contiene object.
+        /// </summary>
+        private static Type[] GetKnownTypes()
+        {
+            return new Type[]
+            {
+                typeof(string), // Esempio: se Field.Value può essere una stringa
+                typeof(bool),   // Esempio: se Field.Value può essere un booleano
+                typeof(int),    // System.Int32
+                typeof(short),  // System.Int16
+                typeof(long),   // System.Int64
+                typeof(uint),   // System.UInt32
+                typeof(ulong),  // System.UInt64
+                typeof(DateTime), // DateTime
+                typeof(StringBuilder), // StringBuilder
+                // Aggiungi qui tutti gli altri tipi concreti che la proprietà 'Value'
+                // nella tua classe Field può assumere.
+                // Esempio: typeof(MyCustomClass), typeof(List<int>), ecc.
+
+                // *** Aggiunto: Dobbiamo informare XmlSerializer che potrebbe incontrare
+                // istanze di SerializableDictionary<string, object> ***
+                typeof(SerializableDictionary<string, object>)
+            };
+        }
+
+
+        /// <summary>
+        /// Serializza un oggetto Database in un file XML.
+        /// </summary>
+        /// <param name="database">L'oggetto Database da serializzare.</param>
+        /// <param name="filePath">Il percorso del file in cui salvare l'XML.</param>
+        public static void SerializeToXmlFile(Database database, string filePath)
+        {
+            // Usa i tipi noti per il serializzatore principale
+            XmlSerializer serializer = new XmlSerializer(typeof(Database), GetKnownTypes());
+
+            // Usa un FileStream per scrivere l'XML su un file.
+            // Usa using per assicurarti che lo stream venga chiuso correttamente.
+            using (FileStream fs = new FileStream(filePath, FileMode.Create))
+            {
+                // Usa un XmlWriter per un maggiore controllo sulla formattazione (indentazione)
+                XmlWriterSettings settings = new XmlWriterSettings { Indent = true };
+                using (System.Xml.XmlWriter writer = System.Xml.XmlWriter.Create(fs, settings))
+                {
+                    serializer.Serialize(writer, database);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Serializza un oggetto Database in una stringa XML.
+        /// </summary>
+        /// <param name="database">L'oggetto Database da serializzare.</param>
+        /// <returns>Una stringa contenente la rappresentazione XML del Database.</returns>
+        public static string SerializeToXmlString(Database database)
+        {
+            // Usa i tipi noti per il serializzatore principale
+            XmlSerializer serializer = new XmlSerializer(typeof(Database), GetKnownTypes());
+            // Usa StringWriter per scrivere l'XML in memoria (come stringa).
+            using (StringWriter writer = new StringWriter())
+            {
+                serializer.Serialize(writer, database);
+                return writer.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Deserializza un oggetto Database da un file XML.
+        /// </summary>
+        /// <param name="filePath">Il percorso del file XML da cui leggere.</param>
+        /// <returns>L'oggetto Database deserializzato.</returns>
+        public static Database DeserializeFromXmlFile(string filePath)
+        {
+            // Usa i tipi noti per il serializzatore principale
+            XmlSerializer serializer = new XmlSerializer(typeof(Database), GetKnownTypes());
+            using (FileStream fs = new FileStream(filePath, FileMode.Open))
+            {
+                 using (System.Xml.XmlReader reader = System.Xml.XmlReader.Create(fs))
+                 {
+                     // Deserializza l'oggetto dallo stream.
+                     return (Database)serializer.Deserialize(reader);
+                 }
+            }
+        }
+
+        /// <summary>
+        /// Deserializza un oggetto Database da una stringa XML.
+        /// </summary>
+        /// <param name="xmlString">La stringa contenente l'XML.</param>
+        /// <returns>L'oggetto Database deserializzato.</returns>
+        public static Database DeserializeFromXmlString(string xmlString)
+        {
+             // Usa i tipi noti per il serializzatore principale
+            XmlSerializer serializer = new XmlSerializer(typeof(Database), GetKnownTypes());
+            using (StringReader reader = new StringReader(xmlString))
+            {
+                return (Database)serializer.Deserialize(reader);
+            }
+        }
+
+        // Esempio di utilizzo (potrebbe essere chiamato dalla tua UI o dal servizio)
+        /*
+        public static void Main(string[] args) // Solo per test console
+        {
+            // Crea un database di esempio (usando il metodo dalla UI o creandone uno qui)
+            Database myMuDb = new Database(1, "MU Game Semantics Example");
+            Table rules = new Table(1, "Rules", myMuDb);
+            rules.AddField(new Field(1, "Rule1", "string", false, false, 0, rules, "Regola 1 test"));
+            rules.AddField(new Field(2, "RuleActive", "bool", false, false, 0, rules, true)); // Esempio con bool
+            rules.AddField(new Field(3, "CreationDate", "DateTime", false, false, 0, rules, DateTime.Now)); // Esempio con DateTime
+            rules.AddField(new Field(4, "Description", "StringBuilder", false, false, 0, rules, new StringBuilder("Descrizione iniziale"))); // Esempio con StringBuilder
+            rules.AddField(new Field(5, "Score", "int", false, false, 0, rules, 100)); // Esempio con int
+            rules.AddField(new Field(6, "ShortValue", "short", false, false, 0, rules, (short)50)); // Esempio con short
+            rules.AddField(new Field(7, "LongValue", "long", false, false, 0, rules, 123456789012345L)); // Esempio con long
+            rules.AddField(new Field(8, "UIntValue", "uint", false, false, 0, rules, 123U)); // Esempio con uint
+            rules.AddField(new Field(9, "ULongValue", "ulong", false, false, 0, rules, 987654321098765UL)); // Esempio con ulong
+
+            myMuDb.AddTable(rules);
+
+            // Aggiungi alcuni dati di record alla tabella rules
+            SerializableDictionary<string, object> record1 = new SerializableDictionary<string, object>();
+            record1.Add("Rule1", "Valore per record 1");
+            record1.Add("RuleActive", false);
+            record1.Add("CreationDate", DateTime.Now.AddDays(-1));
+            record1.Add("Description", new StringBuilder("Descrizione record 1"));
+            record1.Add("Score", 200);
+            record1.Add("ShortValue", (short)60);
+            record1.Add("LongValue", 987654321098765L);
+            record1.Add("UIntValue", 456U);
+            record1.Add("ULongValue", 123456789012345UL);
+            rules.DataRecords.Add(record1);
+
+            SerializableDictionary<string, object> record2 = new SerializableDictionary<string, object>();
+            record2.Add("Rule1", "Valore per record 2");
+            record2.Add("RuleActive", true);
+             record2.Add("Score", 300); // Non tutti i campi devono essere presenti in ogni record
+            rules.DataRecords.Add(record2);
+
+
+            string fileName = "MuGameSemantics.xml";
+
+            // Serializza in file
+            try
+            {
+                SerializeToXmlFile(myMuDb, fileName);
+                Console.WriteLine($"Database serializzato con successo in {fileName}");
+
+                // Deserializza da file
+                Database loadedDb = DeserializeFromXmlFile(fileName);
+                Console.WriteLine($"Database deserializzato con successo da {fileName}. Nome: {loadedDb.DatabaseName}");
+                Console.WriteLine($"Numero tabelle: {loadedDb.Tables.Count}");
+                 if(loadedDb.Tables.Any())
+                 {
+                     Console.WriteLine($"Prima tabella: {loadedDb.Tables[0].TableName}, Campi: {loadedDb.Tables[0].Fields.Count}");
+                     foreach(var field in loadedDb.Tables[0].Fields)
+                     {
+                          Console.WriteLine($"  Campo '{field.FieldName}': Valore: {field.Value} (Tipo: {field.Value?.GetType().Name ?? "null"})");
+                     }
+
+                     Console.WriteLine($"Numero record nella tabella '{loadedDb.Tables[0].TableName}': {loadedDb.Tables[0].DataRecords.Count}");
+                     if(loadedDb.Tables[0].DataRecords.Count > 0)
+                     {
+                         Console.WriteLine("Dettagli Record 1:");
+                         foreach(var kvp in loadedDb.Tables[0].DataRecords[0])
+                         {
+                             Console.WriteLine($"  Chiave: {kvp.Key}, Valore: {kvp.Value} (Tipo: {kvp.Value?.GetType().Name ?? "null"})");
+                         }
+                     }
+                 }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Errore durante serializzazione/deserializzazione: {ex.Message}");
+            }
+
+             // Serializza in stringa
+             try
+             {
+                 string xmlContent = SerializeToXmlString(myMuDb);
+                 Console.WriteLine("\n--- XML String Output ---");
+                 Console.WriteLine(xmlContent);
+                 Console.WriteLine("-----------------------");
+
+                 // Deserializza da stringa
+                 Database loadedDbFromString = DeserializeFromXmlString(xmlContent);
+                 Console.WriteLine($"Database deserializzato da stringa. Nome: {loadedDbFromString.DatabaseName}");
+
+             }
+              catch (Exception ex)
+            {
+                Console.WriteLine($"Errore durante serializzazione/deserializzazione da stringa: {ex.Message}");
+            }
+        }
+        */
+    }
+}

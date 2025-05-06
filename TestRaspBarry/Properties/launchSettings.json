@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TestRaspBarry": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
