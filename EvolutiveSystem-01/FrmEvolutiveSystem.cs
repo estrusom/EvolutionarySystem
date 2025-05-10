@@ -1,11 +1,19 @@
-﻿using EvolutiveSystem;
+﻿/*
+    https://icon-icons.com/it/categoria/Applicazione/4
+    https://icons8.it/icon/set/button-cancel/ios
+	https://convertico.com/
+ */
+using EvolutiveSystem;
 using EvolutiveSystem.SemanticData;
 using EvolutiveSystem.Serialization;
 using EvolutiveSystem_01.Properties;
+using MasterLog;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -19,6 +27,9 @@ namespace EvolutiveSystem_01
 {
     public partial class FrmEvolutiveSystem : Form
     {
+        private Logger _logger;
+        private int swDebug = 0;
+        protected string _path = "";
 
         // La collezione di database (semantiche) gestiti dall'UI.
         private List<Database> loadedDatabases = new List<Database>();
@@ -28,6 +39,11 @@ namespace EvolutiveSystem_01
         public FrmEvolutiveSystem()
         {
             InitializeComponent();
+            swDebug = Convert.ToInt32(ConfigurationManager.AppSettings["DebugLev"]);
+            _path = ConfigurationManager.AppSettings["FolderLOG"];
+            _logger = new Logger(_path, "EvolutiveSystem_01");
+            _logger.SwLogLevel = swDebug;
+            _logger.Log(LogLevel.INFO, string.Format("Log path:{0}", _logger.GetPercorsoCompleto()));
             this.InitializeCustomLogic();
         }
         #region private methods
@@ -85,6 +101,26 @@ namespace EvolutiveSystem_01
                 btnCloseAllDatabases.Click += BtnCloseAllDatabases_Click;
                 toolTip.SetToolTip(btnCloseAllDatabases, "Chiude tutti i database semantici caricati."); // Aggiunto ToolTip
             }
+            if(btnServiceStart != null)
+            {
+                btnServiceStart.Click += BtnServiceStart_Click;
+                toolTip.SetToolTip(btnServiceStart, "Avvia il servizio del server semantico."); // Aggiunto ToolTip
+            }
+            if(btnServicePause != null)
+            {
+                btnServicePause.Click += BtnServicePause_Click;
+                toolTip.SetToolTip(btnServicePause, "Sospensione del servizio server semantico."); // Aggiunto ToolTip
+            }
+            if(btnServiceStop != null)
+            {
+                btnServiceStop.Click += BtnServiceStop_Click;
+                toolTip.SetToolTip(btnServiceStop, "Arresto del servizio server semantico."); // Aggiunto ToolTip
+            }
+            if (btnSocket != null)
+            {
+                btnSocket.Click += BtnSocket_Click;
+                toolTip.SetToolTip(btnSocket, "Avvio client socket."); // Aggiunto ToolTip
+            }
             //if (btnStartProcess != null) btnStartProcess.Click += btnStartProcess_Click;
             //if (btnStopProcess != null) btnStopProcess.Click += btnStopProcess_Click;
             //if (btnPauseProcess != null) btnPauseProcess.Click += btnPauseProcess_Click;
@@ -103,7 +139,6 @@ namespace EvolutiveSystem_01
             // Configura il ContextMenu (assicurati che il controllo ContextMenuStrip esista nel designer)
             ConfigureTreeViewContextMenu();
         }
-
         /// <summary>
         /// Configura le voci del ContextMenu.
         /// </summary>
@@ -1415,7 +1450,47 @@ namespace EvolutiveSystem_01
                 AppendToMonitor("Chiusura database annullata dall'utente.");
             }
         }
-
+        /// <summary>
+        /// Avvio servizio server semantico
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void BtnServiceStart_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Sospensione del servizio server semantico
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void BtnServicePause_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Arresto del servizio del server semantico
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void BtnServiceStop_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// Avvio del client socket
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void BtnSocket_Click(object sender, EventArgs e)
+        {
+            FrmSocketClient fSocket = new FrmSocketClient(_logger);
+            fSocket.ShowDialog();
+        }
         #endregion
         #region context menu events
         /// <summary>

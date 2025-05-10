@@ -34,6 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -71,6 +72,12 @@
     <Compile Include="FrmEvolutiveSystem.Designer.cs">
       <DependentUpon>FrmEvolutiveSystem.cs</DependentUpon>
     </Compile>
+    <Compile Include="FrmSocketClient.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmSocketClient.Designer.cs">
+      <DependentUpon>FrmSocketClient.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SemanticData.cs" />
@@ -85,6 +92,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FrmEvolutiveSystem.resx">
       <DependentUpon>FrmEvolutiveSystem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmSocketClient.resx">
+      <DependentUpon>FrmSocketClient.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -129,6 +139,48 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\businessapplication_database_database_accepteitheracceptthedatabase_connect_connectdatabase_negocios_aplicacion_basededato_2310 %281%29.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
+      <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
+      <Name>MasterLogMutex</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj">
+      <Project>{c4be31ba-71ec-420f-ad75-58c661011b5a}</Project>
+      <Name>MessaggiErrore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SocketManagerInfo\SocketManagerInfo.csproj">
+      <Project>{86479DBC-394F-4EE6-B833-4241DC4543F9}</Project>
+      <Name>SocketManagerInfo</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SocketManager\SocketManager.csproj">
+      <Project>{d628c45f-2369-4e52-9cb6-ef7d6e1888dd}</Project>
+      <Name>SocketManager</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\start256_24877.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\PausePressed_26932.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Stop1Hot_26966.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\connect_23039.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\screenshot.PNG" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\iconfinder-send-4341325_120524.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\close_14776.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\make_15198.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

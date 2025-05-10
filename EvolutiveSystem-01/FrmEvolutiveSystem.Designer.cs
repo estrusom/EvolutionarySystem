@@ -31,9 +31,9 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmEvolutiveSystem));
             this.panelCommands = new System.Windows.Forms.Panel();
-            this.btnLoadDatabase = new System.Windows.Forms.Button();
-            this.btnSaveDatabase = new System.Windows.Forms.Button();
-            this.btnAddDatabase = new System.Windows.Forms.Button();
+            this.gbSocketServer = new System.Windows.Forms.GroupBox();
+            this.gbServiceManager = new System.Windows.Forms.GroupBox();
+            this.gbFileManager = new System.Windows.Forms.GroupBox();
             this.statusStrip = new System.Windows.Forms.ToolStrip();
             this.toolStripStatusLabelDen = new System.Windows.Forms.ToolStripLabel();
             this.toolStripStatusLabel = new System.Windows.Forms.ToolStripLabel();
@@ -51,8 +51,18 @@
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.treeViewContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.btnSocket = new System.Windows.Forms.Button();
+            this.btnServiceStop = new System.Windows.Forms.Button();
+            this.btnServicePause = new System.Windows.Forms.Button();
+            this.btnServiceStart = new System.Windows.Forms.Button();
             this.btnCloseAllDatabases = new System.Windows.Forms.Button();
+            this.btnLoadDatabase = new System.Windows.Forms.Button();
+            this.btnSaveDatabase = new System.Windows.Forms.Button();
+            this.btnAddDatabase = new System.Windows.Forms.Button();
             this.panelCommands.SuspendLayout();
+            this.gbSocketServer.SuspendLayout();
+            this.gbServiceManager.SuspendLayout();
+            this.gbFileManager.SuspendLayout();
             this.statusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerMain)).BeginInit();
             this.splitContainerMain.Panel1.SuspendLayout();
@@ -68,48 +78,55 @@
             // 
             // panelCommands
             // 
-            this.panelCommands.Controls.Add(this.btnCloseAllDatabases);
-            this.panelCommands.Controls.Add(this.btnLoadDatabase);
-            this.panelCommands.Controls.Add(this.btnSaveDatabase);
-            this.panelCommands.Controls.Add(this.btnAddDatabase);
+            this.panelCommands.Controls.Add(this.gbSocketServer);
+            this.panelCommands.Controls.Add(this.gbServiceManager);
+            this.panelCommands.Controls.Add(this.gbFileManager);
             this.panelCommands.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelCommands.Location = new System.Drawing.Point(0, 0);
             this.panelCommands.Name = "panelCommands";
-            this.panelCommands.Size = new System.Drawing.Size(1646, 75);
+            this.panelCommands.Size = new System.Drawing.Size(1646, 94);
             this.panelCommands.TabIndex = 0;
             // 
-            // btnLoadDatabase
+            // gbSocketServer
             // 
-            this.btnLoadDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.business_application_download_downloaddatabase_thedatabase_23201;
-            this.btnLoadDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnLoadDatabase.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnLoadDatabase.Location = new System.Drawing.Point(148, 0);
-            this.btnLoadDatabase.Name = "btnLoadDatabase";
-            this.btnLoadDatabase.Size = new System.Drawing.Size(74, 75);
-            this.btnLoadDatabase.TabIndex = 2;
-            this.btnLoadDatabase.UseVisualStyleBackColor = true;
+            this.gbSocketServer.Controls.Add(this.btnSocket);
+            this.gbSocketServer.Dock = System.Windows.Forms.DockStyle.Left;
+            this.gbSocketServer.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbSocketServer.Location = new System.Drawing.Point(538, 0);
+            this.gbSocketServer.Name = "gbSocketServer";
+            this.gbSocketServer.Size = new System.Drawing.Size(112, 94);
+            this.gbSocketServer.TabIndex = 6;
+            this.gbSocketServer.TabStop = false;
+            this.gbSocketServer.Text = "Socket client";
             // 
-            // btnSaveDatabase
+            // gbServiceManager
             // 
-            this.btnSaveDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.businessapplication_database_loaddatabase_db_negocios_aplicacion_2318;
-            this.btnSaveDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnSaveDatabase.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnSaveDatabase.Location = new System.Drawing.Point(74, 0);
-            this.btnSaveDatabase.Name = "btnSaveDatabase";
-            this.btnSaveDatabase.Size = new System.Drawing.Size(74, 75);
-            this.btnSaveDatabase.TabIndex = 1;
-            this.btnSaveDatabase.UseVisualStyleBackColor = true;
+            this.gbServiceManager.Controls.Add(this.btnServiceStop);
+            this.gbServiceManager.Controls.Add(this.btnServicePause);
+            this.gbServiceManager.Controls.Add(this.btnServiceStart);
+            this.gbServiceManager.Dock = System.Windows.Forms.DockStyle.Left;
+            this.gbServiceManager.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbServiceManager.Location = new System.Drawing.Point(307, 0);
+            this.gbServiceManager.Name = "gbServiceManager";
+            this.gbServiceManager.Size = new System.Drawing.Size(231, 94);
+            this.gbServiceManager.TabIndex = 5;
+            this.gbServiceManager.TabStop = false;
+            this.gbServiceManager.Text = "Service manager";
             // 
-            // btnAddDatabase
+            // gbFileManager
             // 
-            this.btnAddDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.business_application_addthedatabase_add_insert_database_db_2313;
-            this.btnAddDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnAddDatabase.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnAddDatabase.Location = new System.Drawing.Point(0, 0);
-            this.btnAddDatabase.Name = "btnAddDatabase";
-            this.btnAddDatabase.Size = new System.Drawing.Size(74, 75);
-            this.btnAddDatabase.TabIndex = 0;
-            this.btnAddDatabase.UseVisualStyleBackColor = true;
+            this.gbFileManager.Controls.Add(this.btnCloseAllDatabases);
+            this.gbFileManager.Controls.Add(this.btnLoadDatabase);
+            this.gbFileManager.Controls.Add(this.btnSaveDatabase);
+            this.gbFileManager.Controls.Add(this.btnAddDatabase);
+            this.gbFileManager.Dock = System.Windows.Forms.DockStyle.Left;
+            this.gbFileManager.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbFileManager.Location = new System.Drawing.Point(0, 0);
+            this.gbFileManager.Name = "gbFileManager";
+            this.gbFileManager.Size = new System.Drawing.Size(307, 94);
+            this.gbFileManager.TabIndex = 4;
+            this.gbFileManager.TabStop = false;
+            this.gbFileManager.Text = "File";
             // 
             // statusStrip
             // 
@@ -118,9 +135,9 @@
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabelDen,
             this.toolStripStatusLabel});
-            this.statusStrip.Location = new System.Drawing.Point(0, 867);
+            this.statusStrip.Location = new System.Drawing.Point(0, 872);
             this.statusStrip.Name = "statusStrip";
-            this.statusStrip.Size = new System.Drawing.Size(1646, 31);
+            this.statusStrip.Size = new System.Drawing.Size(1646, 26);
             this.statusStrip.TabIndex = 1;
             this.statusStrip.Text = "toolStrip1";
             // 
@@ -129,7 +146,7 @@
             this.toolStripStatusLabelDen.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusLabelDen.ForeColor = System.Drawing.Color.Blue;
             this.toolStripStatusLabelDen.Name = "toolStripStatusLabelDen";
-            this.toolStripStatusLabelDen.Size = new System.Drawing.Size(122, 28);
+            this.toolStripStatusLabelDen.Size = new System.Drawing.Size(122, 23);
             this.toolStripStatusLabelDen.Text = "toolStripLabel1";
             // 
             // toolStripStatusLabel
@@ -137,13 +154,13 @@
             this.toolStripStatusLabel.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusLabel.ForeColor = System.Drawing.Color.Green;
             this.toolStripStatusLabel.Name = "toolStripStatusLabel";
-            this.toolStripStatusLabel.Size = new System.Drawing.Size(22, 28);
+            this.toolStripStatusLabel.Size = new System.Drawing.Size(22, 23);
             this.toolStripStatusLabel.Text = "...";
             // 
             // splitContainerMain
             // 
             this.splitContainerMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainerMain.Location = new System.Drawing.Point(0, 75);
+            this.splitContainerMain.Location = new System.Drawing.Point(0, 94);
             this.splitContainerMain.Name = "splitContainerMain";
             // 
             // splitContainerMain.Panel1
@@ -154,7 +171,7 @@
             // 
             this.splitContainerMain.Panel2.BackColor = System.Drawing.Color.GhostWhite;
             this.splitContainerMain.Panel2.Controls.Add(this.tabControlDetails);
-            this.splitContainerMain.Size = new System.Drawing.Size(1646, 792);
+            this.splitContainerMain.Size = new System.Drawing.Size(1646, 778);
             this.splitContainerMain.SplitterDistance = 548;
             this.splitContainerMain.TabIndex = 2;
             // 
@@ -176,8 +193,8 @@
             this.splitContainerLeft.Panel2.Controls.Add(this.listViewFields);
             this.splitContainerLeft.Panel2.Controls.Add(this.evolutionMonitor);
             this.splitContainerLeft.Panel2.Controls.Add(this.pnlDetail);
-            this.splitContainerLeft.Size = new System.Drawing.Size(548, 792);
-            this.splitContainerLeft.SplitterDistance = 394;
+            this.splitContainerLeft.Size = new System.Drawing.Size(548, 778);
+            this.splitContainerLeft.SplitterDistance = 386;
             this.splitContainerLeft.TabIndex = 0;
             // 
             // dbTreeView
@@ -185,7 +202,7 @@
             this.dbTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dbTreeView.Location = new System.Drawing.Point(0, 0);
             this.dbTreeView.Name = "dbTreeView";
-            this.dbTreeView.Size = new System.Drawing.Size(548, 394);
+            this.dbTreeView.Size = new System.Drawing.Size(548, 386);
             this.dbTreeView.TabIndex = 0;
             this.dbTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.dbTreeView_AfterSelect);
             this.dbTreeView.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.dbTreeView_NodeMouseClick);
@@ -200,7 +217,7 @@
             this.listViewFields.LabelEdit = true;
             this.listViewFields.Location = new System.Drawing.Point(0, 64);
             this.listViewFields.Name = "listViewFields";
-            this.listViewFields.Size = new System.Drawing.Size(548, 204);
+            this.listViewFields.Size = new System.Drawing.Size(548, 198);
             this.listViewFields.TabIndex = 4;
             this.listViewFields.UseCompatibleStateImageBehavior = false;
             this.listViewFields.View = System.Windows.Forms.View.Details;
@@ -208,7 +225,7 @@
             // evolutionMonitor
             // 
             this.evolutionMonitor.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.evolutionMonitor.Location = new System.Drawing.Point(0, 268);
+            this.evolutionMonitor.Location = new System.Drawing.Point(0, 262);
             this.evolutionMonitor.Name = "evolutionMonitor";
             this.evolutionMonitor.Size = new System.Drawing.Size(548, 126);
             this.evolutionMonitor.TabIndex = 3;
@@ -278,7 +295,7 @@
             this.tabControlDetails.Location = new System.Drawing.Point(0, 0);
             this.tabControlDetails.Name = "tabControlDetails";
             this.tabControlDetails.SelectedIndex = 0;
-            this.tabControlDetails.Size = new System.Drawing.Size(1094, 792);
+            this.tabControlDetails.Size = new System.Drawing.Size(1094, 778);
             this.tabControlDetails.TabIndex = 0;
             // 
             // tabPage1
@@ -286,7 +303,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(1086, 763);
+            this.tabPage1.Size = new System.Drawing.Size(1086, 749);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -296,7 +313,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(1086, 768);
+            this.tabPage2.Size = new System.Drawing.Size(1086, 749);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -307,16 +324,93 @@
             this.treeViewContextMenu.Name = "treeViewContextMenu";
             this.treeViewContextMenu.Size = new System.Drawing.Size(61, 4);
             // 
+            // btnSocket
+            // 
+            this.btnSocket.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.connect_23039;
+            this.btnSocket.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnSocket.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnSocket.Location = new System.Drawing.Point(3, 18);
+            this.btnSocket.Name = "btnSocket";
+            this.btnSocket.Size = new System.Drawing.Size(74, 73);
+            this.btnSocket.TabIndex = 5;
+            this.btnSocket.UseVisualStyleBackColor = true;
+            // 
+            // btnServiceStop
+            // 
+            this.btnServiceStop.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.Stop1Hot_26966;
+            this.btnServiceStop.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnServiceStop.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnServiceStop.Location = new System.Drawing.Point(151, 18);
+            this.btnServiceStop.Name = "btnServiceStop";
+            this.btnServiceStop.Size = new System.Drawing.Size(80, 73);
+            this.btnServiceStop.TabIndex = 7;
+            this.btnServiceStop.UseVisualStyleBackColor = true;
+            // 
+            // btnServicePause
+            // 
+            this.btnServicePause.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.PausePressed_26932;
+            this.btnServicePause.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnServicePause.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnServicePause.Location = new System.Drawing.Point(77, 18);
+            this.btnServicePause.Name = "btnServicePause";
+            this.btnServicePause.Size = new System.Drawing.Size(74, 73);
+            this.btnServicePause.TabIndex = 6;
+            this.btnServicePause.UseVisualStyleBackColor = true;
+            // 
+            // btnServiceStart
+            // 
+            this.btnServiceStart.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.start256_24877;
+            this.btnServiceStart.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnServiceStart.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnServiceStart.Location = new System.Drawing.Point(3, 18);
+            this.btnServiceStart.Name = "btnServiceStart";
+            this.btnServiceStart.Size = new System.Drawing.Size(74, 73);
+            this.btnServiceStart.TabIndex = 5;
+            this.btnServiceStart.UseVisualStyleBackColor = true;
+            // 
             // btnCloseAllDatabases
             // 
             this.btnCloseAllDatabases.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.businessapplication_database_database_accepteitheracceptthedatabase_connect_connectdatabase_negocios_aplicacion_basededato_2310__1_;
             this.btnCloseAllDatabases.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
             this.btnCloseAllDatabases.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnCloseAllDatabases.Location = new System.Drawing.Point(222, 0);
+            this.btnCloseAllDatabases.Location = new System.Drawing.Point(225, 18);
             this.btnCloseAllDatabases.Name = "btnCloseAllDatabases";
-            this.btnCloseAllDatabases.Size = new System.Drawing.Size(74, 75);
-            this.btnCloseAllDatabases.TabIndex = 3;
+            this.btnCloseAllDatabases.Size = new System.Drawing.Size(74, 73);
+            this.btnCloseAllDatabases.TabIndex = 7;
             this.btnCloseAllDatabases.UseVisualStyleBackColor = true;
+            // 
+            // btnLoadDatabase
+            // 
+            this.btnLoadDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.business_application_download_downloaddatabase_thedatabase_23201;
+            this.btnLoadDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnLoadDatabase.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnLoadDatabase.Location = new System.Drawing.Point(151, 18);
+            this.btnLoadDatabase.Name = "btnLoadDatabase";
+            this.btnLoadDatabase.Size = new System.Drawing.Size(74, 73);
+            this.btnLoadDatabase.TabIndex = 6;
+            this.btnLoadDatabase.UseVisualStyleBackColor = true;
+            // 
+            // btnSaveDatabase
+            // 
+            this.btnSaveDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.businessapplication_database_loaddatabase_db_negocios_aplicacion_2318;
+            this.btnSaveDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnSaveDatabase.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnSaveDatabase.Location = new System.Drawing.Point(77, 18);
+            this.btnSaveDatabase.Name = "btnSaveDatabase";
+            this.btnSaveDatabase.Size = new System.Drawing.Size(74, 73);
+            this.btnSaveDatabase.TabIndex = 5;
+            this.btnSaveDatabase.UseVisualStyleBackColor = true;
+            // 
+            // btnAddDatabase
+            // 
+            this.btnAddDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.business_application_addthedatabase_add_insert_database_db_2313;
+            this.btnAddDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnAddDatabase.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnAddDatabase.Location = new System.Drawing.Point(3, 18);
+            this.btnAddDatabase.Name = "btnAddDatabase";
+            this.btnAddDatabase.Size = new System.Drawing.Size(74, 73);
+            this.btnAddDatabase.TabIndex = 4;
+            this.btnAddDatabase.UseVisualStyleBackColor = true;
             // 
             // FrmEvolutiveSystem
             // 
@@ -330,6 +424,9 @@
             this.Name = "FrmEvolutiveSystem";
             this.Text = "Evolutive DB - test";
             this.panelCommands.ResumeLayout(false);
+            this.gbSocketServer.ResumeLayout(false);
+            this.gbServiceManager.ResumeLayout(false);
+            this.gbFileManager.ResumeLayout(false);
             this.statusStrip.ResumeLayout(false);
             this.statusStrip.PerformLayout();
             this.splitContainerMain.Panel1.ResumeLayout(false);
@@ -354,8 +451,6 @@
         private System.Windows.Forms.ToolStrip statusStrip;
         private System.Windows.Forms.SplitContainer splitContainerMain;
         private System.Windows.Forms.SplitContainer splitContainerLeft;
-        private System.Windows.Forms.Button btnAddDatabase;
-        private System.Windows.Forms.Button btnSaveDatabase;
         private System.Windows.Forms.TreeView dbTreeView;
         private System.Windows.Forms.Panel pnlDetail;
         private System.Windows.Forms.Label lblDenDbName;
@@ -365,13 +460,22 @@
         private System.Windows.Forms.TabControl tabControlDetails;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.Button btnLoadDatabase;
         private System.Windows.Forms.ContextMenuStrip treeViewContextMenu;
         private System.Windows.Forms.ToolStripLabel toolStripStatusLabelDen;
         private System.Windows.Forms.ToolStripLabel toolStripStatusLabel;
         private System.Windows.Forms.RichTextBox evolutionMonitor;
         private System.Windows.Forms.ListView listViewFields;
+        private System.Windows.Forms.GroupBox gbServiceManager;
+        private System.Windows.Forms.GroupBox gbFileManager;
         private System.Windows.Forms.Button btnCloseAllDatabases;
+        private System.Windows.Forms.Button btnLoadDatabase;
+        private System.Windows.Forms.Button btnSaveDatabase;
+        private System.Windows.Forms.Button btnAddDatabase;
+        private System.Windows.Forms.Button btnServiceStart;
+        private System.Windows.Forms.Button btnServicePause;
+        private System.Windows.Forms.Button btnServiceStop;
+        private System.Windows.Forms.GroupBox gbSocketServer;
+        private System.Windows.Forms.Button btnSocket;
     }
 }
 

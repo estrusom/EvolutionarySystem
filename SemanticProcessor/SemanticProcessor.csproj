@@ -32,13 +32,13 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>RRU_EvolutiveSystem.pfx</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MasterLog">
-      <HintPath>..\DLL\MasterLog.dll</HintPath>
-    </Reference>
-    <Reference Include="MessaggiErrore">
-      <HintPath>..\DLL\MessaggiErrore.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
@@ -53,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ClsCustomBinder.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -69,6 +70,11 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>SemanticServer.settings</DependentUpon>
     </Compile>
+    <Compile Include="Properties\SemSerRes.Designer.cs">
+      <DependentUpon>SemSerRes.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="SematicService.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -84,6 +90,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>SemanticServer.Designer.cs</LastGenOutput>
     </None>
+    <None Include="RRU_EvolutiveSystem.pfx" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ProjectInstaller.resx">
@@ -93,9 +100,31 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="Properties\SemSerRes.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SemSerRes.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
     <EmbeddedResource Include="SematicService.resx">
       <DependentUpon>SematicService.cs</DependentUpon>
     </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj">
+      <Project>{c56b8471-e33b-463a-b0a5-90a7d8a20ddb}</Project>
+      <Name>AsyncSocketServer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
+      <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
+      <Name>MasterLogMutex</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj">
+      <Project>{c4be31ba-71ec-420f-ad75-58c661011b5a}</Project>
+      <Name>MessaggiErrore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SocketManagerInfo\SocketManagerInfo.csproj">
+      <Project>{86479dbc-394f-4ee6-b833-4241dc4543f9}</Project>
+      <Name>SocketManagerInfo</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.902
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasterLogMutex", "MasterLogMutex.csproj", "{D990905E-13C5-40E4-95C0-B16737834777}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{A3AF9363-F9B2-4C1C-8A4E-D036EB30F533}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D990905E-13C5-40E4-95C0-B16737834777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D990905E-13C5-40E4-95C0-B16737834777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D990905E-13C5-40E4-95C0-B16737834777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D990905E-13C5-40E4-95C0-B16737834777}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3AF9363-F9B2-4C1C-8A4E-D036EB30F533}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3AF9363-F9B2-4C1C-8A4E-D036EB30F533}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3AF9363-F9B2-4C1C-8A4E-D036EB30F533}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3AF9363-F9B2-4C1C-8A4E-D036EB30F533}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E3335461-FC66-4B9B-8716-F90A1E7A132E}
+	EndGlobalSection
+EndGlobal

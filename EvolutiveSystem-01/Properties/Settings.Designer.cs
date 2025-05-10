@@ -34,5 +34,29 @@ namespace EvolutiveSystem_01.Properties {
                 this["PathDb"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastIPaddress {
+            get {
+                return ((string)(this["LastIPaddress"]));
+            }
+            set {
+                this["LastIPaddress"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int lastIPport {
+            get {
+                return ((int)(this["lastIPport"]));
+            }
+            set {
+                this["lastIPport"] = value;
+            }
+        }
     }
 }
