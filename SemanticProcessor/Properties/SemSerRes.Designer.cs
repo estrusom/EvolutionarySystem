@@ -79,11 +79,47 @@ namespace SemanticProcessor.Properties {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a The command was not found.
+        /// </summary>
+        internal static string logErrCmdNotFound {
+            get {
+                return ResourceManager.GetString("logErrCmdNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a ERR Telegram is invalid.
+        /// </summary>
+        internal static string logErrTlgrmInvalid {
+            get {
+                return ResourceManager.GetString("logErrTlgrmInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a token mismatch.
         /// </summary>
         internal static string logErrTockenMismatch {
             get {
                 return ResourceManager.GetString("logErrTockenMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Message received by the application .
+        /// </summary>
+        internal static string logMsgCmdRved {
+            get {
+                return ResourceManager.GetString("logMsgCmdRved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Message received by the application .
+        /// </summary>
+        internal static string logMsgCmdRved_ {
+            get {
+                return ResourceManager.GetString("logMsgCmdRved ", resourceCulture);
             }
         }
         

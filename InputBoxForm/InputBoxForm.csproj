@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{86479DBC-394F-4EE6-B833-4241DC4543F9}</ProjectGuid>
+    <ProjectGuid>{B92B009D-E6C4-4581-AF23-7C5A78A9800F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SocketManagerInfo</RootNamespace>
-    <AssemblyName>SocketManagerInfo</AssemblyName>
+    <RootNamespace>InputBoxForm</RootNamespace>
+    <AssemblyName>InputBoxForm</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -30,15 +30,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>RRU_EvolutiveSystem.pfx</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -47,28 +43,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Properties\SocketManagerRes.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>SocketManagerRes.resx</DependentUpon>
+    <Compile Include="InputBoxForm.cs">
+      <SubType>Form</SubType>
     </Compile>
-    <Compile Include="SocketManagerInfo.cs" />
+    <Compile Include="InputBoxForm.Designer.cs">
+      <DependentUpon>InputBoxForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="PAXkey.snk" />
-    <None Include="RRU_EvolutiveSystem.pfx" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj">
-      <Project>{C4BE31BA-71EC-420F-AD75-58C661011B5A}</Project>
-      <Name>MessaggiErrore</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\SocketManagerRes.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>SocketManagerRes.Designer.cs</LastGenOutput>
+    <EmbeddedResource Include="InputBoxForm.resx">
+      <DependentUpon>InputBoxForm.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

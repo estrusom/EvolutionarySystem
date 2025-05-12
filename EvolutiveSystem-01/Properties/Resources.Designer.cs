@@ -210,5 +210,15 @@ namespace EvolutiveSystem_01.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap tools_disk_19657 {
+            get {
+                object obj = ResourceManager.GetObject("tools_disk_19657", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

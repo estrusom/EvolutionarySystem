@@ -1,4 +1,5 @@
-﻿using EvolutiveSystem_01.Properties;
+﻿using EvolutiveSystem.UI.Forms;
+using EvolutiveSystem_01.Properties;
 using MasterLog;
 using MessaggiErrore;
 using SocketManager;
@@ -16,6 +17,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using ToolTip = System.Windows.Forms.ToolTip;
 
@@ -23,10 +25,10 @@ namespace EvolutiveSystem_01
 {
     public partial class FrmSocketClient : Form
     {
-        private string TelegramGenerate = "";
         private Logger _logger;
         private SocketClient sk;
         private ToolTip toolTip;
+        string xmlSv = "";
         public FrmSocketClient(Logger logger)
         {
             InitializeComponent();
@@ -35,6 +37,7 @@ namespace EvolutiveSystem_01
         }
         private void FrmSocketClient_Load(object sender, EventArgs e)
         {
+            #region configura bottoni
             toolTip = new ToolTip();
             if (btnConnect != null) 
             {
@@ -55,7 +58,14 @@ namespace EvolutiveSystem_01
             {
                 btnCommand.Click += BtnCommand_Click;
                 toolTip.SetToolTip(btnCommand, "Composizione del comando per il server semantico."); // *** Aggiunto ToolTip ***
-            }            
+            }
+            if (btnAttrezzi != null)
+            {
+                btnAttrezzi.Click += BtnAttrezzi_Click;
+                toolTip.SetToolTip(btnAttrezzi, "Attrezzi d'uso generico per debuging del sistema."); // *** Aggiunto ToolTip ***
+            }
+            #endregion
+            #region gestione textbox
             if (Settings.Default.LastIPaddress.Length == 0)
             {
                 txtIPaddress.Text = ConfigurationManager.AppSettings["SocketAddrAssetMngm"];
@@ -73,10 +83,12 @@ namespace EvolutiveSystem_01
             {
                 txtIPport.Text = Settings.Default.lastIPport.ToString();
             }
+            #endregion
             this.btnConnect.Enabled = true;
             this.btnSend.Enabled = false;
             this.btnCloseConnection.Enabled = false;
         }
+
         private void FrmSocketClient_FormClosing(object sender, FormClosingEventArgs e)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
@@ -99,22 +111,20 @@ namespace EvolutiveSystem_01
             }
         }
         #region buttons events
+        private void BtnAttrezzi_Click(object sender, EventArgs e)
+        {
+            Point p = PointToScreen(new Point(pnlCmdSocket.Left + btnAttrezzi.Left + btnAttrezzi.Width, btnAttrezzi.Top + btnAttrezzi.Height));
+            ctxTools.Show(p);
+        }
         private void BtnCommand_Click(object sender, EventArgs e)
         {
-            pnlCommand.Enabled = false;
-                        
-            gpCoponiComanado.Visible = true;
-            gpCoponiComanado.Select();
-            gpCoponiComanado.BringToFront();
+            FrmTelegram setTelegram = new FrmTelegram();
+            setTelegram.ShowDialog();
+            if (setTelegram.DialogResult == DialogResult.OK)
+            {
+                txtSendData.Text = setTelegram.TxtSendData;
+            }
 
-            gpCoponiComanado.Left = (this.Width - gpCoponiComanado.Width) / 2;
-            gpCoponiComanado.Top = (this.Height - gpCoponiComanado.Height) / 2;
-            txtDateSend.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
-        }
-        private void btnCalcTocken_Click(object sender, EventArgs e)
-        {
-            Random randomGenerator = new Random();
-            lblToken.Text = randomGenerator.Next(0, int.MaxValue).ToString();
         }
         private void BtnCloseConnection_Click(object sender, EventArgs e)
         {
@@ -135,7 +145,13 @@ namespace EvolutiveSystem_01
                 if (txtSendData.Text.Length > 0)
                 {
                     sk.SendString(txtSendData.Text);
-                    rtbBufferRx.AppendText(sk.ReceiveMessage().Trim() + Environment.NewLine);
+
+                    string rxData = sk.ReceiveMessage().Trim();
+                    ASCIIEncoding dencoding = new ASCIIEncoding();
+                    int init = rxData.IndexOf(SocketMessageSerialize.Base64Start) + SocketMessageSerialize.Base64Start.Length;
+                    int end = rxData.IndexOf(SocketMessageSerialize.Base64End);
+                    xmlSv = Encoding.UTF8.GetString(Convert.FromBase64String(rxData.Substring(init, end - init)));
+                    rtbBufferRx.AppendText(xmlSv + Environment.NewLine);
                 }
                 else
                 {
@@ -149,7 +165,8 @@ namespace EvolutiveSystem_01
         }
         private void BtnConnect_Click(object sender, EventArgs e)
         {
-            //if (!sk.isConnect)
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
             {
                 sk.ConnectToServer(txtIPaddress.Text, Convert.ToInt32(txtIPport.Text));
                 this.btnConnect.Enabled = false;
@@ -157,38 +174,50 @@ namespace EvolutiveSystem_01
                 this.btnCloseConnection.Enabled = true;
                 tssComStatus.Text = "Open";
                 tssComStatus.ForeColor = Color.Green;
+            }catch (Exception ex)
+            {
+                string msg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                _logger.Log(LogLevel.ERROR, msg);
+                MessageBox.Show(msg, "ERRORE", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
                 
         }
-        private void btnSendMsg_Click(object sender, EventArgs e)
+        #endregion
+        #region context menu events
+        private void tsmDecodificaComando_Click(object sender, EventArgs e)
         {
-            SocketMessageStructure telegramma = new SocketMessageStructure();
-            telegramma.Command = txtCmd.Text;
-            telegramma.Data = txtDateSend.Text;
-            if (DateTime.TryParse(txtDateSend.Text,out DateTime result))
+            InputBoxForm inputBox = new InputBoxForm("decodifica Base64 UTF8", "Inserire il messagio");
+            inputBox.ShowDialog();
+            if (inputBox.DialogResult == DialogResult.OK)
             {
-                telegramma.SendingTime = result;
+                SocketCommand sk = new SocketCommand();
+                ASCIIEncoding dencoding = new ASCIIEncoding();
+                int init = inputBox.InputValue.IndexOf(sk.Base64Start) + sk.Base64Start.Length;
+                int end = inputBox.InputValue.IndexOf(sk.Base64End);
+                xmlSv = Encoding.UTF8.GetString(Convert.FromBase64String(inputBox.InputValue.Substring(init, end - init)));
+                richTextBoxDebug.Text = xmlSv;
+            }
+        }
+        private void tsmDeserializzaComando_Click(object sender, EventArgs e)
+        {
+            if (xmlSv.Length > 0)
+            {
+                SocketMessageStructure Telegram = SocketMessageSerialize.DeserializeUTF8(xmlSv);
+                richTextBoxDebug.AppendText(Environment.NewLine);
+                richTextBoxDebug.AppendText("********************************************************" + Environment.NewLine);
+                richTextBoxDebug.AppendText(string.Format("Command: {0}", Telegram.Command) + Environment.NewLine);
+                richTextBoxDebug.AppendText(string.Format("Data trasmissione: {0}", Telegram.SendingTime) + Environment.NewLine);
+                richTextBoxDebug.AppendText(string.Format("Dati: {0}", Telegram.Data) + Environment.NewLine);
+                richTextBoxDebug.AppendText(string.Format("Tocken: {0}", Telegram.Token) + Environment.NewLine);
+                richTextBoxDebug.AppendText(string.Format("CRC: {0}", Telegram.CRC) + Environment.NewLine);
             }
             else
             {
-                telegramma.SendingTime = DateTime.Now;
+                MessageBox.Show("Nessun dato da deserializzare", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            telegramma.Token = Convert.ToInt32(lblToken.Text);
-            if(chkbCRC.Checked)
-            {
-                telegramma.CRC = telegramma.GetHashCode();
-            }
-            TelegramGenerate = SocketMessageSerialize.Serilaize(telegramma);
-            pnlCommand.Enabled = true;
-            gpCoponiComanado.Visible = false;
-            txtSendData.Text = TelegramGenerate;
-        }
-        private void btnAnnullaSend_Click(object sender, EventArgs e)
-        {
-            pnlCommand.Enabled = true;
-            gpCoponiComanado.Visible = false;
         }
         #endregion
+        #region textbox events
         private void txtIPaddress_Leave(object sender, EventArgs e)
         {
             Settings.Default.LastIPaddress = txtIPaddress.Text;
@@ -232,5 +261,8 @@ namespace EvolutiveSystem_01
                 }
             }
         }
+
+        #endregion
+
     }
 }

@@ -47,7 +47,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DatabaseSerializer.cs" />
     <Compile Include="FrmAddField.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -78,9 +77,14 @@
     <Compile Include="FrmSocketClient.Designer.cs">
       <DependentUpon>FrmSocketClient.cs</DependentUpon>
     </Compile>
+    <Compile Include="FrmTelegram.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmTelegram.Designer.cs">
+      <DependentUpon>FrmTelegram.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SemanticData.cs" />
     <EmbeddedResource Include="FrmAddField.resx">
       <DependentUpon>FrmAddField.cs</DependentUpon>
     </EmbeddedResource>
@@ -95,6 +99,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FrmSocketClient.resx">
       <DependentUpon>FrmSocketClient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmTelegram.resx">
+      <DependentUpon>FrmTelegram.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -141,6 +148,14 @@
     <None Include="Resources\businessapplication_database_database_accepteitheracceptthedatabase_connect_connectdatabase_negocios_aplicacion_basededato_2310 %281%29.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EvolutiveSystem.Core\EvolutiveSystem.Core.csproj">
+      <Project>{a193e8c9-5afa-4d49-adfa-f25891b1a8eb}</Project>
+      <Name>EvolutiveSystem.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\InputBoxForm\InputBoxForm.csproj">
+      <Project>{b92b009d-e6c4-4581-af23-7c5a78a9800f}</Project>
+      <Name>InputBoxForm</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
       <Name>MasterLogMutex</Name>
@@ -181,6 +196,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\make_15198.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\tools_disk_19657.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

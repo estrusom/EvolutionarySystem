@@ -17,6 +17,23 @@ namespace MessaggiErrore
         /// Creazione del messaggio da visualizzare o da inserire nel log event
         /// </summary>
         /// <param name="Ex">Eccezione rilevata</param>
+        /// <returns>Messaggio compilato</returns>
+        public static string CustomMsg(Exception Ex)
+        {
+            StringBuilder myStr = new StringBuilder();
+            myStr.Append(Ex.Message);
+            myStr.Append("\t");
+            if (Ex.InnerException != null)
+            {
+                myStr.Append(Ex.InnerException.Message);
+                myStr.Append("\t");
+            }
+            return myStr.ToString();
+        }
+        /// <summary>
+        /// Creazione del messaggio da visualizzare o da inserire nel log event
+        /// </summary>
+        /// <param name="Ex">Eccezione rilevata</param>
         /// <param name="ThisMethod">Metodo in cui è avvenuta l'eccezione</param>
         /// <returns>Messaggio compilato</returns>
         public static string CustomMsg(Exception Ex, MethodBase ThisMethod)

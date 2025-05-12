@@ -103,6 +103,7 @@
     <EmbeddedResource Include="Properties\SemSerRes.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>SemSerRes.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="SematicService.resx">
       <DependentUpon>SematicService.cs</DependentUpon>
@@ -112,6 +113,10 @@
     <ProjectReference Include="..\AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj">
       <Project>{c56b8471-e33b-463a-b0a5-90a7d8a20ddb}</Project>
       <Name>AsyncSocketServer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\CommandHandlers\CommandHandlers.csproj">
+      <Project>{78F37CCC-727B-4FDF-BC20-8F51F2DFAE88}</Project>
+      <Name>CommandHandlers</Name>
     </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>

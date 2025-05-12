@@ -135,9 +135,9 @@
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabelDen,
             this.toolStripStatusLabel});
-            this.statusStrip.Location = new System.Drawing.Point(0, 872);
+            this.statusStrip.Location = new System.Drawing.Point(0, 867);
             this.statusStrip.Name = "statusStrip";
-            this.statusStrip.Size = new System.Drawing.Size(1646, 26);
+            this.statusStrip.Size = new System.Drawing.Size(1646, 31);
             this.statusStrip.TabIndex = 1;
             this.statusStrip.Text = "toolStrip1";
             // 
@@ -146,7 +146,7 @@
             this.toolStripStatusLabelDen.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusLabelDen.ForeColor = System.Drawing.Color.Blue;
             this.toolStripStatusLabelDen.Name = "toolStripStatusLabelDen";
-            this.toolStripStatusLabelDen.Size = new System.Drawing.Size(122, 23);
+            this.toolStripStatusLabelDen.Size = new System.Drawing.Size(122, 28);
             this.toolStripStatusLabelDen.Text = "toolStripLabel1";
             // 
             // toolStripStatusLabel
@@ -154,7 +154,7 @@
             this.toolStripStatusLabel.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusLabel.ForeColor = System.Drawing.Color.Green;
             this.toolStripStatusLabel.Name = "toolStripStatusLabel";
-            this.toolStripStatusLabel.Size = new System.Drawing.Size(22, 23);
+            this.toolStripStatusLabel.Size = new System.Drawing.Size(22, 28);
             this.toolStripStatusLabel.Text = "...";
             // 
             // splitContainerMain
@@ -171,7 +171,7 @@
             // 
             this.splitContainerMain.Panel2.BackColor = System.Drawing.Color.GhostWhite;
             this.splitContainerMain.Panel2.Controls.Add(this.tabControlDetails);
-            this.splitContainerMain.Size = new System.Drawing.Size(1646, 778);
+            this.splitContainerMain.Size = new System.Drawing.Size(1646, 773);
             this.splitContainerMain.SplitterDistance = 548;
             this.splitContainerMain.TabIndex = 2;
             // 
@@ -193,8 +193,8 @@
             this.splitContainerLeft.Panel2.Controls.Add(this.listViewFields);
             this.splitContainerLeft.Panel2.Controls.Add(this.evolutionMonitor);
             this.splitContainerLeft.Panel2.Controls.Add(this.pnlDetail);
-            this.splitContainerLeft.Size = new System.Drawing.Size(548, 778);
-            this.splitContainerLeft.SplitterDistance = 386;
+            this.splitContainerLeft.Size = new System.Drawing.Size(548, 773);
+            this.splitContainerLeft.SplitterDistance = 383;
             this.splitContainerLeft.TabIndex = 0;
             // 
             // dbTreeView
@@ -202,7 +202,7 @@
             this.dbTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dbTreeView.Location = new System.Drawing.Point(0, 0);
             this.dbTreeView.Name = "dbTreeView";
-            this.dbTreeView.Size = new System.Drawing.Size(548, 386);
+            this.dbTreeView.Size = new System.Drawing.Size(548, 383);
             this.dbTreeView.TabIndex = 0;
             this.dbTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.dbTreeView_AfterSelect);
             this.dbTreeView.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.dbTreeView_NodeMouseClick);
@@ -217,7 +217,7 @@
             this.listViewFields.LabelEdit = true;
             this.listViewFields.Location = new System.Drawing.Point(0, 64);
             this.listViewFields.Name = "listViewFields";
-            this.listViewFields.Size = new System.Drawing.Size(548, 198);
+            this.listViewFields.Size = new System.Drawing.Size(548, 196);
             this.listViewFields.TabIndex = 4;
             this.listViewFields.UseCompatibleStateImageBehavior = false;
             this.listViewFields.View = System.Windows.Forms.View.Details;
@@ -225,7 +225,7 @@
             // evolutionMonitor
             // 
             this.evolutionMonitor.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.evolutionMonitor.Location = new System.Drawing.Point(0, 262);
+            this.evolutionMonitor.Location = new System.Drawing.Point(0, 260);
             this.evolutionMonitor.Name = "evolutionMonitor";
             this.evolutionMonitor.Size = new System.Drawing.Size(548, 126);
             this.evolutionMonitor.TabIndex = 3;
@@ -295,7 +295,7 @@
             this.tabControlDetails.Location = new System.Drawing.Point(0, 0);
             this.tabControlDetails.Name = "tabControlDetails";
             this.tabControlDetails.SelectedIndex = 0;
-            this.tabControlDetails.Size = new System.Drawing.Size(1094, 778);
+            this.tabControlDetails.Size = new System.Drawing.Size(1094, 773);
             this.tabControlDetails.TabIndex = 0;
             // 
             // tabPage1
@@ -303,7 +303,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(1086, 749);
+            this.tabPage1.Size = new System.Drawing.Size(1086, 744);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             this.tabPage1.UseVisualStyleBackColor = true;

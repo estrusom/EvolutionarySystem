@@ -4,8 +4,7 @@
 	https://convertico.com/
  */
 using EvolutiveSystem;
-using EvolutiveSystem.SemanticData;
-using EvolutiveSystem.Serialization;
+using EvolutiveSystem.Core;
 using EvolutiveSystem_01.Properties;
 using MasterLog;
 using System;

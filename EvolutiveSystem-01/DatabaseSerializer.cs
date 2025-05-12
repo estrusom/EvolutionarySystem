@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO; // Necessario per FileStream, StringWriter, ecc.
 using System.Xml.Serialization; // Necessario per XmlSerializer
-using EvolutiveSystem.SemanticData; // Assicurati che questo namespace sia corretto (contiene Database, Table, Field, SerializableDictionary)
 using System.Text; // Necessario per StringBuilder
-using System.Xml; // Necessario per XmlReader, XmlWriter
+using System.Xml;
+using EvolutiveSystem.Core; // Necessario per XmlReader, XmlWriter
 
 namespace EvolutiveSystem.Serialization
 {

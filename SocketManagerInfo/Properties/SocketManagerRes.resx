@@ -117,31 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="logAssignToken" xml:space="preserve">
-    <value>Command: {0}. The current token is {1} is replaced by the {2} token</value>
+  <data name="EndB64String" xml:space="preserve">
+    <value>&lt;/SocketMessageStructure&gt;</value>
   </data>
-  <data name="logDisabled" xml:space="preserve">
-    <value>The debug log is disabled</value>
-  </data>
-  <data name="logErrCmdNotFound" xml:space="preserve">
-    <value>The command was not found</value>
-  </data>
-  <data name="logErrTlgrmInvalid" xml:space="preserve">
-    <value>ERR Telegram is invalid</value>
-  </data>
-  <data name="logErrTockenMismatch" xml:space="preserve">
-    <value>token mismatch</value>
-  </data>
-  <data name="logMsgCmdRved" xml:space="preserve">
-    <value>Message received by the application </value>
-  </data>
-  <data name="logMsgCmdRved " xml:space="preserve">
-    <value>Message received by the application </value>
-  </data>
-  <data name="logMsgStartThread" xml:space="preserve">
-    <value>Starting thread in progress</value>
-  </data>
-  <data name="sktErrRecive" xml:space="preserve">
-    <value>I received {0} {1}</value>
+  <data name="StartB64string" xml:space="preserve">
+    <value>&lt;SocketMessageStructure&gt;</value>
   </data>
 </root>

@@ -1,4 +1,5 @@
 ﻿using AsyncSocketServer;
+using CommandHandlers;
 using MasterLog;
 using MessaggiErrore;
 using SemanticProcessor.Properties;
@@ -106,10 +107,12 @@ namespace SemanticProcessor
         private bool SemaforoDC = false; // (semaforo) serve per evitare l'over run durante l'avvio del servizio
         private int logCountSrv = 0; //Timer for the issuance of the service notification is working
         private int swDebug = 0;
-        string _path = "";
+        private string _path = "";
+        private long HandlerError = 0;
         protected Mutex SyncMtxLogger = new Mutex();
         protected DateTime today = DateTime.MinValue;
         private string ServiceVer = "";
+        private static ClsCommandHandlers commandHandlers;
         #region Instance of the asynchronous socket server class
         private AsyncSocketListener asl;
         protected AsyncSocketThread scktThrd;
@@ -136,6 +139,7 @@ namespace SemanticProcessor
                 _logger.SwLogLevel = swDebug;
                 _logger.Log(LogLevel.INFO, string.Format("Log path:{0}", _logger.GetPercorsoCompleto()));
                 today = DateTime.Now;
+                commandHandlers = new ClsCommandHandlers(_logger);
                 StartServerSocket();
                 if (swDebug > 0)
                 {
@@ -257,9 +261,9 @@ namespace SemanticProcessor
                     case 0:
                         {
                             #region Avvio socket
-                            if (!SemaforoDC)
+                            if (!this.SemaforoDC)
                             {
-                                SemaforoDC = true;
+                                this.SemaforoDC = true;
                                 IntervalMilliSeconds = 500;
                                 if (!scktThrd.IsStarted)
                                 {
@@ -273,7 +277,7 @@ namespace SemanticProcessor
                                 {
                                     StepStartingService = 1;
                                 }
-                                SemaforoDC = false;
+                                this.SemaforoDC = false;
                             }
                             else
                             {
@@ -284,8 +288,9 @@ namespace SemanticProcessor
                         break;
                     case 1:
                         {
-                            if (!SemaforoDC)
+                            if (!this.SemaforoDC)
                             {
+                                this.SemaforoDC = true;
                                 Socket soc = null;
                                 if (asl.Listner != null)
                                 {
@@ -303,6 +308,7 @@ namespace SemanticProcessor
                                     SemaforoDC = false;
                                 }
                                 _logger.Log(LogLevel.DEBUG, thSocket.IsAlive ? "Thread is alive" : "Thread is dead");
+                                this.SemaforoDC = false;
                             }
                         }
                         break;
@@ -313,13 +319,14 @@ namespace SemanticProcessor
                         }
                         break;
                 }
-                
                 //this.myStart();
                 swWatchDog(true, IntervalMilliSeconds);
             }
             catch (Exception ex)
             {
-                this.myStart();
+                string msg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                _logger.Log(LogLevel.ERROR, msg);
+                //this.myStart();
                 swWatchDog(true, IntervalMilliSeconds);
             }
         }
@@ -424,10 +431,16 @@ namespace SemanticProcessor
             scktThrd.Interval = 100;
             thSocket = new Thread(scktThrd.AsyncSocket);
         }
+        /// <summary>
+        /// looking if I got some command from the socket
+        /// </summary>
+        /// <returns></returns>
         private SocketCommand checkCommandFromSocket(string cmd, long? TokenSocket = 0)
         {
+            // 02.04.2021 gestione del token
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
             SocketCommand scktCmd = new SocketCommand();
+            //string ret = "";
             try
             {
 #if DEBUG
@@ -437,76 +450,97 @@ namespace SemanticProcessor
                 var getSktCmd = tySktCmd.GetProperties().Where(CMD => CMD.Name.ToUpper().Equals(cmd.ToUpper()));
                 if (getSktCmd.Any())
                 {
+                    // 02.04.2021 gestione accesso concorrente alla tavoletta 
                     PropertyInfo fInfo = getSktCmd.First();
                     var call = fInfo.CustomAttributes.First().NamedArguments.Where(CALL => CALL.MemberName == "TockenManaging");
                     if (call.Any())
                     {
-                        switch ((byte)call.First().TypedValue.Value)
+                        //var vToken = tySktCmd.GetProperties().Where(A => A.Name == "AccessToken");
+                        //if (vToken.Any())
                         {
-                            case 0: //Token validity check
-                                {
-                                    _logger.Log(LogLevel.INFO, string.Format("Check validity token for the command {0}. Received: {1} stored: {2}", cmd, TokenSocket, asl.TokenSocket));
-                                    if (asl.TokenSocket == TokenSocket)
+                            switch ((byte)call.First().TypedValue.Value)
+                            {
+                                case 0: // controllo validità del token 
                                     {
+                                        _logger.Log(LogLevel.INFO, string.Format("Check validity token for the command {0}. Received: {1} stored: {2}", cmd, TokenSocket, asl.TokenSocket));
+                                        if (asl.TokenSocket == TokenSocket)
+                                        {
+                                            //SocketCommand mysc = getSktCmd.First();
+                                            getSktCmd.First().GetValue(scktCmd).ToString();
+                                            var val = ((System.Reflection.TypeInfo)tySktCmd).DeclaredProperties.Where(VAL => VAL.Name.Contains("CommandSocket")).First();
+                                            val.SetValue(scktCmd, getSktCmd.First().Name);
+                                        }
+                                        else
+                                        {
+                                            getSktCmd.First().GetValue(scktCmd).ToString();
+                                            var val = ((System.Reflection.TypeInfo)tySktCmd).DeclaredProperties.Where(VAL => VAL.Name.Contains("CommandSocket")).First();
+                                            val.SetValue(scktCmd, "CmdTokenMismatch");
+                                            //_logger.Log(LogLevel.WARNING, msg);
+                                            //HandlerError |= 0x400;  //System busy reporting event
+                                            //asl.Send(asl.Handler, msg);
+                                        }
+                                        break;
+                                    }
+                                case 1: // assegnazione token
+                                    {
+                                        sysCmdRunnig = false; // 09.06.2021 when token is assigned the flag command runnig to be false
+                                        if (TokenSocket != 0)
+                                        {
+                                            _logger.Log(LogLevel.INFO, string.Format(SemSerRes.logAssignToken, cmd, asl.TokenSocket, TokenSocket));
+                                            asl.TokenSocket = (long)TokenSocket;
+                                        }
+                                        else
+                                        {
+                                            _logger.Log(LogLevel.INFO, string.Format("command: {0} token value: {1}. Token does not assigned", cmd, TokenSocket));
+                                        }
                                         getSktCmd.First().GetValue(scktCmd).ToString();
                                         var val = ((System.Reflection.TypeInfo)tySktCmd).DeclaredProperties.Where(VAL => VAL.Name.Contains("CommandSocket")).First();
                                         val.SetValue(scktCmd, getSktCmd.First().Name);
+                                        break;
                                     }
-                                    else
+                                case 2: // comandi per cui il token non deve essere controllato
                                     {
+                                        _logger.Log(LogLevel.INFO, string.Format("for the {0} command the token does not checked", cmd));
                                         getSktCmd.First().GetValue(scktCmd).ToString();
                                         var val = ((System.Reflection.TypeInfo)tySktCmd).DeclaredProperties.Where(VAL => VAL.Name.Contains("CommandSocket")).First();
-                                        val.SetValue(scktCmd, "CmdTokenMismatch");
+                                        val.SetValue(scktCmd, getSktCmd.First().Name);
+                                        break;
                                     }
-                                }
-                                break;
-                            case 1: //Token assignment
-                                {
-                                    sysCmdRunnig = false; // when token is assigned the flag command runnig to be false
-                                    if (TokenSocket != 0)
+                                default:
                                     {
-                                        _logger.Log(LogLevel.INFO, string.Format(SemSerRes.logAssignToken, cmd, asl.TokenSocket, TokenSocket));
-                                        asl.TokenSocket = (long)TokenSocket;
+                                        string msg = string.Format("The command {0} does not support tokens. {1} Time: {2}", cmd, SemSerRes.logErrTockenMismatch, DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss"));
+                                        _logger.Log(LogLevel.WARNING, msg);
+                                        HandlerError |= 0x2000;  //Command does not support tokens
+                                        asl.Send(asl.Handler, msg);
+                                        break;
                                     }
-                                    else
-                                    {
-                                        _logger.Log(LogLevel.INFO, string.Format("command: {0} token value: {1}. Token does not assigned", cmd, TokenSocket));
-                                    }
-                                }
-                                break;
-                            case 2: //commands for which the token should not be checked
-                                {
-                                    _logger.Log(LogLevel.INFO, string.Format("for the {0} command the token does not checked", cmd));
-                                    getSktCmd.First().GetValue(scktCmd).ToString();
-                                    var val = ((System.Reflection.TypeInfo)tySktCmd).DeclaredProperties.Where(VAL => VAL.Name.Contains("CommandSocket")).First();
-                                    val.SetValue(scktCmd, getSktCmd.First().Name);
-                                }
-                                break;
-                            default:
-                                {
-                                    string msg = string.Format("The command {0} does not support tokens. {1} Time: {2}", cmd, SemSerRes.logErrTockenMismatch, DateTime.Now.ToString("dd-MM-yyyy hh:mm:ss"));
-                                    _logger.Log(LogLevel.WARNING, msg);
-                                    asl.Send(asl.Handler, msg);
-                                }
-                                break;
+                            }
+                        }
+                        var sp = fInfo.CustomAttributes.First().NamedArguments.Where(CALL => CALL.MemberName == "SendingDataPackets");
+                        if (sp.Any())
+                        {
+                            getSktCmd.First().GetValue(scktCmd).ToString();
+                            var val = ((System.Reflection.TypeInfo)tySktCmd).DeclaredProperties.Where(VAL => VAL.Name.Contains("SendingDataPackets")).First();
+                            val.SetValue(scktCmd, sp.First().TypedValue.Value);
                         }
                     }
+                }
+                else
+                {
+                    throw new Exception(SemSerRes.logErrCmdNotFound);
                 }
             }
             catch (Exception ex)
             {
-
-            }
-            finally
-            {
-
+                throw new Exception(ClsMessaggiErrore.CustomMsg(ex, thisMethod));
             }
             return scktCmd;
         }
         #endregion
         #region Socket server events
-        private void Asl_DataFromSocket(object sender, SocketManagerInfo.SocketMessageStructure e)
+        private void Asl_DataFromSocket(object sender, SocketMessageStructure e)
         {
+            /*
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
             Socket Handler = sender as Socket;
             SocketCommand cmdCom = null;
@@ -537,8 +571,6 @@ namespace SemanticProcessor
                     CommandRunning = 1;
                     erCnt = 2;
                     ClsCustomBinder myCustomBinder = new ClsCustomBinder();
-                    
-
                 }
             }
             catch (Exception ex)
@@ -552,6 +584,340 @@ namespace SemanticProcessor
                 _logger.Log(LogLevel.DEBUG, "finally sysCmdRunnig set to false");
                 sysCmdRunnig = false; // 09.06.2021 interlock esecuzione comandi
                 this.myStart();
+            }
+            */
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            Socket Handler = sender as Socket;
+            SocketCommand cmdCom = null;
+            SocketCommand cmdCom1 = null;
+            int erCnt = 0;
+            int cnt = 0;
+            try
+            {
+                erCnt = 1;
+                swWatchDog(false); // condizione di break e.Command=="CmdSendFormConfiguration"
+                    
+                cmdCom1 = checkCommandFromSocket(e.Command, e.Token);
+
+                _logger.Log(LogLevel.DEBUG, "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *");
+                _logger.Log(LogLevel.DEBUG, string.Format("* * * *  {0} * * * * {1} * * * *", e.Command.ToUpper(), e.Token));
+                _logger.Log(LogLevel.DEBUG, "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *");
+
+                if (cmdCom1 != null)
+                {
+                    cmdCom = cmdCom1;
+                    _logger.Log(LogLevel.ENANCED_DEBUG, "sysCmdRunnig status on received comand from soket: " + sysCmdRunnig.ToString());
+                    //16.06.2021
+                    while (sysCmdRunnig)
+                    {
+                        Thread.Sleep(20);
+                        if (cnt == 10)
+                            sysCmdRunnig = false;
+                        else
+                            cnt++;
+                        _logger.Log(LogLevel.ENANCED_DEBUG, "- WAITING CYCLES: " + cnt.ToString());
+                    }
+                    _logger.Log(LogLevel.ENANCED_DEBUG, "At start command sysCmdRunnig set to true");
+                    sysCmdRunnig = true; // 09.06.2021 interlock esecuzione comandi
+                    CommandRunning = 1; 
+                    erCnt = 2;
+                    Type tyCommandHandlers = typeof(ClsCommandHandlers);
+                    ClsCustomBinder myCustomBinder = new ClsCustomBinder();
+                    SocketCommand myO = new SocketCommand();
+                    myO.LocalEndPoint= Handler.RemoteEndPoint.ToString();
+                    myO.PortAddress = asl.CallerIpAddress;
+                    myO.SocketPortSrv = asl.SrvPort;
+                    myO.SocketAddressClient = asl.SrvIpAddress;
+                    myO.SocketHandler = Handler;
+                    myO.SocketPortCli= Convert.ToInt32(ConfigurationManager.AppSettings["SocketPortClient"]);
+                    myO.Response = new object();
+                    erCnt = 4;
+                    string metodo;
+                    //MethodInfo myMethod = tyCommandHandlers.GetMethod(cmdCom.CommandSocket, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(SocketCommand), typeof(string), typeof(AsyncSocketListener) }, null);
+                    MethodInfo myMethod = tyCommandHandlers.GetMethod(
+                        cmdCom.CommandSocket, // Nome del metodo
+                        BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
+                        myCustomBinder, // Usa il tuo binder per la risoluzione
+                        new Type[] { typeof(SocketCommand), typeof(string), typeof(AsyncSocketListener) }, // Tipi dei parametri (verifica che siano corretti!)
+                        null // Modificatori
+                    );
+                    if (myMethod != null)
+                    {
+                        metodo = myMethod.Name;
+                        _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                        _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
+                        erCnt = 5;
+                        // Invoke the overload.
+                        //tyCommandHandlers.InvokeMember(metodo, BindingFlags.InvokeMethod, myCustomBinder, commandHandlers, new Object[] { myO, e.Data, asl });
+                        object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.Data, asl });
+                        // if (myO.CommandCode == myO.CmdSendFormConfiguration) _logger.Log(LogLevel.DEBUG,string.Format( "Sono uscito dal comando {0}", myO.CommandName));
+                    }
+                    else
+                    {
+                        throw new Exception("Command not found");
+                    }
+                    /*
+                    Type TyPaxAires8 = typeof(PAXAires8Com);
+                    //ClsCustomBinder myCustomBinder = new ClsCustomBinder();
+                    ClsCustomBinder myCustomBinder = new ClsCustomBinder();
+                    DeviceCommand myO = new DeviceCommand();
+                    erCnt = 3;
+                    myO.LocalEndPoint = Handler.RemoteEndPoint.ToString(); // 03.12.2021
+                    myO.PortAddress = asl.CallerIpAddress; //  ConfigurationManager.AppSettings["SocketAddressClient"]; 20.07.02
+                    myO.SocketPortSrv = asl.SrvPort; // port a cui si deve connettere la libreria //Convert.ToInt32(ConfigurationManager.AppSettings["SocketPortClient"]);
+                    myO.SocketAddressClient = asl.SrvIpAddress;
+                    myO.SocketHandler = Handler;
+                    myO.SocketPortCli = Convert.ToInt32(ConfigurationManager.AppSettings["SocketPortClient"]);
+                    // 12.11.2020 Da oggi devo scegliere la porta da mandare la libreria myO.SocketPortCli = Convert.ToInt32(ConfigurationManager.AppSettings["SocketPortClient"]);
+                    myO.Response = new object();
+                    erCnt = 4;
+                    string metodo;
+                    MethodInfo myMethod = TyPaxAires8.GetMethod(cmdCom.CommandSocket, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string) }, null);
+                    //17.08.2020 modifica per ritornare licenza
+                    if (myMethod != null)
+                    {
+                        metodo = myMethod.Name;
+                        //if ((this.swDebug & _logger.LOG_INFO) == _logger.LOG_INFO) 
+                        _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                        if (logDelay != null)
+                            logDelay.Log(LogLevel.INFO, string.Format("1) COMMAND {0}; STARTED AT; {1}", metodo, DateTime.Now.Ticks.ToString()));
+                        //if ((this.swDebug & _logger.LOG_DEBUG) == _logger.LOG_DEBUG) 
+                        _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", WinTTabRes.logMsgCmdRved, metodo));
+                        erCnt = 5;
+                        // Invoke the overload.
+                        TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data });
+                        // if (myO.CommandCode == myO.CmdSendFormConfiguration) _logger.Log(LogLevel.DEBUG,string.Format( "Sono uscito dal comando {0}", myO.CommandName));
+                    }
+                    else
+                    {
+                        //if ((this.swDebug & _logger.LOG_INFO) == _logger.LOG_INFO) 
+                        myMethod = TyPaxAires8.GetMethod(cmdCom.CommandSocket, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string), typeof(string) }, null);
+                        if (myMethod != null)
+                        {
+                            if (logDelay != null)
+                                logDelay.Log(LogLevel.INFO, string.Format("2) COMMAND {0}; STARTED AT; {1}", myMethod, DateTime.Now.Ticks.ToString()));
+                            metodo = myMethod.Name;
+                            //if ((this.swDebug & _logger.LOG_DEBUG) == _logger.LOG_DEBUG)
+                            _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                            _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string, string", WinTTabRes.logMsgCmdRved, metodo));
+                            erCnt = 51;
+                            // Invoke the overload.
+                            // 20.05.2021 TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data, string.Format("{0}, {1}", License.udid2, License.udid) });
+
+                            // 06.06.2021
+                            string sudid = "";
+                            if (License.udid.GetType() == typeof(System.Xml.XmlNode[]))
+                            {
+                                sudid = ((System.Xml.XmlNode[])License.udid)[0].Value;
+                            }
+                            else
+                            {
+                                sudid = License.udid.ToString();
+                            }
+                            TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data, string.Format("{0}, {1}", License.udid2, sudid) });
+
+                            // 06.06.2021 TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data, string.Format("{0}, {1}", License.udid2, ((System.Xml.XmlCharacterData)((System.Xml.XmlNode[])License.udid)[0]).InnerText) });
+
+                        }
+                        else
+                        {
+                            myMethod = TyPaxAires8.GetMethod(cmdCom.CommandSocket, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string), typeof(bool) }, null);
+                            //13.04.2021 modifica per definire le trasmissioni a pacchetto
+                            metodo = myMethod.Name;
+                            //if ((this.swDebug & _logger.LOG_INFO) == _logger.LOG_INFO) 
+                            _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                            if (logDelay != null)
+                                logDelay.Log(LogLevel.INFO, string.Format("3) COMMAND {0}; STARTED AT; {1}", metodo, DateTime.Now.Ticks.ToString()));
+                            _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", WinTTabRes.logMsgCmdRved, metodo));
+                            erCnt = 5;
+                            // Invoke the overload.
+                            TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data, cmdCom.SendingDataPackets });
+                            // if (myO.CommandCode == myO.CmdSendFormConfiguration) _logger.Log(LogLevel.DEBUG,string.Format( "Sono uscito dal comando {0}", myO.CommandName));
+                        }
+                    }
+                    if (logDelay != null)
+                        logDelay.Log(LogLevel.INFO, string.Format("0) COMMAND {0}; EXECUTED AT; {1}", cmdCom.CommandSocket, DateTime.Now.Ticks.ToString()));
+                    //if ((this.swDebug & _logger.LOG_DEBUG) == _logger.LOG_DEBUG)
+                    _logger.Log(LogLevel.INFO, string.Format(WinTTabRes.logMsgCmdExecWait, metodo));
+                    //17.08.2020
+                    erCnt = 6;
+                    Type tymyO = myO.GetType();
+                    // Molto probabilmente non serve controllare il comando dell'evento perché se le cose sono fatte bene in cmdCom dovrebbe essere correttamente assegnato dalla gestione comandi
+                    //2.11.2020
+                    // var getComCmd = this.USBSconnected ? tymyO.GetProperties().Where(CMD => CMD.Name.ToUpper().Equals(cmdCom.CommandSocket.ToUpper())) : tymyO.GetProperties().Where(CMD => CMD.Name.ToUpper().Equals(e.Command.ToUpper()));// I'm looking for the command in the table
+                    var getComCmd = tymyO.GetProperties().Where(CMD => CMD.Name.ToUpper().Equals(cmdCom.CommandSocket.ToUpper()));
+                    erCnt = 7;
+                    if (getComCmd.Any())
+                    {
+                        erCnt = 8;
+                        // Do I need to determine which command was executed? device type or service type from here
+                        var trgt = getComCmd.First().CustomAttributes.First().NamedArguments.Where(A => A.MemberName == "CmdTarget");
+                        erCnt = 9;
+                        if (trgt.Any())
+                        {
+                            if ((Convert.ToInt32(trgt.First().TypedValue.Value) == Convert.ToInt32(CmdTargetID.Service)))
+                            {
+                                erCnt = 10;
+                                string methods = getComCmd.First().CustomAttributes.First().NamedArguments[2].TypedValue.Value.ToString();
+                                //it is only for control, it does not perform any function
+                                MethodInfo myMethodOut;
+                                myMethodOut = TyPaxAires8.GetMethod(methods, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(int), typeof(string), typeof(AsyncSocketListener) }, null);
+                                if (myMethodOut == null)
+                                    myMethodOut = TyPaxAires8.GetMethod(methods, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(string), typeof(string), typeof(AsyncSocketListener) }, null);
+                                if (myMethodOut == null)
+                                    myMethodOut = TyPaxAires8.GetMethod(methods, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string), typeof(AsyncSocketListener) }, null);
+                                // to here
+                                object ob = myO.Response;
+                                erCnt = 11;
+                                switch (ob.GetType().Name.ToUpper())
+                                {
+                                    case "INT32":
+                                        {
+                                            erCnt = 12;
+                                            int I = (int)myO.Response;
+                                            TyPaxAires8.InvokeMember(methods, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { I, cmdCom.CommandSocket, asl });
+                                            erCnt = 13;
+                                            break;
+                                        }
+                                    case "STRING":
+                                        {
+                                            erCnt = 14;
+                                            if (ob == null)
+                                            {
+                                                //if ((this.swDebug & _logger.LOG_DEBUG) == _logger.LOG_DEBUG)
+                                                _logger.Log(LogLevel.DEBUG, "ob is null");
+                                            }
+
+                                            string S = ob.ToString();
+                                            TyPaxAires8.InvokeMember(methods, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { S, cmdCom.CommandSocket, asl });
+                                            erCnt = 15;
+                                            break;
+                                        }
+                                    case "BOOLEAN":
+                                        {
+                                            erCnt = 16;
+                                            bool B = (bool)ob;
+                                            TyPaxAires8.InvokeMember(methods, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { B, cmdCom.CommandSocket, asl });
+                                            erCnt = 17;
+                                            break;
+                                        }
+                                    case "DEVICECOMMAND":
+                                        {
+                                            erCnt = 18;
+                                            TyPaxAires8.InvokeMember(methods, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, cmdCom.CommandSocket, asl });
+                                            erCnt = 19;
+                                            break;
+                                        }
+                                    default:
+                                        {
+                                            _logger.Log(LogLevel.WARNING, WinTTabRes.logErrNoAnswerProvide);
+                                            break;
+                                        }
+                                }
+                                if (logDelay != null)
+                                    logDelay.Log(LogLevel.INFO, string.Format("(SERVICES) COMMAND {0}; CLOSED AT; {1}", methods, DateTime.Now.Ticks.ToString()));
+                                _logger.Log(LogLevel.INFO, string.Format("Command:{0} <COMMAND ENDED>", myMethod));
+                                Type tycmdCom = cmdCom.GetType();
+                                var cc = tycmdCom.GetProperties().Where(CC => CC.Name == cmdCom.CommandSocket);
+                                if (cc.Any())
+                                {
+                                    var isr = cc.First().CustomAttributes.First().NamedArguments.Where(ISR => ISR.MemberName == "IsSignatureRequest");
+                                    if (isr.Any())
+                                    {
+                                        if ((byte)isr.First().TypedValue.Value == 0) MainCycleService();
+                                    }
+                                }
+                            }
+                            else
+                            {
+#if DEBUG
+                            _logger.Log(LogLevel.DEBUG, string.Format("Sender={0} Command={1}", sender.GetType(), e.Command));
+                            Console.WriteLine("* * * *  " + trgt.First().TypedValue.Value + "  " + trgt.First().TypedValue.Value.GetType() + "  * * * *");
+                            Console.WriteLine("CommandName: {0} {1}", myO.CommandName, myO.CommandCode);
+#endif
+                                var f = tymyO.GetRuntimeProperties().Where(F => F.Name == myO.CommandName);
+                                if (f.Any())
+                                {
+                                    // fInfo.CustomAttributes.First().NamedArguments.Where(A => A.MemberName == "TypeOfResponse").First()
+                                    PropertyInfo fInfo = f.First();
+                                    var call = fInfo.CustomAttributes.First().NamedArguments.Where(CALL => CALL.MemberName == "TypeOfResponse");
+                                    if (call.Any())
+                                    {
+                                        var NameMethos = call.First().TypedValue.Value;
+                                        myMethod = TyPaxAires8.GetMethod(NameMethos.ToString(), BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string), typeof(AsyncSocketListener) }, null);
+                                        TyPaxAires8.InvokeMember(NameMethos.ToString(), BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, myO.Response.ToString(), asl });
+                                        if (logDelay != null)
+                                            logDelay.Log(LogLevel.INFO, string.Format("(TABLET) COMMAND {0}; CLOSED AT; {1}", NameMethos.ToString(), DateTime.Now.Ticks.ToString()));
+                                        _logger.Log(LogLevel.INFO, string.Format("Command:{0} <COMMAND ENDED>", myMethod));
+                                    }
+                                    // string NameMethos = fInfo.CustomAttributes.First().NamedArguments[2].TypedValue.Value.ToString();
+                                }
+                                if (myO.IsSignCommand == 0 || myO.IsSignCommand == 3)
+                                    MainCycleService(); // after timeout event, i need to restart de duty cycle
+                                else
+                                {
+#if DEBUG
+                                Console.WriteLine("MainCycleService bloccato");
+#endif
+                                    // SchedularWD.Change(Timeout.Infinite, Timeout.Infinite);
+                                    swWatchDog(false);
+                                }
+                                erCnt = 20;
+                            }
+                        }
+                        myO.Dispose();
+                        if (logDelay != null)
+                        {
+                            logDelay.Log(LogLevel.INFO, string.Format("0) COMMAND {0}; DISPOSED AT; {1}", e.Command, DateTime.Now.Ticks.ToString()));
+                            logDelay.Log(LogLevel.DEBUG, "* * * * * * * * * * * * * * * * * * * * * * * * * * * *");
+                        }
+                    }
+                    syncCount = 0;
+                    CommandRunning = 2; // alla conclusione di un processo innescato da host spengo la flag di command is running, così torno a gfare il comando 99
+                    //else
+                    //{
+                    //    // 09.06.2021 interlock esecuzione comandi
+                    //    asl.Send(Handler, string.Format(WinTTabRes.msgCmdAlreadyInRun, cmdCom1.CommandSocket, cmdCom.CommandSocket));
+                    //    _logger.Log(LogLevel.WARNING, string.Format(WinTTabRes.msgCmdAlreadyInRun, cmdCom1.CommandSocket, cmdCom.CommandSocket));
+                    //}
+                    */
+                }
+                else
+                {
+                    erCnt = 21;
+                    string message = SemSerRes.logErrTlgrmInvalid;
+                    throw new Exception(message);
+                }
+            }
+            catch (Exception ex)
+            {
+                HandlerError |= 0x2000; //Error occurred in the handling of messages received by the socket serverù
+                string errMsg = ClsMessaggiErrore.CustomMsg(ex);
+                if (ex.InnerException != null)
+                {
+                    errMsg += " " + ClsMessaggiErrore.CustomMsg(ex.InnerException);
+                }
+                SocketMessageStructure response = new SocketMessageStructure
+                {
+                    Command = "Error",
+                    SendingTime = DateTime.Now,
+                    Data = errMsg,
+                    Token = asl.TokenSocket,
+                    CRC = 0
+                };
+                string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
+                ASCIIEncoding encoding = new ASCIIEncoding();
+                byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                _logger.Log(LogLevel.ERROR, errMsg);
+                asl.Send(Handler, string.Format(SemSerRes.sktErrRecive, txtSendData, cmdCom.Eof));
+            }
+            finally
+            {
+                _logger.Log(LogLevel.ENANCED_DEBUG, "finally sysCmdRunnig set to false");
+                sysCmdRunnig = false; // 09.06.2021 interlock esecuzione comandi
+                this.myStart();
+                // swWatchDog(true, IntervalMilliSeconds);
             }
         }
 
