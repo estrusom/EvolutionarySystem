@@ -106,6 +106,24 @@ namespace SemanticProcessor.Properties {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Can ShutDown = {0}.
+        /// </summary>
+        internal static string logMsgCanShutDwn {
+            get {
+                return ResourceManager.GetString("logMsgCanShutDwn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Can Stop = {0} .
+        /// </summary>
+        internal static string logMsgCanStop {
+            get {
+                return ResourceManager.GetString("logMsgCanStop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Message received by the application .
         /// </summary>
         internal static string logMsgCmdRved {
@@ -124,11 +142,65 @@ namespace SemanticProcessor.Properties {
         }
         
         /// <summary>
+        ///   Cerca una stringa localizzata simile a Can Pause and Continue = {0} .
+        /// </summary>
+        internal static string logMsgPauseCont {
+            get {
+                return ResourceManager.GetString("logMsgPauseCont", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Il servizio è passaqto in stato di pausa.
+        /// </summary>
+        internal static string logMsgServicePaused {
+            get {
+                return ResourceManager.GetString("logMsgServicePaused", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Il servizio è ritornato attivo.
+        /// </summary>
+        internal static string logMsgServiceRunning {
+            get {
+                return ResourceManager.GetString("logMsgServiceRunning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a Status = {0} .
+        /// </summary>
+        internal static string logMsgSrvcStatus {
+            get {
+                return ResourceManager.GetString("logMsgSrvcStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a SERVICE STARTED .
+        /// </summary>
+        internal static string logMsgSrvStarted {
+            get {
+                return ResourceManager.GetString("logMsgSrvStarted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cerca una stringa localizzata simile a Starting thread in progress.
         /// </summary>
         internal static string logMsgStartThread {
             get {
                 return ResourceManager.GetString("logMsgStartThread", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una stringa localizzata simile a waiting 1000 msec before to start the service .
+        /// </summary>
+        internal static string logMsgWaitStart {
+            get {
+                return ResourceManager.GetString("logMsgWaitStart", resourceCulture);
             }
         }
         

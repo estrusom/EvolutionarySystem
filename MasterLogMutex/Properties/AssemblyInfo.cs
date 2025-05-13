@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("MasterLog")]
 [assembly: AssemblyDescription("Gestore dei messaggi di log")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Technology Estate Srl")]
+[assembly: AssemblyCompany("RRU Evolutive System")]
 [assembly: AssemblyProduct("MasterLog")]
-[assembly: AssemblyCopyright("Copyright © Technology Estate srl 2020")]
+[assembly: AssemblyCopyright("Copyright © Evolutive System 2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -31,5 +31,5 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Revision and Build Numbers 
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("2.0.2.1")]
-[assembly: AssemblyFileVersion("24.3.15.1")]
+[assembly: AssemblyVersion("3.0.0.0")]
+[assembly: AssemblyFileVersion("25.05.13.8")]

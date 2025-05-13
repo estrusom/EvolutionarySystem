@@ -16,6 +16,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Security.Principal;
+using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -29,7 +31,8 @@ namespace EvolutiveSystem_01
         private Logger _logger;
         private int swDebug = 0;
         protected string _path = "";
-
+        private string _serviceName = "SemanticProcessor";
+        private bool _isAdmin = false;
         // La collezione di database (semantiche) gestiti dall'UI.
         private List<Database> loadedDatabases = new List<Database>();
         // Riferimento al database attualmente selezionato o attivo nell'UI
@@ -59,8 +62,8 @@ namespace EvolutiveSystem_01
             // semanticEngine.OnPhaseChange += SemanticEngine_OnPhaseChange; // Sottoscrivi agli eventi di cambio fase
 
             // Imposta lo stato iniziale dei controlli di supervisione e dettagli
-            // btnStopProcess.Enabled = false;
-            // btnPauseProcess.Enabled = false;
+            // btnServiceStop.Enabled = false;
+            // btnServicePause.Enabled = false;
             // lblCurrentPhase.Text = "Stato: Inattivo"; // Se hai una label per la fase
             // evolutionMonitor.Clear();
             // lblSelectedElementType.Text = ""; // Se hai etichette per i dettagli
@@ -74,6 +77,17 @@ namespace EvolutiveSystem_01
 
             // Configura le colonne della ListView per i campi (RIPRISTINATO)
             ConfigureFieldsListView();
+            _isAdmin = IsRunningAsAdministrator();
+            if (!_isAdmin)
+            {
+                AppendToMonitor("L'applicazione non è in esecuzione con privilegi amministrativi.");
+                UpdateStatus("Eseguire come amministratore per controllare il servizio.");
+            }
+            else
+            {
+                AppendToMonitor("L'applicazione è in esecuzione con privilegi amministrativi.");
+                UpdateStatus("Controllo servizio abilitato.");
+            }
 
             UpdateStatus("Pronto."); // Imposta lo stato iniziale nella StatusStrip
 
@@ -121,8 +135,8 @@ namespace EvolutiveSystem_01
                 toolTip.SetToolTip(btnSocket, "Avvio client socket."); // Aggiunto ToolTip
             }
             //if (btnStartProcess != null) btnStartProcess.Click += btnStartProcess_Click;
-            //if (btnStopProcess != null) btnStopProcess.Click += btnStopProcess_Click;
-            //if (btnPauseProcess != null) btnPauseProcess.Click += btnPauseProcess_Click;
+            //if (btnServiceStop != null) btnServiceStop.Click += btnStopProcess_Click;
+            //if (btnServicePause != null) btnServicePause.Click += btnPauseProcess_Click;
 
 
             // Associa gli eventi della TreeView (assicurati che il controllo TreeView esista nel designer)
@@ -1457,7 +1471,54 @@ namespace EvolutiveSystem_01
         /// <exception cref="NotImplementedException"></exception>
         private void BtnServiceStart_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (!_isAdmin)
+                {
+                    MessageBox.Show("È necessario eseguire l'applicazione come amministratore per avviare il servizio.", "Permessi Insufficienti", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    UpdateStatus("Avvio servizio non consentito (privilegi insufficienti).");
+                    return;
+                }
+                // *** Modificato: Usa ServiceController per avviare il servizio Windows ***
+                ServiceController service = GetServiceController(_serviceName);
+
+                if (service != null)
+                {
+                    if (service.Status == ServiceControllerStatus.Stopped)
+                    {
+                        AppendToMonitor($"Avvio del servizio '{_serviceName}'...");
+                        UpdateStatus($"Avvio servizio '{_serviceName}'...");
+                        service.Start();
+                        // Opzionale: attendi che lo stato cambi
+                        service.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(10)); // Attendi fino a 10 secondi
+                        AppendToMonitor($"Servizio '{_serviceName}' avviato.");
+                        UpdateStatus($"Servizio '{_serviceName}' avviato.");
+                    }
+                    else
+                    {
+                        AppendToMonitor($"Servizio '{_serviceName}' è già in stato: {service.Status}");
+                        UpdateStatus($"Servizio '{_serviceName}' già in esecuzione.");
+                    }
+                }
+                else
+                {
+                    AppendToMonitor($"Errore: Servizio '{_serviceName}' non trovato.");
+                    UpdateStatus($"Errore: Servizio '{_serviceName}' non trovato.");
+                    MessageBox.Show($"Servizio '{_serviceName}' non trovato sul sistema.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                // *** Aggiunto: Aggiorna lo stato dei pulsanti dopo l'operazione ***
+                UpdateServiceControlButtonsState();
+            }
+            catch (Exception ex)
+            {
+                // Gestisci eventuali errori nell'interazione con il servizio
+                MessageBox.Show($"Errore durante l'avvio del servizio: {ex.Message}", "Errore Controllo Servizio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                AppendToMonitor($"Errore nell'avvio del servizio '{_serviceName}': {ex.Message}");
+                UpdateStatus($"Errore avvio servizio: {ex.Message}");
+                // *** Aggiunto: Aggiorna lo stato dei pulsanti anche in caso di errore ***
+                UpdateServiceControlButtonsState();
+            }
         }
         /// <summary>
         /// Sospensione del servizio server semantico
@@ -1467,7 +1528,73 @@ namespace EvolutiveSystem_01
         /// <exception cref="NotImplementedException"></exception>
         private void BtnServicePause_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            try
+            {
+                if (!_isAdmin)
+                {
+                    MessageBox.Show("È necessario eseguire l'applicazione come amministratore per avviare il servizio.", "Permessi Insufficienti", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    UpdateStatus("Avvio servizio non consentito (privilegi insufficienti).");
+                    return;
+                }
+                // *** Modificato: Usa ServiceController per mettere in pausa/riprendere il servizio Windows ***
+                ServiceController service = GetServiceController(_serviceName);
+
+                if (service != null)
+                {
+                    if (service.Status == ServiceControllerStatus.Running)
+                    {
+                        if (service.CanPauseAndContinue) // Verifica se il servizio supporta pausa/ripresa
+                        {
+                            AppendToMonitor($"Messa in pausa del servizio '{_serviceName}'...");
+                            UpdateStatus($"Pausa servizio '{_serviceName}'...");
+                            service.Pause();
+                            // Opzionale: attendi che lo stato cambi
+                            service.WaitForStatus(ServiceControllerStatus.Paused, TimeSpan.FromSeconds(10)); // Attendi fino a 10 secondi
+                            AppendToMonitor($"Servizio '{_serviceName}' in pausa.");
+                            UpdateStatus($"Servizio '{_serviceName}' in pausa.");
+                        }
+                        else
+                        {
+                            AppendToMonitor($"Servizio '{_serviceName}' non supporta pausa/ripresa.");
+                            UpdateStatus($"Servizio non supporta pausa.");
+                            MessageBox.Show($"Il servizio '{_serviceName}' non supporta le operazioni di pausa e ripresa.", "Avviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                    else if (service.Status == ServiceControllerStatus.Paused)
+                    {
+                        AppendToMonitor($"Ripresa del servizio '{_serviceName}'...");
+                        UpdateStatus($"Ripresa servizio '{_serviceName}'...");
+                        service.Continue();
+                        // Opzionale: attendi che lo stato cambi
+                        service.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(10)); // Attendi fino a 10 secondi
+                        AppendToMonitor($"Servizio '{_serviceName}' ripreso.");
+                        UpdateStatus($"Servizio '{_serviceName}' ripreso.");
+                    }
+                    else
+                    {
+                        AppendToMonitor($"Servizio '{_serviceName}' non può essere messo in pausa/ripreso dallo stato corrente: {service.Status}");
+                        UpdateStatus($"Impossibile mettere in pausa/riprendere.");
+                    }
+                }
+                else
+                {
+                    AppendToMonitor($"Errore: Servizio '{_serviceName}' non trovato.");
+                    UpdateStatus($"Errore: Servizio '{_serviceName}' non trovato.");
+                    MessageBox.Show($"Servizio '{_serviceName}' non trovato sul sistema.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                // *** Aggiunto: Aggiorna lo stato dei pulsanti dopo l'operazione ***
+                UpdateServiceControlButtonsState();
+            }
+            catch (Exception ex)
+            {
+                // Gestisci errori
+                MessageBox.Show($"Errore durante la pausa/ripresa del servizio: {ex.Message}", "Errore Controllo Servizio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                AppendToMonitor($"Errore nella pausa/ripresa del servizio '{_serviceName}': {ex.Message}");
+                UpdateStatus($"Errore pausa/ripresa servizio: {ex.Message}");
+                // *** Aggiunto: Aggiorna lo stato dei pulsanti anche in caso di errore ***
+                UpdateServiceControlButtonsState();
+            }
         }
         /// <summary>
         /// Arresto del servizio del server semantico
@@ -1477,7 +1604,54 @@ namespace EvolutiveSystem_01
         /// <exception cref="NotImplementedException"></exception>
         private void BtnServiceStop_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            if (!_isAdmin)
+            {
+                MessageBox.Show("È necessario eseguire l'applicazione come amministratore per avviare il servizio.", "Permessi Insufficienti", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UpdateStatus("Avvio servizio non consentito (privilegi insufficienti).");
+                return;
+            }
+            try
+            {
+                // *** Modificato: Usa ServiceController per fermare il servizio Windows ***
+                ServiceController service = GetServiceController(_serviceName);
+
+                if (service != null)
+                {
+                    if (service.Status != ServiceControllerStatus.Stopped)
+                    {
+                        AppendToMonitor($"Arresto del servizio '{_serviceName}'...");
+                        UpdateStatus($"Arresto servizio '{_serviceName}'...");
+                        service.Stop();
+                        // Opzionale: attendi che lo stato cambi
+                        service.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(10)); // Attendi fino a 10 secondi
+                        AppendToMonitor($"Servizio '{_serviceName}' fermato.");
+                        UpdateStatus($"Servizio '{_serviceName}' fermato.");
+                    }
+                    else
+                    {
+                        AppendToMonitor($"Servizio '{_serviceName}' è già fermo.");
+                        UpdateStatus($"Servizio '{_serviceName}' già fermo.");
+                    }
+                }
+                else
+                {
+                    AppendToMonitor($"Errore: Servizio '{_serviceName}' non trovato.");
+                    UpdateStatus($"Errore: Servizio '{_serviceName}' non trovato.");
+                    MessageBox.Show($"Servizio '{_serviceName}' non trovato sul sistema.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                // *** Aggiunto: Aggiorna lo stato dei pulsanti dopo l'operazione ***
+                UpdateServiceControlButtonsState();
+            }
+            catch (Exception ex)
+            {
+                // Gestisci errori
+                MessageBox.Show($"Errore durante l'arresto del servizio: {ex.Message}", "Errore Controllo Servizio", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                AppendToMonitor($"Errore nell'arresto del servizio '{_serviceName}': {ex.Message}");
+                UpdateStatus($"Errore arresto servizio: {ex.Message}");
+                // *** Aggiunto: Aggiorna lo stato dei pulsanti anche in caso di errore ***
+                UpdateServiceControlButtonsState();
+            }
         }
         /// <summary>
         /// Avvio del client socket
@@ -1530,5 +1704,113 @@ namespace EvolutiveSystem_01
             }
         }
         #endregion
+
+        // --- Metodo Helper per ottenere l'istanza di ServiceController ---
+        /// <summary>
+        /// Recupera l'istanza di ServiceController per il servizio specificato.
+        /// </summary>
+        /// <param name="serviceName">Il nome del servizio Windows.</param>
+        /// <returns>L'oggetto ServiceController, o null se il servizio non è trovato.</returns>
+        private ServiceController GetServiceController(string serviceName)
+        {
+            try
+            {
+                // Ottiene tutti i servizi installati sul computer locale
+                ServiceController[] scServices = ServiceController.GetServices();
+
+                // Cerca il servizio con il nome specificato
+                var service = scServices.FirstOrDefault(sc => sc.ServiceName == serviceName);
+
+                return service;
+            }
+            catch (Exception ex)
+            {
+                // Gestisci eventuali errori (es. permessi insufficienti)
+                AppendToMonitor($"Errore nel recuperare ServiceController per '{serviceName}': {ex.Message}");
+                UpdateStatus($"Errore ServiceController: {ex.Message}");
+                return null;
+            }
+        }
+        // --- Metodo per aggiornare lo stato di abilitazione dei pulsanti di controllo servizio ---
+        /// <summary>
+        /// Aggiorna lo stato di abilitazione dei pulsanti Start, Pause, Stop
+        /// in base allo stato corrente del servizio Windows.
+        /// </summary>
+        private void UpdateServiceControlButtonsState()
+        {
+            // Assicurati che i pulsanti esistano nel designer
+            if (btnServiceStart == null || btnServicePause == null || btnServiceStop == null)
+            {
+                // Controlli non ancora inizializzati o non presenti
+                return;
+            }
+
+            ServiceController service = GetServiceController(_serviceName);
+
+            // Se il servizio non è trovato o ci sono errori, disabilita tutto
+            if (service == null)
+            {
+                btnServiceStart.Enabled = false;
+                btnServicePause.Enabled = false;
+                btnServiceStop.Enabled = false;
+                UpdateStatus($"Servizio '{_serviceName}' non trovato.");
+                return;
+            }
+
+            // Aggiorna lo stato dei pulsanti in base allo stato del servizio
+            switch (service.Status)
+            {
+                case ServiceControllerStatus.Running:
+                    btnServiceStart.Enabled = false; // Già avviato
+                    btnServicePause.Enabled = service.CanPauseAndContinue; // Abilita pausa solo se supportata
+                    btnServiceStop.Enabled = true; // Può essere fermato
+                    UpdateStatus($"Servizio '{_serviceName}' in esecuzione.");
+                    break;
+                case ServiceControllerStatus.Stopped:
+                    btnServiceStart.Enabled = true; // Può essere avviato
+                    btnServicePause.Enabled = false; // Non può essere messo in pausa
+                    btnServiceStop.Enabled = false; // Già fermo
+                    UpdateStatus($"Servizio '{_serviceName}' fermo.");
+                    break;
+                case ServiceControllerStatus.Paused:
+                    btnServiceStart.Enabled = false; // Non può essere avviato (è in pausa)
+                    btnServicePause.Enabled = service.CanPauseAndContinue; // Può essere ripreso se supportato
+                    btnServiceStop.Enabled = true; // Può essere fermato
+                    UpdateStatus($"Servizio '{_serviceName}' in pausa.");
+                    break;
+                case ServiceControllerStatus.StartPending:
+                case ServiceControllerStatus.StopPending:
+                case ServiceControllerStatus.ContinuePending:
+                case ServiceControllerStatus.PausePending:
+                    // Durante le transizioni, disabilita tutti i pulsanti per evitare operazioni concorrenti
+                    btnServiceStart.Enabled = false;
+                    btnServicePause.Enabled = false;
+                    btnServiceStop.Enabled = false;
+                    UpdateStatus($"Servizio '{_serviceName}' in transizione: {service.Status}");
+                    break;
+                default:
+                    // Stato sconosciuto o errore
+                    btnServiceStart.Enabled = false;
+                    btnServicePause.Enabled = false;
+                    btnServiceStop.Enabled = false;
+                    UpdateStatus($"Servizio '{_serviceName}' stato sconosciuto: {service.Status}");
+                    break;
+            }
+        }
+        /// <summary>
+        /// Verifica se l'applicazione corrente è in esecuzione con privilegi amministrativi.
+        /// </summary>
+        /// <returns>True se l'applicazione è amministratore, altrimenti False.</returns>
+        private bool IsRunningAsAdministrator()
+        {
+            // Ottiene l'identità Windows dell'utente corrente.
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            // Crea un oggetto WindowsPrincipal basato sull'identità.
+            WindowsPrincipal principal = new WindowsPrincipal(identity);
+
+            // Controlla se l'utente è membro del gruppo Administrators.
+            // Questo è il modo standard per verificare i privilegi amministrativi su Windows.
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
+        }
     }
 }

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Configuration;
 using System.Reflection;
 using System.Text;
@@ -23,6 +24,7 @@ namespace CommandHandlers
         private string lastCmdExec = "";
         private SocketCommand GdvCmd = new SocketCommand();//Global variable containing the communication status
         private SocketMessageStructure response = null;
+        private readonly List<Database> _loadedDatabases = new List<Database>(); // Esempio: Gestione interna semplice
         public ClsCommandHandlers()
         {
 
@@ -31,6 +33,13 @@ namespace CommandHandlers
         {
             _loger = Log;
         }
+        /// <summary>
+        /// Controllo esistenze e connessione stabile col server socket
+        /// </summary>
+        /// <param name="DvCmd">comando da eseguire</param>
+        /// <param name="Param">parametri da aggiungere al campo data della classse SocketMessageStructure</param>
+        /// <param name="asl">Riferimenti al socket server</param>
+        /// <exception cref="Exception"></exception>
         public void CmdSync(SocketCommand DvCmd, string Param, AsyncSocketListener asl)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
@@ -64,6 +73,13 @@ namespace CommandHandlers
                 }
             }
         }
+        /// <summary>
+        /// Apertura del database specificato nel campo data della classe SocketMessageStructure
+        /// </summary>
+        /// <param name="DvCmd"></param>
+        /// <param name="Param"></param>
+        /// <param name="asl"></param>
+        /// <exception cref="Exception"></exception>
         public void CmdOpenDB(SocketCommand DvCmd, string Param, AsyncSocketListener asl)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
@@ -87,6 +103,11 @@ namespace CommandHandlers
                     throw (new Exception("File non trovato"));
                 }
                 Database loadedDb = DatabaseSerializer.DeserializeFromXmlFile(response.Data);
+                if (_loadedDatabases.Any(db => db.DatabaseId == loadedDb.DatabaseId || db.DatabaseName.Equals(loadedDb.DatabaseName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    throw (new Exception(string.Format("Il database {0} è già caricato", loadedDb.DatabaseName)));
+                }
+                _loadedDatabases.Add(loadedDb);
 
                 string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
                 ASCIIEncoding encoding = new ASCIIEncoding();
@@ -118,6 +139,45 @@ namespace CommandHandlers
                 {
                     throw new Exception(msg);
                 }
+            }
+        }
+        /// <summary>
+        /// salvataggio di un database
+        /// </summary>
+        /// <param name="DvCmd">comando da eseguire</param>
+        /// <param name="Param">parametri da aggiungere al campo data della classse SocketMessageStructure</param>
+        /// <param name="asl">Riferimenti al socket server</param>
+        public void CmdSaveDB(SocketCommand DvCmd, string Param, AsyncSocketListener asl)
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
+            {
+                string command = checkCommand(DvCmd.CmdSaveDB, DvCmd);
+                response = new SocketMessageStructure
+                {
+                    Command = command.Substring(1, command.Length - 2),
+                    SendingTime = DateTime.Now,
+                    Data = Param,
+                    Token = asl.TokenSocket,
+                    CRC = 0
+                };
+                if (response.Data == null) 
+                {
+                    throw (new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante."));
+                }
+                if (string.IsNullOrWhiteSpace(response.Data))
+                {
+                    throw (new Exception("Percorso file database mancante nel messaggio."));
+                }
+                if (!File.Exists(response.Data))
+                {
+                    throw (new Exception("File non trovato"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+
             }
         }
         /// <summary>

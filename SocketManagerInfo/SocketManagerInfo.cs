@@ -294,7 +294,7 @@ namespace SocketManagerInfo
         private const string eof = "<eof>";
         private string cmd00 = stx + "CmdSync" + etx;   // 29.03.2021 era cmdSync
         private string cmd05 = stx + "CmdOpenDB" + etx;
-        private string cmd06 = stx + "CmdRxDataSign" + etx;
+        private string cmd06 = stx + "CmdSaveDB" + etx;
         private string cmd07 = stx + "CmdCancSignSurface" + etx;
         private string cmd08 = stx + "CmdSigningProcStarted" + etx;
         private string cmd09 = stx + "CmdSigningProcTermination" + etx;
@@ -328,6 +328,10 @@ namespace SocketManagerInfo
         /// </summary>
         [SktProperty(IsSignatureRequest = 0, Description = "Device nameplate data request", TockenManaging = 2)]
         public string CmdOpenDB { get { return this.cmd05; } }
+        /// <summary>
+        /// Salvataggio del database
+        /// </summary>
+        public string CmdSaveDB { get { return this.cmd06; } }
         /*
         /// <summary>
         /// Single signature frame reception CMD = 06

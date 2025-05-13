@@ -109,7 +109,15 @@ namespace SemanticProcessor
         private int swDebug = 0;
         private string _path = "";
         private long HandlerError = 0;
+
+        private volatile bool _isRunning = false; // volatile per garantire visibilità tra thread
+        // Flag per indicare se il processo semantico è in pausa
+        private volatile bool _isPaused = false; // volatile per garantire visibilità tra thread
+        private CancellationTokenSource _cancellationTokenSource;
+
+        private static string ServicePath = ""; //22.03.2022 Gestione riavvio tablet per timeout, nome della cartella ove risiede ilò servizio
         protected Mutex SyncMtxLogger = new Mutex();
+        private ManualResetEvent _pauseEvent = new ManualResetEvent(true); // Inizializzato su 'true' (segnale) per partire non in pausa
         protected DateTime today = DateTime.MinValue;
         private string ServiceVer = "";
         private static ClsCommandHandlers commandHandlers;
@@ -133,6 +141,13 @@ namespace SemanticProcessor
             try
             {
                 InitializeComponent();
+
+                this.CanPauseAndContinue = true; // *** Abilita la capacità di pausa/ripresa ***
+                this.CanStop = true;
+                this.CanShutdown = true; // Permette al servizio di rispondere allo shutdown del sistema
+                this.CanHandleSessionChangeEvent = false; // Non necessario per ora
+                this.CanHandlePowerEvent = false; // Non necessario per ora
+
                 swDebug = Convert.ToInt32(ConfigurationManager.AppSettings["DebugLev"]); ;
                 _path = ConfigurationManager.AppSettings["FolderLOG"];
                 _logger = new Logger(_path, "SemanticProcessor", SyncMtxLogger);
@@ -151,27 +166,83 @@ namespace SemanticProcessor
                 {
                     _logger.Log(LogLevel.WARNING, SemSerRes.logDisabled);
                 }
+                // accendo il timer per il duty cycle e lo disattivo subito per evitare l'errore nel duty cycle
+                this.myStart();
+                swWatchDog(false, 0);
                 StartThread();
             }catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, ClsMessaggiErrore.CustomMsg(ex, thisMethod));
             }
         }
+        protected override void OnPause()
+        {
+            _logger.Log(LogLevel.INFO, SemSerRes.logMsgServicePaused);
+            Console.WriteLine("Servizio SemanticProcessor: OnPause chiamato."); // *** Log aggiuntivo ***
+            // Aggiungi logging alla pausa
+            // _logger.LogInfo("Servizio SemanticProcessor in pausa...");
+            Console.WriteLine("Servizio SemanticProcessor in pausa..."); // Log di fallback
 
+            // Imposta il flag di pausa
+            this._isPaused = true;
+            // Resetta l'evento di pausa. Questo bloccherà il thread semantico nel suo loop.
+            _pauseEvent.Reset(); // Imposta l'evento su 'non segnalato' (blocca)
+            Console.WriteLine($"Servizio SemanticProcessor: OnPause completato. _isPaused = {_isPaused}"); // *** Log aggiuntivo ***
+            // Segnala all'SCM che il servizio è in pausa
+            // _logger.LogInfo("Servizio SemanticProcessor in pausa.");
+            Console.WriteLine("Servizio SemanticProcessor in pausa."); // Log di fallback
+            base.OnPause();
+            this.StepStartingService = -1;
+            swWatchDog(false, 0);
+            
+        }
+        protected override void OnContinue()
+        {
+            base.OnContinue();
+            // Imposta il flag di pausa a false
+            this._isPaused = false;
+            _logger.Log(LogLevel.INFO, SemSerRes.logMsgServiceRunning);
+            // Segnala l'evento di pausa. Questo sbloccherà il thread semantico.
+            _pauseEvent.Set(); // Imposta l'evento su 'segnalato' (sblocca)
+            this.StepStartingService = 1;
+            swWatchDog(true, 0);
+        }
         protected override void OnStart(string[] args)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
             try
             {
-                Assembly tyWinTTab = typeof(SemanticProcessor).Assembly;
-                AssemblyName WinTTabVER = tyWinTTab.GetName();
-                Version ver = WinTTabVER.Version;
+                Assembly tySematicProcessor = typeof(SemanticProcessor).Assembly;
+                AssemblyName SematicProcessorVER = tySematicProcessor.GetName();
+                Version ver = SematicProcessorVER.Version;
                 this.ServiceVer = ver.ToString();
                 ServiceStatus serviceStatus = new ServiceStatus();
-                SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+                _logger.Log(LogLevel.INFO, "serviceStatus.dwCurrentState = ServiceState.SERVICE_START_PENDING;");
                 serviceStatus.dwCurrentState = ServiceState.SERVICE_START_PENDING;
+                _logger.Log(LogLevel.INFO, "serviceStatus.dwWaitHint = 30000;");
                 serviceStatus.dwWaitHint = 30000;
                 SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+                _logger.Log(LogLevel.INFO, "SetServiceStatus(this.ServiceHandle, ref serviceStatus);");
+                _logger.Log(LogLevel.WARNING, "VER: " + this.ServiceVer);
+                _logger.Log(LogLevel.WARNING, "VER DATE:" + this.VersionDate);
+                SetServiceStatus(this.ServiceHandle, ref serviceStatus);
+                if (_logger != null)
+                {
+                    _logger.Log(LogLevel.INFO, SemSerRes.logMsgSrvStarted);
+                    _logger.Log(LogLevel.INFO, string.Format("Current full name {0}", tySematicProcessor.FullName));
+                    ServicePath = Path.GetDirectoryName(tySematicProcessor.Location);
+                    _logger.Log(LogLevel.INFO, string.Format("Current Location name {0}", ServicePath));
+                }
+                else
+                {
+                    EventLog.WriteEntry(string.Format("No instances for the event log - {0}", SemSerRes.logMsgSrvStarted), EventLogEntryType.Error, 0x7f0f);
+                }
+
+                _isRunning = true; // Imposta il flag di esecuzione
+                _isPaused = false; // Assicurati che non sia in pausa all'avvio
+                _pauseEvent.Set(); // Assicurati che l'evento di pausa sia segnalato (non bloccato)
+                _cancellationTokenSource = new CancellationTokenSource(); // Crea un nuovo token di cancellazione
+
                 serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
                 SetServiceStatus(this.ServiceHandle, ref serviceStatus);
                 this.myStart();
@@ -185,12 +256,36 @@ namespace SemanticProcessor
                 currentProcess.Kill();
             }
         }
-
         protected override void OnStop()
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
             try
             {
+                _logger.Log(LogLevel.INFO, "STOP REQUEST");
+
+
+                // Segnala al thread del motore semantico di fermarsi
+                _isRunning = false; // Imposta il flag di esecuzione a false
+                                    // Assicurati che il thread non sia bloccato in pausa prima di segnalare l'arresto
+                _pauseEvent.Set(); // Sblocca il ManualResetEvent nel caso fosse in pausa
+                                   // Segnala l'annullamento tramite CancellationTokenSource
+                if (_cancellationTokenSource != null)
+                {
+                    _cancellationTokenSource.Cancel();
+                }
+
+                if (asl != null)
+                {
+                    asl.DataFromSocket -= Asl_DataFromSocket;
+                    asl.CloseServerSocket(1000);
+                    scktThrd.StopThread = true;
+                }
+                if (_cancellationTokenSource != null)
+                {
+                    _cancellationTokenSource.Dispose();
+                    _cancellationTokenSource = null;
+                }
+
                 ServiceStatus serviceStatus = new ServiceStatus();
                 serviceStatus.dwCurrentState = ServiceState.SERVICE_STOP_PENDING;
                 serviceStatus.dwWaitHint = 10000;
@@ -215,6 +310,7 @@ namespace SemanticProcessor
             int IntervalMilliSeconds = 0;
             try
             {
+                swWatchDog(false, IntervalMilliSeconds);
 #if DEBUG
                 if (!firstInDebug)
                 {
@@ -234,28 +330,31 @@ namespace SemanticProcessor
                     firstInDebug = true;
                 }
 #endif
-                _logger.Log(LogLevel.INFO, "Sun'mi sun't chi");
-                IntervalMilliSeconds = Convert.ToInt32(ConfigurationManager.AppSettings["IntervalMilliSeconds"]);
-                IntervalMilliSeconds = IntervalMilliSeconds < K_MILLI ? K_MILLI : IntervalMilliSeconds;
-                Thread.Sleep(100);
-                if (scktThrd != null)
-                    _logger.Log(LogLevel.SERVICE_EVENT, string.Format("THREAD SOCKET IS STARTED = {0} STEPS START = {1}", scktThrd.IsStarted, StepStartingService));
-                else
+                if (this.StepStartingService != -1)
                 {
-                    _logger.Log(LogLevel.ERROR, "THREAD SOCKET NOT STARTED ");
+                    //_logger.Log(LogLevel.INFO, "Sun'mi sun't chi");
+                    IntervalMilliSeconds = Convert.ToInt32(ConfigurationManager.AppSettings["IntervalMilliSeconds"]);
+                    IntervalMilliSeconds = IntervalMilliSeconds < K_MILLI ? K_MILLI : IntervalMilliSeconds;
+                    Thread.Sleep(100);
+                    if (scktThrd != null)
+                        _logger.Log(LogLevel.SERVICE_EVENT, string.Format("THREAD SOCKET IS STARTED = {0} STEPS START = {1}", scktThrd.IsStarted, StepStartingService));
+                    else
+                    {
+                        _logger.Log(LogLevel.ERROR, "THREAD SOCKET NOT STARTED ");
 #if !DEBUG
                         ServiceController[] scServices;
                         scServices = ServiceController.GetServices();
                         var scs = scServices.Where(SC => SC.ServiceName == "WinTTabServiceCom-01");
-                        if (scs.Any()) 
+                        if (scs.Any())
                         {
                             Process currentProcess = Process.GetCurrentProcess();
                             _logger.Log(LogLevel.WARNING, string.Format("Process {0} stopped", currentProcess.ProcessName));
                             currentProcess.Kill();
                         }
 #endif
+                    }
+                    _logger.Log(LogLevel.SERVICE, string.Format("Step status: {0}", StepStartingService));
                 }
-                _logger.Log(LogLevel.SERVICE, string.Format("Step status: {0}", StepStartingService));
                 switch (StepStartingService)
                 {
                     case 0:
@@ -307,6 +406,9 @@ namespace SemanticProcessor
                                     soc.Dispose();
                                     SemaforoDC = false;
                                 }
+#if !DEBUG
+                                manageService();
+#endif
                                 _logger.Log(LogLevel.DEBUG, thSocket.IsAlive ? "Thread is alive" : "Thread is dead");
                                 this.SemaforoDC = false;
                             }
@@ -368,6 +470,41 @@ namespace SemanticProcessor
                 string msg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
                 //if ((this.swDebug & _logger.LOG_SERVICE_EVENT) == _logger.LOG_SERVICE_EVENT)
                 _logger.Log(LogLevel.ERROR, msg);
+            }
+        }
+        private void manageService()
+        {
+            _logger.Log(LogLevel.DEBUG, "manageService");
+            ServiceController[] scServices;
+            scServices = ServiceController.GetServices();
+            var scs = scServices.Where(SC => SC.ServiceName == "WinTTabServiceCom-01");
+            if (scs.Any())
+            {
+                ServiceController sc = scs.First();
+                //if ((swDebug & _logger.LOG_SERVICE) == _logger.LOG_SERVICE)
+                {
+                    _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgSrvcStatus, sc.Status));
+                    _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgPauseCont, sc.CanPauseAndContinue));
+                    _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgCanShutDwn, sc.CanShutdown));
+                    _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgCanStop, sc.CanStop));
+                }
+#if DEBUG
+                Console.WriteLine(string.Format("Status = {0}", sc.Status));
+                Console.WriteLine(string.Format("Can Pause and Continue = {0}", sc.CanPauseAndContinue));
+                Console.WriteLine(string.Format("Can ShutDown = {0}", sc.CanShutdown));
+                Console.WriteLine(string.Format("Can Stop = {0}", sc.CanStop));
+#endif
+#if !DEBUG
+                if (sc.Status == ServiceControllerStatus.Stopped)
+                {
+                    // if ((swDebug & _logger.LOG_INFO) == _logger.LOG_INFO)
+                    _logger.Log(LogLevel.INFO, SemSerRes.logMsgWaitStart);
+                    Thread.Sleep(30000);
+                    sc.Start();
+                }
+#endif
+                sc.Dispose();
+                scs.First().Dispose();
             }
         }
         /// <summary>
@@ -540,52 +677,6 @@ namespace SemanticProcessor
         #region Socket server events
         private void Asl_DataFromSocket(object sender, SocketMessageStructure e)
         {
-            /*
-            MethodBase thisMethod = MethodBase.GetCurrentMethod();
-            Socket Handler = sender as Socket;
-            SocketCommand cmdCom = null;
-            SocketCommand cmdCom1 = null;
-            int erCnt = 0;
-            int cnt = 0;
-            try
-            {
-                erCnt = 1;
-                swWatchDog(false); // condizione di break e.Command=="CmdSendFormConfiguration"
-                cmdCom1 = checkCommandFromSocket(e.Command, e.Token);
-                _logger.Log(LogLevel.DEBUG, "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *");
-                _logger.Log(LogLevel.DEBUG, string.Format("* * * *  {0} * * * * {1} * * * *", e.Command.ToUpper(), e.Token));
-                _logger.Log(LogLevel.DEBUG, "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *");
-                if (cmdCom1 != null)
-                {
-                    while (sysCmdRunnig)
-                    {
-                        Thread.Sleep(20);
-                        if (cnt == 10)
-                            sysCmdRunnig = false;
-                        else
-                            cnt++;
-                        _logger.Log(LogLevel.DEBUG, "- WAITING CYCLES: " + cnt.ToString());
-                    }
-                    _logger.Log(LogLevel.DEBUG, "At start command sysCmdRunnig set to true");
-                    sysCmdRunnig = true; // 09.06.2021 interlock esecuzione comandi
-                    CommandRunning = 1;
-                    erCnt = 2;
-                    ClsCustomBinder myCustomBinder = new ClsCustomBinder();
-                }
-            }
-            catch (Exception ex)
-            {
-                string message = ClsMessaggiErrore.CustomMsg(ex, thisMethod) + " erCnt = " + erCnt.ToString();
-                _logger.Log(LogLevel.ERROR, message);
-                asl.Send(Handler, string.Format(SemSerRes.sktErrRecive, message, cmdCom.Eof));
-            }
-            finally
-            {
-                _logger.Log(LogLevel.DEBUG, "finally sysCmdRunnig set to false");
-                sysCmdRunnig = false; // 09.06.2021 interlock esecuzione comandi
-                this.myStart();
-            }
-            */
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
             Socket Handler = sender as Socket;
             SocketCommand cmdCom = null;
@@ -916,6 +1007,7 @@ namespace SemanticProcessor
             {
                 _logger.Log(LogLevel.ENANCED_DEBUG, "finally sysCmdRunnig set to false");
                 sysCmdRunnig = false; // 09.06.2021 interlock esecuzione comandi
+                swWatchDog(true); // condizione di break e.Command=="CmdSendFormConfiguration"
                 this.myStart();
                 // swWatchDog(true, IntervalMilliSeconds);
             }

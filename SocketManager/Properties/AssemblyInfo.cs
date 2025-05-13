@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("SocketManager")]
 [assembly: AssemblyDescription("Gestione comunicazione socket, creazkione socket client")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Technology Estate Srl")]
+[assembly: AssemblyCompany("RRU Evolutive System")]
 [assembly: AssemblyProduct("SocketManager")]
-[assembly: AssemblyCopyright("Copyright © 2020 PaxItalia s.r.l.")]
+[assembly: AssemblyCopyright("Copyright © 2025 Evolutive System")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // È possibile specificare tutti i valori oppure impostare valori predefiniti per i numeri relativi alla revisione e alla build
 // usando l'asterisco '*' come illustrato di seguito:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("1.0.0.3")]
-[assembly: AssemblyFileVersion("21.12.3.3")]
+[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyFileVersion("25.5.13.8")]

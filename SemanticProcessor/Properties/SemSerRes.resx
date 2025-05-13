@@ -132,14 +132,38 @@
   <data name="logErrTockenMismatch" xml:space="preserve">
     <value>token mismatch</value>
   </data>
+  <data name="logMsgCanShutDwn" xml:space="preserve">
+    <value>Can ShutDown = {0}</value>
+  </data>
+  <data name="logMsgCanStop" xml:space="preserve">
+    <value>Can Stop = {0} </value>
+  </data>
   <data name="logMsgCmdRved" xml:space="preserve">
     <value>Message received by the application </value>
   </data>
   <data name="logMsgCmdRved " xml:space="preserve">
     <value>Message received by the application </value>
   </data>
+  <data name="logMsgPauseCont" xml:space="preserve">
+    <value>Can Pause and Continue = {0} </value>
+  </data>
+  <data name="logMsgServicePaused" xml:space="preserve">
+    <value>Il servizio è passaqto in stato di pausa</value>
+  </data>
+  <data name="logMsgServiceRunning" xml:space="preserve">
+    <value>Il servizio è ritornato attivo</value>
+  </data>
+  <data name="logMsgSrvcStatus" xml:space="preserve">
+    <value>Status = {0} </value>
+  </data>
+  <data name="logMsgSrvStarted" xml:space="preserve">
+    <value>SERVICE STARTED </value>
+  </data>
   <data name="logMsgStartThread" xml:space="preserve">
     <value>Starting thread in progress</value>
+  </data>
+  <data name="logMsgWaitStart" xml:space="preserve">
+    <value>waiting 1000 msec before to start the service </value>
   </data>
   <data name="sktErrRecive" xml:space="preserve">
     <value>I received {0} {1}</value>

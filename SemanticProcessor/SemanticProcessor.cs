@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
@@ -38,7 +39,7 @@ namespace SemanticProcessor
                     w.MainCycleService();
                     while (!bExit)
                     {
-
+                    
                     }
                 }
             }
