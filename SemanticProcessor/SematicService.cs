@@ -166,7 +166,7 @@ namespace SemanticProcessor
                 {
                     _logger.Log(LogLevel.WARNING, SemSerRes.logDisabled);
                 }
-                // accendo il timer per il duty cycle e lo disattivo subito per evitare l'errore nel duty cycle
+                // accendo il timer per il duty cycle e lo disattivo subito per evitare l'errore nel duty cycle 13/5/2025
                 this.myStart();
                 swWatchDog(false, 0);
                 StartThread();
