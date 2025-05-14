@@ -285,8 +285,11 @@ namespace SocketManager
         {
             try
             {
-                this.client.Shutdown(SocketShutdown.Both);
-                this.client.Close();
+                if (this.client != null)
+                {
+                    this.client.Shutdown(SocketShutdown.Both);
+                    this.client.Close();
+                }
             }
             catch(SocketException sex)
             {

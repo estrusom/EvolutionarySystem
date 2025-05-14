@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WinTTab_01
+namespace SemanticProcessor
 {
     class ClsCustomBinder : Binder
     {

@@ -1,4 +1,7 @@
-﻿using MessaggiErrore;
+﻿/* changelog
+  2025.05.14 aggiunto campo AddToCombobox. Determina se il comando è da aggiungere alla combobox dei comandi da inviare 
+ */
+using MessaggiErrore;
 using SocketManagerInfo.Properties;
 using System;
 using System.Collections.Generic;
@@ -12,9 +15,17 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+using static System.Collections.Specialized.BitVector32;
 
 namespace SocketManagerInfo
 {
+    public enum ActionType
+    {
+        None = 0,
+        FilePath = 1,
+        DbId = 2,
+        DbName = 3,
+    }
     public partial class SocketMessageStructure
     {
         /// <summary>
@@ -193,13 +204,11 @@ namespace SocketManagerInfo
         /// </summary>
         public static string Base64End { get { return SocketManagerRes.EndB64String; } }
     }
-
+    /// <summary>
+    /// Classe per custom attribute della classe CommandSocket
+    /// </summary>
     public class SktProperty : System.Attribute
     {
-        /// <summary>
-        /// Defines whether it is a signature request
-        /// </summary>
-        public byte IsSignatureRequest { get; set; }
         /// <summary>
         /// Defines the name of the command
         /// </summary>
@@ -215,6 +224,14 @@ namespace SocketManagerInfo
         /// If true, send in packets13.04.2021
         /// </summary>
         public bool SendingDataPackets { get; set; }
+        /// <summary>
+        /// Determina se il comando è da aggiungere alla combobox dei comandi da inviare (2025.05.14)
+        /// </summary>
+        public bool AddToCombobox { get; set; }
+        /// <summary>
+        /// Definisce il tipo d'azione da applicare per il comando specifico
+        /// </summary>
+        public ActionType SelectAction { get; set; }
     }
     /*
     public class SocketCommand : IDisposable
@@ -321,16 +338,17 @@ namespace SocketManagerInfo
         /// <summary>
         /// Sync command (watch dog) CMD = 00
         /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Check comunication chanel", TockenManaging = 1)]
+        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Check comunication chanel", TockenManaging = 1, SelectAction = ActionType.None)]
         public string CmdSync { get { return this.cmd00; } } // 29.03.2021 era cmdSync
         /// <summary>
         /// Apertura del database
         /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Device nameplate data request", TockenManaging = 2)]
+        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Comando di apertura di un database", TockenManaging = 2, SelectAction = ActionType.FilePath)]
         public string CmdOpenDB { get { return this.cmd05; } }
         /// <summary>
         /// Salvataggio del database
         /// </summary>
+        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Comando di salvataggio DB", TockenManaging = 1, SelectAction = ActionType.FilePath|ActionType.DbId|ActionType.DbName)]
         public string CmdSaveDB { get { return this.cmd06; } }
         /*
         /// <summary>

@@ -3,6 +3,9 @@
     https://icons8.it/icon/set/button-cancel/ios
 	https://convertico.com/
  */
+/* changelog
+ 25.05.14 nel form FrmTelegram è stata aggiunto una combobox da cui scegliere il comando da generare
+*/
 using EvolutiveSystem;
 using EvolutiveSystem.Core;
 using EvolutiveSystem_01.Properties;

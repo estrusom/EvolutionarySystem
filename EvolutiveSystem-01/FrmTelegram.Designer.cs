@@ -30,175 +30,300 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmTelegram));
             this.btnAnnullaSend = new System.Windows.Forms.Button();
-            this.btnSendMsg = new System.Windows.Forms.Button();
-            this.gbComponiTelegramma = new System.Windows.Forms.GroupBox();
-            this.btnCalcTocken = new System.Windows.Forms.Button();
-            this.lblToken = new System.Windows.Forms.Label();
-            this.txtBuffer = new System.Windows.Forms.TextBox();
+            this.gbSelCmd = new System.Windows.Forms.GroupBox();
+            this.cmbCommand = new System.Windows.Forms.ComboBox();
             this.txtDateSend = new System.Windows.Forms.TextBox();
-            this.txtCmd = new System.Windows.Forms.TextBox();
-            this.chkbCRC = new System.Windows.Forms.CheckBox();
-            this.lblDenToken = new System.Windows.Forms.Label();
-            this.lblBufferTx = new System.Windows.Forms.Label();
             this.lblSendTime = new System.Windows.Forms.Label();
             this.lblCommand = new System.Windows.Forms.Label();
-            this.gbComponiTelegramma.SuspendLayout();
+            this.pnlbtn = new System.Windows.Forms.Panel();
+            this.gbCompilaBufferTx = new System.Windows.Forms.GroupBox();
+            this.rtxtBuffer = new System.Windows.Forms.RichTextBox();
+            this.lblDenCalcolaTocken = new System.Windows.Forms.Label();
+            this.lblToken = new System.Windows.Forms.Label();
+            this.btnCalcTocken = new System.Windows.Forms.Button();
+            this.chkbCRC = new System.Windows.Forms.CheckBox();
+            this.gbActionTypeLoadDb = new System.Windows.Forms.GroupBox();
+            this.lblDenDbName = new System.Windows.Forms.Label();
+            this.txtFileDb = new System.Windows.Forms.TextBox();
+            this.btnSelDb = new System.Windows.Forms.Button();
+            this.btnSendMsg = new System.Windows.Forms.Button();
+            this.btnOkDb = new System.Windows.Forms.Button();
+            this.bgtnAnnullaDb = new System.Windows.Forms.Button();
+            this.lblDenDb = new System.Windows.Forms.Label();
+            this.lblDb = new System.Windows.Forms.Label();
+            this.btnOkSend = new System.Windows.Forms.Button();
+            this.gbSelCmd.SuspendLayout();
+            this.pnlbtn.SuspendLayout();
+            this.gbCompilaBufferTx.SuspendLayout();
+            this.gbActionTypeLoadDb.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnAnnullaSend
             // 
             this.btnAnnullaSend.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnAnnullaSend.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnAnnullaSend.Location = new System.Drawing.Point(153, 296);
+            this.btnAnnullaSend.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnAnnullaSend.Location = new System.Drawing.Point(228, 3);
             this.btnAnnullaSend.Name = "btnAnnullaSend";
-            this.btnAnnullaSend.Size = new System.Drawing.Size(75, 31);
+            this.btnAnnullaSend.Size = new System.Drawing.Size(95, 53);
             this.btnAnnullaSend.TabIndex = 13;
             this.btnAnnullaSend.Text = "Annulla";
             this.btnAnnullaSend.UseVisualStyleBackColor = true;
             this.btnAnnullaSend.Click += new System.EventHandler(this.btnAnnullaSend_Click);
             // 
-            // btnSendMsg
+            // gbSelCmd
             // 
-            this.btnSendMsg.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnSendMsg.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnSendMsg.Location = new System.Drawing.Point(7, 296);
-            this.btnSendMsg.Name = "btnSendMsg";
-            this.btnSendMsg.Size = new System.Drawing.Size(140, 31);
-            this.btnSendMsg.TabIndex = 12;
-            this.btnSendMsg.Text = "Prepara telegramma";
-            this.btnSendMsg.UseVisualStyleBackColor = true;
-            this.btnSendMsg.Click += new System.EventHandler(this.btnSendMsg_Click);
+            this.gbSelCmd.Controls.Add(this.lblDb);
+            this.gbSelCmd.Controls.Add(this.lblDenDb);
+            this.gbSelCmd.Controls.Add(this.chkbCRC);
+            this.gbSelCmd.Controls.Add(this.btnCalcTocken);
+            this.gbSelCmd.Controls.Add(this.lblToken);
+            this.gbSelCmd.Controls.Add(this.lblDenCalcolaTocken);
+            this.gbSelCmd.Controls.Add(this.cmbCommand);
+            this.gbSelCmd.Controls.Add(this.txtDateSend);
+            this.gbSelCmd.Controls.Add(this.lblSendTime);
+            this.gbSelCmd.Controls.Add(this.lblCommand);
+            this.gbSelCmd.Dock = System.Windows.Forms.DockStyle.Top;
+            this.gbSelCmd.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbSelCmd.Location = new System.Drawing.Point(0, 0);
+            this.gbSelCmd.Name = "gbSelCmd";
+            this.gbSelCmd.Size = new System.Drawing.Size(738, 203);
+            this.gbSelCmd.TabIndex = 36;
+            this.gbSelCmd.TabStop = false;
+            this.gbSelCmd.Text = "Seezione comandi e parametri di trasmissione";
             // 
-            // gbComponiTelegramma
+            // cmbCommand
             // 
-            this.gbComponiTelegramma.Controls.Add(this.btnCalcTocken);
-            this.gbComponiTelegramma.Controls.Add(this.lblToken);
-            this.gbComponiTelegramma.Controls.Add(this.txtBuffer);
-            this.gbComponiTelegramma.Controls.Add(this.txtDateSend);
-            this.gbComponiTelegramma.Controls.Add(this.txtCmd);
-            this.gbComponiTelegramma.Controls.Add(this.chkbCRC);
-            this.gbComponiTelegramma.Controls.Add(this.lblDenToken);
-            this.gbComponiTelegramma.Controls.Add(this.lblBufferTx);
-            this.gbComponiTelegramma.Controls.Add(this.lblSendTime);
-            this.gbComponiTelegramma.Controls.Add(this.lblCommand);
-            this.gbComponiTelegramma.Dock = System.Windows.Forms.DockStyle.Top;
-            this.gbComponiTelegramma.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbComponiTelegramma.Location = new System.Drawing.Point(0, 0);
-            this.gbComponiTelegramma.Name = "gbComponiTelegramma";
-            this.gbComponiTelegramma.Size = new System.Drawing.Size(390, 290);
-            this.gbComponiTelegramma.TabIndex = 14;
-            this.gbComponiTelegramma.TabStop = false;
-            this.gbComponiTelegramma.Text = "Parametri telegramma";
-            // 
-            // btnCalcTocken
-            // 
-            this.btnCalcTocken.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnCalcTocken.Location = new System.Drawing.Point(284, 238);
-            this.btnCalcTocken.Name = "btnCalcTocken";
-            this.btnCalcTocken.Size = new System.Drawing.Size(83, 28);
-            this.btnCalcTocken.TabIndex = 31;
-            this.btnCalcTocken.Text = "Calcola";
-            this.btnCalcTocken.UseVisualStyleBackColor = true;
-            this.btnCalcTocken.Click += new System.EventHandler(this.btnCalcTocken_Click);
-            // 
-            // lblToken
-            // 
-            this.lblToken.AutoSize = true;
-            this.lblToken.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblToken.Location = new System.Drawing.Point(130, 238);
-            this.lblToken.Name = "lblToken";
-            this.lblToken.Size = new System.Drawing.Size(16, 16);
-            this.lblToken.TabIndex = 32;
-            this.lblToken.Text = "...";
-            // 
-            // txtBuffer
-            // 
-            this.txtBuffer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtBuffer.Location = new System.Drawing.Point(11, 122);
-            this.txtBuffer.Multiline = true;
-            this.txtBuffer.Name = "txtBuffer";
-            this.txtBuffer.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtBuffer.Size = new System.Drawing.Size(356, 94);
-            this.txtBuffer.TabIndex = 30;
+            this.cmbCommand.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cmbCommand.FormattingEnabled = true;
+            this.cmbCommand.Location = new System.Drawing.Point(160, 44);
+            this.cmbCommand.Name = "cmbCommand";
+            this.cmbCommand.Size = new System.Drawing.Size(526, 28);
+            this.cmbCommand.TabIndex = 38;
+            this.cmbCommand.SelectedIndexChanged += new System.EventHandler(this.cmbCommand_SelectedIndexChanged);
             // 
             // txtDateSend
             // 
-            this.txtDateSend.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtDateSend.Location = new System.Drawing.Point(158, 73);
+            this.txtDateSend.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtDateSend.Location = new System.Drawing.Point(160, 85);
             this.txtDateSend.Name = "txtDateSend";
-            this.txtDateSend.Size = new System.Drawing.Size(209, 24);
-            this.txtDateSend.TabIndex = 29;
-            // 
-            // txtCmd
-            // 
-            this.txtCmd.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCmd.Location = new System.Drawing.Point(158, 43);
-            this.txtCmd.Name = "txtCmd";
-            this.txtCmd.Size = new System.Drawing.Size(138, 24);
-            this.txtCmd.TabIndex = 28;
-            // 
-            // chkbCRC
-            // 
-            this.chkbCRC.AutoSize = true;
-            this.chkbCRC.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.chkbCRC.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chkbCRC.Location = new System.Drawing.Point(39, 263);
-            this.chkbCRC.Name = "chkbCRC";
-            this.chkbCRC.Size = new System.Drawing.Size(108, 20);
-            this.chkbCRC.TabIndex = 33;
-            this.chkbCRC.Text = "Abilita CRC";
-            this.chkbCRC.UseVisualStyleBackColor = true;
-            // 
-            // lblDenToken
-            // 
-            this.lblDenToken.AutoSize = true;
-            this.lblDenToken.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDenToken.Location = new System.Drawing.Point(69, 238);
-            this.lblDenToken.Name = "lblDenToken";
-            this.lblDenToken.Size = new System.Drawing.Size(55, 16);
-            this.lblDenToken.TabIndex = 27;
-            this.lblDenToken.Text = "Token:";
-            // 
-            // lblBufferTx
-            // 
-            this.lblBufferTx.AutoSize = true;
-            this.lblBufferTx.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblBufferTx.Location = new System.Drawing.Point(4, 103);
-            this.lblBufferTx.Name = "lblBufferTx";
-            this.lblBufferTx.Size = new System.Drawing.Size(143, 16);
-            this.lblBufferTx.TabIndex = 26;
-            this.lblBufferTx.Text = "Buffer trasmissione:";
+            this.txtDateSend.Size = new System.Drawing.Size(291, 27);
+            this.txtDateSend.TabIndex = 37;
             // 
             // lblSendTime
             // 
             this.lblSendTime.AutoSize = true;
-            this.lblSendTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSendTime.Location = new System.Drawing.Point(66, 73);
+            this.lblSendTime.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSendTime.Location = new System.Drawing.Point(41, 85);
             this.lblSendTime.Name = "lblSendTime";
-            this.lblSendTime.Size = new System.Drawing.Size(81, 16);
-            this.lblSendTime.TabIndex = 25;
+            this.lblSendTime.Size = new System.Drawing.Size(88, 18);
+            this.lblSendTime.TabIndex = 36;
             this.lblSendTime.Text = "Data invio:";
             // 
             // lblCommand
             // 
             this.lblCommand.AutoSize = true;
-            this.lblCommand.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblCommand.Location = new System.Drawing.Point(70, 43);
+            this.lblCommand.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblCommand.Location = new System.Drawing.Point(45, 44);
             this.lblCommand.Name = "lblCommand";
-            this.lblCommand.Size = new System.Drawing.Size(77, 16);
-            this.lblCommand.TabIndex = 24;
+            this.lblCommand.Size = new System.Drawing.Size(86, 18);
+            this.lblCommand.TabIndex = 35;
             this.lblCommand.Text = "Comando:";
+            // 
+            // pnlbtn
+            // 
+            this.pnlbtn.Controls.Add(this.btnOkSend);
+            this.pnlbtn.Controls.Add(this.btnAnnullaSend);
+            this.pnlbtn.Controls.Add(this.btnSendMsg);
+            this.pnlbtn.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.pnlbtn.Location = new System.Drawing.Point(0, 584);
+            this.pnlbtn.Name = "pnlbtn";
+            this.pnlbtn.Size = new System.Drawing.Size(738, 62);
+            this.pnlbtn.TabIndex = 37;
+            // 
+            // gbCompilaBufferTx
+            // 
+            this.gbCompilaBufferTx.Controls.Add(this.rtxtBuffer);
+            this.gbCompilaBufferTx.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.gbCompilaBufferTx.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbCompilaBufferTx.Location = new System.Drawing.Point(0, 400);
+            this.gbCompilaBufferTx.Name = "gbCompilaBufferTx";
+            this.gbCompilaBufferTx.Size = new System.Drawing.Size(738, 184);
+            this.gbCompilaBufferTx.TabIndex = 38;
+            this.gbCompilaBufferTx.TabStop = false;
+            this.gbCompilaBufferTx.Text = "Telegramma compilato";
+            // 
+            // rtxtBuffer
+            // 
+            this.rtxtBuffer.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.rtxtBuffer.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.rtxtBuffer.Location = new System.Drawing.Point(3, 18);
+            this.rtxtBuffer.Name = "rtxtBuffer";
+            this.rtxtBuffer.Size = new System.Drawing.Size(732, 163);
+            this.rtxtBuffer.TabIndex = 0;
+            this.rtxtBuffer.Text = "";
+            // 
+            // lblDenCalcolaTocken
+            // 
+            this.lblDenCalcolaTocken.AutoSize = true;
+            this.lblDenCalcolaTocken.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDenCalcolaTocken.Location = new System.Drawing.Point(59, 125);
+            this.lblDenCalcolaTocken.Name = "lblDenCalcolaTocken";
+            this.lblDenCalcolaTocken.Size = new System.Drawing.Size(69, 18);
+            this.lblDenCalcolaTocken.TabIndex = 39;
+            this.lblDenCalcolaTocken.Text = "Tocken:";
+            // 
+            // lblToken
+            // 
+            this.lblToken.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lblToken.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblToken.Location = new System.Drawing.Point(160, 125);
+            this.lblToken.Name = "lblToken";
+            this.lblToken.Size = new System.Drawing.Size(288, 28);
+            this.lblToken.TabIndex = 40;
+            this.lblToken.Text = "0";
+            // 
+            // btnCalcTocken
+            // 
+            this.btnCalcTocken.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnCalcTocken.Location = new System.Drawing.Point(458, 125);
+            this.btnCalcTocken.Name = "btnCalcTocken";
+            this.btnCalcTocken.Size = new System.Drawing.Size(43, 39);
+            this.btnCalcTocken.TabIndex = 41;
+            this.btnCalcTocken.Text = "...";
+            this.btnCalcTocken.UseVisualStyleBackColor = true;
+            this.btnCalcTocken.Click += new System.EventHandler(this.btnCalcTocken_Click);
+            // 
+            // chkbCRC
+            // 
+            this.chkbCRC.AutoSize = true;
+            this.chkbCRC.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.chkbCRC.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkbCRC.Location = new System.Drawing.Point(530, 85);
+            this.chkbCRC.Name = "chkbCRC";
+            this.chkbCRC.Size = new System.Drawing.Size(156, 22);
+            this.chkbCRC.TabIndex = 42;
+            this.chkbCRC.Text = "Calcolo del CRC";
+            this.chkbCRC.UseVisualStyleBackColor = true;
+            // 
+            // gbActionTypeLoadDb
+            // 
+            this.gbActionTypeLoadDb.Controls.Add(this.bgtnAnnullaDb);
+            this.gbActionTypeLoadDb.Controls.Add(this.btnOkDb);
+            this.gbActionTypeLoadDb.Controls.Add(this.btnSelDb);
+            this.gbActionTypeLoadDb.Controls.Add(this.txtFileDb);
+            this.gbActionTypeLoadDb.Controls.Add(this.lblDenDbName);
+            this.gbActionTypeLoadDb.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbActionTypeLoadDb.Location = new System.Drawing.Point(0, 209);
+            this.gbActionTypeLoadDb.Name = "gbActionTypeLoadDb";
+            this.gbActionTypeLoadDb.Size = new System.Drawing.Size(659, 112);
+            this.gbActionTypeLoadDb.TabIndex = 39;
+            this.gbActionTypeLoadDb.TabStop = false;
+            this.gbActionTypeLoadDb.Text = "Selezione database";
+            this.gbActionTypeLoadDb.Visible = false;
+            // 
+            // lblDenDbName
+            // 
+            this.lblDenDbName.AutoSize = true;
+            this.lblDenDbName.Location = new System.Drawing.Point(12, 25);
+            this.lblDenDbName.Name = "lblDenDbName";
+            this.lblDenDbName.Size = new System.Drawing.Size(121, 16);
+            this.lblDenDbName.TabIndex = 0;
+            this.lblDenDbName.Text = "Database name:";
+            // 
+            // txtFileDb
+            // 
+            this.txtFileDb.Location = new System.Drawing.Point(15, 44);
+            this.txtFileDb.Name = "txtFileDb";
+            this.txtFileDb.Size = new System.Drawing.Size(593, 22);
+            this.txtFileDb.TabIndex = 1;
+            // 
+            // btnSelDb
+            // 
+            this.btnSelDb.Location = new System.Drawing.Point(614, 44);
+            this.btnSelDb.Name = "btnSelDb";
+            this.btnSelDb.Size = new System.Drawing.Size(43, 39);
+            this.btnSelDb.TabIndex = 42;
+            this.btnSelDb.Text = "...";
+            this.btnSelDb.UseVisualStyleBackColor = true;
+            this.btnSelDb.Click += new System.EventHandler(this.btnSelDb_Click);
+            // 
+            // btnSendMsg
+            // 
+            this.btnSendMsg.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnSendMsg.Location = new System.Drawing.Point(3, 3);
+            this.btnSendMsg.Name = "btnSendMsg";
+            this.btnSendMsg.Size = new System.Drawing.Size(140, 53);
+            this.btnSendMsg.TabIndex = 12;
+            this.btnSendMsg.Text = "Prepara telegramma";
+            this.btnSendMsg.UseVisualStyleBackColor = true;
+            this.btnSendMsg.Click += new System.EventHandler(this.btnSendMsg_Click);
+            // 
+            // btnOkDb
+            // 
+            this.btnOkDb.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnOkDb.Location = new System.Drawing.Point(15, 69);
+            this.btnOkDb.Name = "btnOkDb";
+            this.btnOkDb.Size = new System.Drawing.Size(65, 31);
+            this.btnOkDb.TabIndex = 43;
+            this.btnOkDb.Text = "Ok";
+            this.btnOkDb.UseVisualStyleBackColor = true;
+            this.btnOkDb.Click += new System.EventHandler(this.btnOkDb_Click);
+            // 
+            // bgtnAnnullaDb
+            // 
+            this.bgtnAnnullaDb.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.bgtnAnnullaDb.Location = new System.Drawing.Point(84, 69);
+            this.bgtnAnnullaDb.Name = "bgtnAnnullaDb";
+            this.bgtnAnnullaDb.Size = new System.Drawing.Size(75, 31);
+            this.bgtnAnnullaDb.TabIndex = 44;
+            this.bgtnAnnullaDb.Text = "Annulla";
+            this.bgtnAnnullaDb.UseVisualStyleBackColor = true;
+            this.bgtnAnnullaDb.Click += new System.EventHandler(this.bgtnAnnullaDb_Click);
+            // 
+            // lblDenDb
+            // 
+            this.lblDenDb.AutoSize = true;
+            this.lblDenDb.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDenDb.Location = new System.Drawing.Point(43, 166);
+            this.lblDenDb.Name = "lblDenDb";
+            this.lblDenDb.Size = new System.Drawing.Size(84, 18);
+            this.lblDenDb.TabIndex = 43;
+            this.lblDenDb.Text = "Database:";
+            // 
+            // lblDb
+            // 
+            this.lblDb.AutoSize = true;
+            this.lblDb.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.lblDb.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDb.Location = new System.Drawing.Point(160, 166);
+            this.lblDb.Name = "lblDb";
+            this.lblDb.Size = new System.Drawing.Size(47, 22);
+            this.lblDb.TabIndex = 44;
+            this.lblDb.Text = "none";
+            // 
+            // btnOkSend
+            // 
+            this.btnOkSend.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.btnOkSend.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnOkSend.Location = new System.Drawing.Point(147, 3);
+            this.btnOkSend.Name = "btnOkSend";
+            this.btnOkSend.Size = new System.Drawing.Size(75, 53);
+            this.btnOkSend.TabIndex = 14;
+            this.btnOkSend.Text = "ok";
+            this.btnOkSend.UseVisualStyleBackColor = true;
+            this.btnOkSend.Click += new System.EventHandler(this.btnOkSend_Click);
             // 
             // FrmTelegram
             // 
-            this.AcceptButton = this.btnSendMsg;
+            this.AcceptButton = this.btnOkDb;
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnAnnullaSend;
-            this.ClientSize = new System.Drawing.Size(390, 339);
-            this.Controls.Add(this.gbComponiTelegramma);
-            this.Controls.Add(this.btnAnnullaSend);
-            this.Controls.Add(this.btnSendMsg);
+            this.ClientSize = new System.Drawing.Size(738, 646);
+            this.Controls.Add(this.gbActionTypeLoadDb);
+            this.Controls.Add(this.gbCompilaBufferTx);
+            this.Controls.Add(this.pnlbtn);
+            this.Controls.Add(this.gbSelCmd);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -207,25 +332,40 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Configurazione telegramma";
-            this.gbComponiTelegramma.ResumeLayout(false);
-            this.gbComponiTelegramma.PerformLayout();
+            this.Load += new System.EventHandler(this.FrmTelegram_Load);
+            this.gbSelCmd.ResumeLayout(false);
+            this.gbSelCmd.PerformLayout();
+            this.pnlbtn.ResumeLayout(false);
+            this.gbCompilaBufferTx.ResumeLayout(false);
+            this.gbActionTypeLoadDb.ResumeLayout(false);
+            this.gbActionTypeLoadDb.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
         private System.Windows.Forms.Button btnAnnullaSend;
-        private System.Windows.Forms.Button btnSendMsg;
-        private System.Windows.Forms.GroupBox gbComponiTelegramma;
-        private System.Windows.Forms.Button btnCalcTocken;
-        private System.Windows.Forms.Label lblToken;
-        private System.Windows.Forms.TextBox txtBuffer;
+        private System.Windows.Forms.GroupBox gbSelCmd;
+        private System.Windows.Forms.ComboBox cmbCommand;
         private System.Windows.Forms.TextBox txtDateSend;
-        private System.Windows.Forms.TextBox txtCmd;
-        private System.Windows.Forms.CheckBox chkbCRC;
-        private System.Windows.Forms.Label lblDenToken;
-        private System.Windows.Forms.Label lblBufferTx;
         private System.Windows.Forms.Label lblSendTime;
         private System.Windows.Forms.Label lblCommand;
+        private System.Windows.Forms.Panel pnlbtn;
+        private System.Windows.Forms.GroupBox gbCompilaBufferTx;
+        private System.Windows.Forms.RichTextBox rtxtBuffer;
+        private System.Windows.Forms.Label lblDenCalcolaTocken;
+        private System.Windows.Forms.Button btnCalcTocken;
+        private System.Windows.Forms.Label lblToken;
+        private System.Windows.Forms.CheckBox chkbCRC;
+        private System.Windows.Forms.GroupBox gbActionTypeLoadDb;
+        private System.Windows.Forms.Button btnSelDb;
+        private System.Windows.Forms.TextBox txtFileDb;
+        private System.Windows.Forms.Label lblDenDbName;
+        private System.Windows.Forms.Button btnSendMsg;
+        private System.Windows.Forms.Button bgtnAnnullaDb;
+        private System.Windows.Forms.Button btnOkDb;
+        private System.Windows.Forms.Label lblDb;
+        private System.Windows.Forms.Label lblDenDb;
+        private System.Windows.Forms.Button btnOkSend;
     }
 }
