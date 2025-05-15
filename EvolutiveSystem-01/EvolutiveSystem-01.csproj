@@ -48,6 +48,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ClsCustomBinder.cs" />
+    <Compile Include="CommandConfig.cs" />
     <Compile Include="FrmAddField.cs">
       <SubType>Form</SubType>
     </Compile>

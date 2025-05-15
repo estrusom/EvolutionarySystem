@@ -21,6 +21,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using SemanticProcessor;
+using System.Xml.Linq;
 
 namespace SemanticProcessor
 {
@@ -572,7 +573,7 @@ namespace SemanticProcessor
         /// looking if I got some command from the socket
         /// </summary>
         /// <returns></returns>
-        private SocketCommand checkCommandFromSocket(string cmd, long? TokenSocket = 0)
+        private SocketCommand checkCommandFromSocket(string cmd, string TokenSocket = "")
         {
             // 02.04.2021 gestione del token
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
@@ -600,7 +601,7 @@ namespace SemanticProcessor
                                 case 0: // controllo validità del token 
                                     {
                                         _logger.Log(LogLevel.INFO, string.Format("Check validity token for the command {0}. Received: {1} stored: {2}", cmd, TokenSocket, asl.TokenSocket));
-                                        if (asl.TokenSocket == TokenSocket)
+                                        if (asl.TokenSocket == Convert.ToInt32(TokenSocket)) 
                                         {
                                             //SocketCommand mysc = getSktCmd.First();
                                             getSktCmd.First().GetValue(scktCmd).ToString();
@@ -621,10 +622,10 @@ namespace SemanticProcessor
                                 case 1: // assegnazione token
                                     {
                                         sysCmdRunnig = false; // 09.06.2021 when token is assigned the flag command runnig to be false
-                                        if (TokenSocket != 0)
+                                        if (Convert.ToUInt32(TokenSocket) != 0) 
                                         {
                                             _logger.Log(LogLevel.INFO, string.Format(SemSerRes.logAssignToken, cmd, asl.TokenSocket, TokenSocket));
-                                            asl.TokenSocket = (long)TokenSocket;
+                                            asl.TokenSocket = Convert.ToInt32(TokenSocket);
                                         }
                                         else
                                         {
@@ -688,7 +689,7 @@ namespace SemanticProcessor
                 erCnt = 1;
                 swWatchDog(false); // condizione di break e.Command=="CmdSendFormConfiguration"
                     
-                cmdCom1 = checkCommandFromSocket(e.Command, e.Token);
+                cmdCom1 = checkCommandFromSocket(e.Command, e.Token.ToString());
 
                 _logger.Log(LogLevel.DEBUG, "* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *");
                 _logger.Log(LogLevel.DEBUG, string.Format("* * * *  {0} * * * * {1} * * * *", e.Command.ToUpper(), e.Token));
@@ -729,7 +730,7 @@ namespace SemanticProcessor
                         cmdCom.CommandSocket, // Nome del metodo
                         BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
                         myCustomBinder, // Usa il tuo binder per la risoluzione
-                        new Type[] { typeof(SocketCommand), typeof(string), typeof(AsyncSocketListener) }, // Tipi dei parametri (verifica che siano corretti!)
+                        new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener) }, // Tipi dei parametri (verifica che siano corretti!)
                         null // Modificatori
                     );
                     if (myMethod != null)
@@ -740,7 +741,7 @@ namespace SemanticProcessor
                         erCnt = 5;
                         // Invoke the overload.
                         //tyCommandHandlers.InvokeMember(metodo, BindingFlags.InvokeMethod, myCustomBinder, commandHandlers, new Object[] { myO, e.Data, asl });
-                        object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.Data, asl });
+                        object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.BufferDati, asl });
                         // if (myO.CommandCode == myO.CmdSendFormConfiguration) _logger.Log(LogLevel.DEBUG,string.Format( "Sono uscito dal comando {0}", myO.CommandName));
                     }
                     else
@@ -992,8 +993,8 @@ namespace SemanticProcessor
                 {
                     Command = "Error",
                     SendingTime = DateTime.Now,
-                    Data = errMsg,
-                    Token = asl.TokenSocket,
+                    BufferDati = new XElement("ErrorDetails", new XElement("Message", errMsg)),  
+                    Token = asl.TokenSocket.ToString(),
                     CRC = 0
                 };
                 string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);

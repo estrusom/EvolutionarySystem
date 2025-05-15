@@ -1,5 +1,6 @@
 ﻿/* changelog
   2025.05.14 aggiunto campo AddToCombobox. Determina se il comando è da aggiungere alla combobox dei comandi da inviare 
+  2025.05.14 *** Implementa IXmlSerializable *** 
  */
 using MessaggiErrore;
 using SocketManagerInfo.Properties;
@@ -26,28 +27,152 @@ namespace SocketManagerInfo
         DbId = 2,
         DbName = 3,
     }
-    public partial class SocketMessageStructure
+    [XmlRoot("SocketMessageStructure")] // Definisce il nome dell'elemento radice XML
+    public partial class SocketMessageStructure : IXmlSerializable // *** Implementa IXmlSerializable *** 2025.05.14
     {
-        /// <summary>
-        /// Command to execute
-        /// </summary>
+        // Proprietà serializzate automaticamente da XmlSerializer
+        [XmlElement("Command")]
         public string Command { get; set; }
-        /// <summary>
-        /// Sending date
-        /// </summary>
+
+        [XmlElement("SendingTime")]
         public DateTime SendingTime { get; set; }
-        /// <summary>
-        /// Data buffer
-        /// </summary>
-        public string Data { get; set; }
-        /// <summary>
-        /// 02.04.2021 gestione accesso concorrente al socket
-        /// </summary>
-        public long Token { get; set; }
-        /// <summary>
-        /// hash check
-        /// </summary>
+
+        [XmlElement("Token")]
+        public string Token { get; set; }
+
+        [XmlElement("CRC")]
         public int CRC { get; set; }
+
+        // *** La proprietà BufferDati NON ha più l'attributo XmlElement ***
+        // La sua serializzazione/deserializzazione è gestita manualmente in ReadXml/WriteXml.
+        // [XmlElement("BufferDati")] // Rimosso
+        public XElement BufferDati { get; set; }
+
+        // NOTA: Includi qui altre proprietà serializzabili automaticamente (es. Data, Stato, MessaggioStato)
+        // con i relativi attributi [XmlElement].
+        // Esempio:
+        // [XmlElement("Data")]
+        // public string Data { get; set; }
+        // [XmlElement("Stato")]
+        // public string Stato { get; set; }
+        // [XmlElement("MessaggioStato")]
+        // public string MessaggioStato { get; set; }
+
+
+        // Costruttore vuoto necessario per XmlSerializer
+        public SocketMessageStructure() { }
+
+        // Costruttore di esempio (opzionale)
+        public SocketMessageStructure(string command, XElement bufferDati, string token = null, int crc = 0)
+        {
+            Command = command;
+            SendingTime = DateTime.UtcNow;
+            BufferDati = bufferDati;
+            Token = token ?? Guid.NewGuid().ToString(); // Genera un token se non fornito
+            CRC = crc;
+        }
+
+        // --- Implementazione di IXmlSerializable ---
+
+        public System.Xml.Schema.XmlSchema GetSchema()
+        {
+            return null; // Schema non necessario per questo esempio
+        }
+
+        /// <summary>
+        /// Legge i dati XML e popola l'oggetto.
+        /// Gestisce manualmente la deserializzazione del BufferDati.
+        /// </summary>
+        public void ReadXml(System.Xml.XmlReader reader)
+        {
+            // Il reader è posizionato sull'elemento radice <SocketMessageStructure>.
+            // Dobbiamo leggere le proprietà serializzate automaticamente e poi gestire BufferDati.
+
+            reader.ReadStartElement(); // Legge <SocketMessageStructure>
+
+            // Deserializza le proprietà serializzate automaticamente usando XmlSerializer temporanei
+            // o leggendo manualmente gli elementi. Leggere manualmente è più sicuro con IXmlSerializable.
+
+            // Legge <Command>
+            if (reader.IsStartElement("Command"))
+            {
+                Command = reader.ReadElementContentAsString();
+            }
+
+            // Legge <SendingTime>
+            if (reader.IsStartElement("SendingTime"))
+            {
+                SendingTime = reader.ReadElementContentAsDateTime();
+            }
+
+            // Legge <BufferDati> - Questo è il punto cruciale
+            if (reader.IsStartElement("BufferDati"))
+            {
+                // Legge l'elemento <BufferDati> e il suo contenuto come un XElement.
+                // XmlReader.ReadOuterXml() legge l'elemento corrente e il suo contenuto come stringa XML.
+                // Poi usiamo XElement.Parse per creare l'XElement.
+                string bufferDatiXml = reader.ReadOuterXml(); // Legge <BufferDati>...</BufferDati> come stringa
+                if (!string.IsNullOrEmpty(bufferDatiXml))
+                {
+                    BufferDati = XElement.Parse(bufferDatiXml); // Parsa la stringa XML in un XElement
+                }
+            }
+
+            // Legge <Token>
+            if (reader.IsStartElement("Token"))
+            {
+                Token = reader.ReadElementContentAsString();
+            }
+
+            // Legge <CRC>
+            if (reader.IsStartElement("CRC"))
+            {
+                CRC = reader.ReadElementContentAsInt();
+            }
+
+            // TODO: Aggiungere logica per leggere altre proprietà serializzate automaticamente (Data, Stato, MessaggioStato)
+
+            reader.ReadEndElement(); // Legge </SocketMessageStructure>
+        }
+
+        /// <summary>
+        /// Scrive i dati dell'oggetto in formato XML.
+        /// Gestisce manualmente la serializzazione del BufferDati.
+        /// </summary>
+        public void WriteXml(System.Xml.XmlWriter writer)
+        {
+            // Scrive le proprietà serializzate automaticamente usando XmlWriter.WriteElement.
+
+            // Scrive <Command>
+            writer.WriteElementString("Command", Command);
+
+            // Scrive <SendingTime>
+            writer.WriteElementString("SendingTime", SendingTime.ToString("o")); // Formato ISO 8601
+
+            // Scrive <BufferDati> - Questo è il punto cruciale
+            if (BufferDati != null)
+            {
+                // Scrive l'XElement BufferDati direttamente nello stream del writer.
+                // Questo scriverà l'elemento radice dell'XElement (che dovrebbe essere <BufferDati>)
+                // e tutto il suo contenuto.
+                BufferDati.WriteTo(writer);
+            }
+            else
+            {
+                // Scrive un elemento <BufferDati> vuoto se la proprietà è null
+                writer.WriteStartElement("BufferDati");
+                writer.WriteEndElement();
+            }
+
+
+            // Scrive <Token>
+            writer.WriteElementString("Token", Token);
+
+            // Scrive <CRC>
+            writer.WriteElementString("CRC", CRC.ToString());
+
+            // TODO: Aggiungere logica per scrivere altre proprietà serializzate automaticamente (Data, Stato, MessaggioStato)
+        }
     }
     public static class SocketMessageSerialize
     {

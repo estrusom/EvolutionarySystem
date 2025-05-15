@@ -6,6 +6,7 @@ using MessaggiErrore;
 using SocketManagerInfo;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -14,6 +15,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace CommandHandlers
 {
@@ -40,7 +42,7 @@ namespace CommandHandlers
         /// <param name="Param">parametri da aggiungere al campo data della classse SocketMessageStructure</param>
         /// <param name="asl">Riferimenti al socket server</param>
         /// <exception cref="Exception"></exception>
-        public void CmdSync(SocketCommand DvCmd, string Param, AsyncSocketListener asl)
+        public void CmdSync(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
             try
@@ -50,8 +52,8 @@ namespace CommandHandlers
                 {
                     Command = command.Substring(1, command.Length - 2),
                     SendingTime = DateTime.Now,
-                    Data = "",
-                    Token = asl.TokenSocket,
+                    BufferDati = null,
+                    Token = asl.TokenSocket.ToString(),
                     CRC = 0
                 };
                 string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
@@ -80,7 +82,7 @@ namespace CommandHandlers
         /// <param name="Param"></param>
         /// <param name="asl"></param>
         /// <exception cref="Exception"></exception>
-        public void CmdOpenDB(SocketCommand DvCmd, string Param, AsyncSocketListener asl)
+        public void CmdOpenDB(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
             try
@@ -90,25 +92,37 @@ namespace CommandHandlers
                 {
                     Command = command.Substring(1, command.Length - 2),
                     SendingTime = DateTime.Now,
-                    Data = Param,
-                    Token = asl.TokenSocket,
+                    BufferDati= new XElement("SyncDetails",
+                                        new XElement("ServerTime", DateTime.UtcNow.ToString("o")), // Orario del server in formato ISO 8601
+                                        new XElement("Status", "OK")), // Esempio di stato
+                                        // Aggiungi qui altre informazioni di sincronizzazione se necessario
+                    Token = asl.TokenSocket.ToString(),
                     CRC = 0
                 };
-                if (string.IsNullOrWhiteSpace(response.Data)) 
+                if (Param == null)
                 {
-                    throw (new Exception("Percorso file database mancante nel messaggio."));
+                    throw (new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante."));
                 }
-                if (!File.Exists(response.Data))
+                XElement filePathElement = Param.Element("FilePath");
+                if (filePathElement == null || string.IsNullOrWhiteSpace(filePathElement.Value))
                 {
                     throw (new Exception("File non trovato"));
                 }
-                Database loadedDb = DatabaseSerializer.DeserializeFromXmlFile(response.Data);
-                if (_loadedDatabases.Any(db => db.DatabaseId == loadedDb.DatabaseId || db.DatabaseName.Equals(loadedDb.DatabaseName, StringComparison.OrdinalIgnoreCase)))
+                string dbFilePath = filePathElement.Value;
+                Database loadedDb= DatabaseSerializer.DeserializeFromXmlFile(dbFilePath);
+                if (filePathElement == null || string.IsNullOrWhiteSpace(filePathElement.Value))
                 {
-                    throw (new Exception(string.Format("Il database {0} è già caricato", loadedDb.DatabaseName)));
+                    throw (new Exception($"Comando OpenDb ricevuto da {asl.CallerIpAddress} ma FilePath mancante o vuoto nel BufferDati."));
+                }
+                if (!File.Exists(dbFilePath))
+                {
+                    throw (new Exception($"il file{dbFilePath} ricevuto da  {asl.CallerIpAddress} no è sato trovato."));
                 }
                 _loadedDatabases.Add(loadedDb);
 
+                XElement bufferContent = new XElement("DatabaseInfo",
+                                            new XElement("FilePath", dbFilePath) // Utile per il client sapere da dove è stato caricato
+                                            );
                 string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
                 ASCIIEncoding encoding = new ASCIIEncoding();
                 byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
@@ -147,7 +161,7 @@ namespace CommandHandlers
         /// <param name="DvCmd">comando da eseguire</param>
         /// <param name="Param">parametri da aggiungere al campo data della classse SocketMessageStructure</param>
         /// <param name="asl">Riferimenti al socket server</param>
-        public void CmdSaveDB(SocketCommand DvCmd, string Param, AsyncSocketListener asl)
+        public void CmdSaveDB(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
             try
@@ -157,27 +171,122 @@ namespace CommandHandlers
                 {
                     Command = command.Substring(1, command.Length - 2),
                     SendingTime = DateTime.Now,
-                    Data = Param,
-                    Token = asl.TokenSocket,
+                    BufferDati = new XElement("SyncDetails",
+                                        new XElement("ServerTime", DateTime.UtcNow.ToString("o")), // Orario del server in formato ISO 8601
+                                        new XElement("Status", "OK")), // Esempio di stato
+                                                                       // Aggiungi qui altre informazioni di sincronizzazione se necessario
+                    Token = asl.TokenSocket.ToString(),
                     CRC = 0
                 };
-                if (response.Data == null) 
+                if (Param == null)
                 {
                     throw (new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante."));
                 }
-                if (string.IsNullOrWhiteSpace(response.Data))
+
+                // Estrai l'identificatore del database e il percorso
+                XElement dbIdentifierElement = Param.Element("DatabaseIdentifier");
+                XElement filePathElement = Param.Element("FilePath");
+
+                if (dbIdentifierElement == null || filePathElement == null)
                 {
-                    throw (new Exception("Percorso file database mancante nel messaggio."));
-                }
-                if (!File.Exists(response.Data))
-                {
-                    throw (new Exception("File non trovato"));
+                    // _logger.LogWarning($"Comando CmdSaveDb: DatabaseIdentifier o FilePath mancante nel BufferDati.");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} ma DatabaseIdentifier o FilePath mancante nel BufferDati.");
                 }
 
+                string identifierType = dbIdentifierElement.Attribute("Type")?.Value;
+                string identifierValue = dbIdentifierElement.Value;
+                string saveFilePath = filePathElement.Value;
+
+                if (string.IsNullOrWhiteSpace(saveFilePath))
+                {
+                    // _logger.LogWarning($"Comando CmdSaveDb: Percorso file salvataggio mancante.");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} ma percorso file salvataggio mancante.");
+                }
+
+                Database databaseToSave = null;
+                if (identifierType?.Equals("Id", StringComparison.OrdinalIgnoreCase) == true && int.TryParse(identifierValue, out int dbId))
+                {
+                    databaseToSave = _loadedDatabases.FirstOrDefault(db => db.DatabaseId == dbId);
+                }
+                else if (identifierType?.Equals("Name", StringComparison.OrdinalIgnoreCase) == true && !string.IsNullOrWhiteSpace(identifierValue))
+                {
+                    databaseToSave = _loadedDatabases.FirstOrDefault(db => db.DatabaseName.Equals(identifierValue, StringComparison.OrdinalIgnoreCase));
+                }
+                else
+                {
+                    // _logger.LogWarning($"Comando CmdSaveDb: Identificatore database non valido (Type='{identifierType}', Value='{identifierValue}').");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} Identificatore database non valido (Type='{identifierType}', Value='{identifierValue}').");
+                }
+
+                if (databaseToSave == null)
+                {
+                    // _logger.LogWarning($"Comando CmdSaveDb: Database con identificatore '{identifierValue}' non trovato.");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress}. Database con identificatore '{identifierValue}' non trovato sul server.");
+                }
+
+                DatabaseSerializer.SerializeToXmlFile(databaseToSave, saveFilePath);
+
+                response.BufferDati = new XElement("SyncDetails",
+                                        new XElement("ServerTime", DateTime.UtcNow.ToString("o")), // Orario del server in formato ISO 8601
+                                        new XElement("Database", $"Db {databaseToSave.DatabaseName}caricato"),
+                                        new XElement("Status", "OK")); // Esempio di stato
+                string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
+                ASCIIEncoding encoding = new ASCIIEncoding();
+                byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+
+                asl.Send(asl.Handler, txtSendData);
+            }
+
+            catch (UnauthorizedAccessException ex)
+            {
+                // _logger.LogError($"Errore di accesso al file per CmdSaveDb:", ex);
+                // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                throw new Exception($"Errore: Accesso negato al percorso specificato '{ex.Message}'. Assicurarsi che il servizio abbia i permessi necessari.");
+            }
+            catch (PathTooLongException ex)
+            {
+                // _logger.LogError($"Percorso troppo lungo per CmdSaveDb:", ex);
+                // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                throw new Exception($"Errore: Il percorso specificato è troppo lungo '{ex.Message}'.");
+            }
+            catch (DirectoryNotFoundException ex)
+            {
+                // _logger.LogError($"Directory non trovata per CmdSaveDb:", ex);
+                // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                throw new Exception($"Errore: La directory specificata non esiste '{ex.Message}'.");
+            }
+            catch (IOException ex)
+            {
+                // Gestisce altri errori di I/O (es. file in uso)
+                // _logger.LogError($"Errore di I/O per CmdSaveDb:", ex);
+                // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                throw new Exception($"Errore di I/O durante il salvataggio del file: {ex.Message}");
+            }
+            catch (System.Xml.XmlException ex) // Potrebbe verificarsi durante la serializzazione se ci sono problemi con i dati
+            {
+                // _logger.LogError($"Errore di serializzazione XML per CmdSaveDb:", ex);
+                // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                throw new Exception($"Errore durante la serializzazione del database in XML: {ex.Message}");
+            }
+            catch (InvalidOperationException ex) // Potrebbe verificarsi se ci sono problemi con i tipi noti nella serializzazione
+            {
+                // _logger.LogError($"Errore di operazione non valida per CmdSaveDb:", ex);
+                // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                throw new Exception($"Errore interno di serializzazione: {ex.Message}");
             }
             catch (Exception ex)
             {
+                // Gestione generica degli errori per qualsiasi altra eccezione
+                Console.WriteLine($"Errore generico durante la gestione del comando CmdSaveDb: {ex.Message}");
+                // _logger.LogError($"Errore generico durante la gestione del comando CmdSaveDb:", ex);
 
+                // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                throw new Exception($"Errore generico durante l'elaborazione del comando CmdSaveDb: {ex.Message}");
             }
         }
         /// <summary>

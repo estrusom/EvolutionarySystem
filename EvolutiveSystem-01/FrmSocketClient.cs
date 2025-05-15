@@ -207,7 +207,7 @@ namespace EvolutiveSystem_01
                 richTextBoxDebug.AppendText("********************************************************" + Environment.NewLine);
                 richTextBoxDebug.AppendText(string.Format("Command: {0}", Telegram.Command) + Environment.NewLine);
                 richTextBoxDebug.AppendText(string.Format("Data trasmissione: {0}", Telegram.SendingTime) + Environment.NewLine);
-                richTextBoxDebug.AppendText(string.Format("Dati: {0}", Telegram.Data) + Environment.NewLine);
+                richTextBoxDebug.AppendText(string.Format("Dati: {0}", Telegram.BufferDati) + Environment.NewLine);
                 richTextBoxDebug.AppendText(string.Format("Tocken: {0}", Telegram.Token) + Environment.NewLine);
                 richTextBoxDebug.AppendText(string.Format("CRC: {0}", Telegram.CRC) + Environment.NewLine);
             }
