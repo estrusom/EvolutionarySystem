@@ -1,6 +1,7 @@
 ﻿/* changelog
   2025.05.14 aggiunto campo AddToCombobox. Determina se il comando è da aggiungere alla combobox dei comandi da inviare 
   2025.05.14 *** Implementa IXmlSerializable *** 
+  2025.05.16 aggiunto il comando per richiedere lo satto del db al server
  */
 using MessaggiErrore;
 using SocketManagerInfo.Properties;
@@ -26,7 +27,11 @@ namespace SocketManagerInfo
         FilePath = 1,
         DbId = 2,
         DbName = 3,
+        DbRequest = 4,
     }
+    /// <summary>
+    /// Classe dove sono definiti i campi da trasferire durante la conmunicazione socket fra client e server
+    /// </summary>
     [XmlRoot("SocketMessageStructure")] // Definisce il nome dell'elemento radice XML
     public partial class SocketMessageStructure : IXmlSerializable // *** Implementa IXmlSerializable *** 2025.05.14
     {
@@ -174,6 +179,9 @@ namespace SocketManagerInfo
             // TODO: Aggiungere logica per scrivere altre proprietà serializzate automaticamente (Data, Stato, MessaggioStato)
         }
     }
+    /// <summary>
+    /// Classe contenente le funzioni per serializzare e de serializzare la struttura di comunicazione fra client e server
+    /// </summary>
     public static class SocketMessageSerialize
     {
         public static string SerializeUTF8(SocketMessageStructure messageStructure)
@@ -358,76 +366,8 @@ namespace SocketManagerInfo
         /// </summary>
         public ActionType SelectAction { get; set; }
     }
-    /*
-    public class SocketCommand : IDisposable
-    {
-        private const string stx = "";// "<stx>";
-        private const string etx = "";// "<etx>";
-        private const string eof = "<eof>";
-        private string cmd00 = stx + "CmdSync" + etx;
-        private string cmd01 = stx + "CmdOpenDB" + etx;
-        /// <summary>
-        /// Sync command (watch dog) CMD = 00
-        /// </summary>
-        [SktProperty(Description = "Check comunication chanel", TockenManaging = 1)]
-        public string CmdSync { get { return this.cmd00; } }
-        /// <summary>
-        /// Opening the working db
-        /// </summary>
-        public string CmdOpenDB { get { return this.cmd01; } }
-        /// <summary>
-        /// Final sequence to add to messages to be sent to the client
-        /// </summary>
-        public string Eof { get { return eof; } }
-        /// <summary>
-        /// Stringa iniziale per identificare una stringa base64 proveniente dal socket
-        /// </summary>
-        public string Base64Start { get { return SocketManagerRes.StartB64string; } }
-        /// <summary>
-        /// Stringa di chiusura di un messaggio ricevuto via socket
-        /// </summary>
-        public string Base64End { get { return SocketManagerRes.EndB64String; } }
-        #region IDisposable Support
-        private bool disposedValue = false; // Per rilevare chiamate ridondanti
-        /// <summary>
-        /// disposing Class procedure
-        /// </summary>
-        /// <param name="disposing"></param>
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: eliminare lo stato gestito (oggetti gestiti).
-                }
-
-                // TODO: liberare risorse non gestite (oggetti non gestiti) ed eseguire sotto l'override di un finalizzatore.
-                // TODO: impostare campi di grandi dimensioni su Null.
-
-                disposedValue = true;
-            }
-        }
-
-        // TODO: eseguire l'override di un finalizzatore solo se Dispose(bool disposing) include il codice per liberare risorse non gestite.
-        // ~SocketCommand() {
-        //   // Non modificare questo codice. Inserire il codice di pulizia in Dispose(bool disposing) sopra.
-        //   Dispose(false);
-        // }
-
-        // Questo codice viene aggiunto per implementare in modo corretto il criterio Disposable.
-        void IDisposable.Dispose()
-        {
-            // Non modificare questo codice. Inserire il codice di pulizia in Dispose(bool disposing) sopra.
-            Dispose(true);
-            // TODO: rimuovere il commento dalla riga seguente se è stato eseguito l'override del finalizzatore.
-            // GC.SuppressFinalize(this);
-        }
-        #endregion
-    }
-    */
     /// <summary>
-    /// 
+    /// Classe contenente la lista dei comandi da eseguire
     /// </summary>
     public class SocketCommand : IDisposable
     {
@@ -437,7 +377,7 @@ namespace SocketManagerInfo
         private string cmd00 = stx + "CmdSync" + etx;   // 29.03.2021 era cmdSync
         private string cmd05 = stx + "CmdOpenDB" + etx;
         private string cmd06 = stx + "CmdSaveDB" + etx;
-        private string cmd07 = stx + "CmdCancSignSurface" + etx;
+        private string cmd07 = stx + "CmdStructDb" + etx; 
         private string cmd08 = stx + "CmdSigningProcStarted" + etx;
         private string cmd09 = stx + "CmdSigningProcTermination" + etx;
         private string cmd0A = stx + "CmdHideSignatureForm " + etx;
@@ -475,6 +415,11 @@ namespace SocketManagerInfo
         /// </summary>
         [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Comando di salvataggio DB", TockenManaging = 1, SelectAction = ActionType.FilePath|ActionType.DbId|ActionType.DbName)]
         public string CmdSaveDB { get { return this.cmd06; } }
+        /// <summary>
+        /// 2025.05.16 aggiunto il comando per richiedere lo satto del db al server
+        /// </summary>
+        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Richiesta dello stato del database al server", TockenManaging = 1, SelectAction = ActionType.DbRequest)]
+        public string CmdStructDb { get { return this.cmd07; } }
         /*
         /// <summary>
         /// Single signature frame reception CMD = 06

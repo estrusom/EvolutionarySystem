@@ -1385,42 +1385,6 @@ namespace EvolutiveSystem_01
                     }
                 }
             }
-            /*
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*";
-                openFileDialog.Title = "Seleziona un file XML del Database Semantico";
-
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    try
-                    {
-                        UpdateStatus($"Caricamento database da {openFileDialog.FileName}...");
-                        Database loadedDb = DatabaseSerializer.DeserializeFromXmlFile(openFileDialog.FileName);
-                        loadedDatabases.Clear();
-                        loadedDatabases.Add(loadedDb);
-                        currentDatabase = loadedDb;
-
-                        PopulateDatabaseTreeView(); // Aggiorna la TreeView
-
-                        // Abilita i controlli rilevanti (solo pulsanti non gestiti da ContextMenu)
-                        // if (btnSaveDatabase != null) btnSaveDatabase.Enabled = true;
-
-                        // Passa il database caricato al motore semantico (se gestito qui)
-                        // semanticEngine.LoadSemanticDatabase(currentDatabase);
-
-                        AppendToMonitor($"Database caricato con successo da {openFileDialog.FileName}");
-                        UpdateStatus("Database caricato.");
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Errore durante il caricamento del database: {ex.Message}", "Errore di Caricamento", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        AppendToMonitor($"Errore durante il caricamento: {ex.Message}");
-                        UpdateStatus($"Errore caricamento: {ex.Message}");
-                    }
-                }
-            }
-            */
         }
         private void BtnCloseAllDatabases_Click(object sender, EventArgs e)
         {

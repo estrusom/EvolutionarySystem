@@ -1,4 +1,9 @@
-﻿using System;
+﻿/*
+ * changelog
+ * 2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database ***
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -117,6 +122,14 @@ namespace EvolutiveSystem.Core
         // Proprietà specifiche di un Database
         public int DatabaseId { get; set; }
         public string DatabaseName { get; set; }
+        /// <summary>
+        /// 2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database ***
+        // Questo percorso viene impostato quando il database viene caricato da file o salvato su file.
+        // Non è serializzato per evitare dipendenze dirette dal file system nel file XML stesso.
+        /// </summary>
+        [XmlIgnore] // Non serializzare questa proprietà nel file XML
+        public string FilePath { get; set; }
+
 
         // *** Composizione: Un Database CONTIENE una lista di Tabelle ***
         public List<Table> Tables { get; set; } = new List<Table>(); // Inizializzata per evitare NullReferenceException

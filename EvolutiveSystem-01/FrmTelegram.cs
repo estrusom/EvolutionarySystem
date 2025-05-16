@@ -38,9 +38,11 @@ namespace EvolutiveSystem_01
             cmdCnf.ExecuteCmdSync += CmdCnf_ExecuteCmdSync;
             cmdCnf.ExecuteOpenDB += CmdCnf_ExecuteOpenDB;
             cmdCnf.ExecuteSaveDB += CmdCnf_ExecuteSaveDB;
+            cmdCnf.ExecuteDBStruct += CmdCnf_ExecuteDBStruct;
             txtDateSend.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
             lblDb.Text = "";
         }
+
         private void FrmTelegram_Load(object sender, EventArgs e)
         {
             toolTip = new System.Windows.Forms.ToolTip();
@@ -110,6 +112,14 @@ namespace EvolutiveSystem_01
                                 gbActionSaveDatabase.Dock = DockStyle.Fill;
                             }
                             break;
+                        case ActionType.DbRequest:
+                            {
+                                gbSelCmd.Enabled = false;
+                                pnlbtn.Enabled = false;
+                                gbSelRequest.Visible = true;
+                                gbSelRequest.Dock = DockStyle.Fill;
+                            }
+                            break;
                     }
                 }
             }
@@ -141,7 +151,6 @@ namespace EvolutiveSystem_01
                     object a = myMethod.Invoke(cmdCnf, new Object[] { method.First().Name });
                 }
             }
-
             if (DateTime.TryParse(txtDateSend.Text, out DateTime result))
             {
                 telegramma.SendingTime = result;
@@ -198,7 +207,7 @@ namespace EvolutiveSystem_01
             gbActionTypeLoadDb.Visible = false;
             gbActionTypeLoadDb.Dock = DockStyle.None;
             gbSelCmd.Enabled = true;
-            pnlbtn.Enabled = true;
+                pnlbtn.Enabled = true;
         }
         private void bgtnAnnullaDb_Click(object sender, EventArgs e)
         {
@@ -206,6 +215,53 @@ namespace EvolutiveSystem_01
             gbActionTypeLoadDb.Dock = DockStyle.None;
             gbSelCmd.Enabled = true;
             pnlbtn.Enabled = true;
+        }
+        #endregion
+        #region DB Request
+        private void btnSelRqDb_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog()
+            {
+                DefaultExt = "*.xml",
+                Filter = "xml files (*.xml)|*.xml|All files (*.*)|*.*",
+                InitialDirectory = Settings.Default.LoadPathDbForCmd.Length == 0 ? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) : Settings.Default.LoadPathDbForCmd
+            };
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                txtDbRq.Text = ofd.FileName;
+                Settings.Default.LoadPathDbForCmd = ofd.FileName;
+                Settings.Default.Save();
+                Database loadedDb = DatabaseSerializer.DeserializeFromXmlFile(ofd.FileName);
+                lblRqId.Text = loadedDb.DatabaseId.ToString();
+                lblRqDbSel.Text = Path.GetFileNameWithoutExtension(Path.GetFileName(ofd.FileName));
+            }
+        }
+        private void BtnDbStructRecOk_Click(object sender, EventArgs e)
+        {
+            rtxtMonitor.Clear();
+            lblIdSel.Text = chbRqPerId.Checked ? lblId.Text : "none";
+            if (rbListOnly.Checked) rtxtMonitor.AppendText(rbListOnly.Tag.ToString());
+            if (rbStructureOnly.Checked) rtxtMonitor.AppendText(rbStructureOnly.Tag.ToString());
+            if (rbFull.Checked) rtxtMonitor.AppendText(rbFull.Tag.ToString());
+            if (chbRqPerId.Checked) 
+                lblIdSel.Text = lblRqId.Text;
+            else
+                lblDb.Text = lblRqDbSel.Text;
+            gbSelRequest.Visible = false;
+            gbSelRequest.Dock = DockStyle.None;
+            gbSelCmd.Enabled = true;
+            pnlbtn.Enabled = true;
+        }
+        private void dbStructReqAnnulla_Click(object sender, EventArgs e)
+        {
+            gbSelRequest.Visible = false;
+            gbSelRequest.Dock = DockStyle.None;
+            gbSelCmd.Enabled = true;
+            pnlbtn.Enabled = true;
+        }
+        private void chbRqPerId_CheckedChanged(object sender, EventArgs e)
+        {
+            lblRqId.Visible = chbRqPerId.Checked;
         }
         #endregion
         #region SAVE DB
@@ -226,13 +282,12 @@ namespace EvolutiveSystem_01
                 lblId.Text = loadedDb.DatabaseId.ToString();
                 lblDbSelect.Text = Path.GetFileNameWithoutExtension(Path.GetFileName(ofd.FileName));
                 txtDbSave.Text = ofd.FileName;
-
             }
         }
         private void btnOkSaveDB_Click(object sender, EventArgs e)
         {
             lblIdSel.Text = chbSavePerID.Checked ? lblId.Text : "none";
-            lblDb.Text = txtDbSave.Text;
+            lblDb.Text = lblDbSelect.Text;
             gbActionSaveDatabase.Visible = false;
             gbActionSaveDatabase.Dock = DockStyle.None;
             gbSelCmd.Enabled = true;
@@ -245,12 +300,12 @@ namespace EvolutiveSystem_01
             gbActionSaveDatabase.Visible = false;
             gbActionSaveDatabase.Dock = DockStyle.None;
         }
-        #endregion
-        #endregion
         private void chbSavePerID_CheckedChanged(object sender, EventArgs e)
         {
             lblId.Visible = chbSavePerID.Checked;
         }
+        #endregion
+        #endregion
         #region eventi di configurazione UI per comandi
         private void CmdCnf_ExecuteSaveDB(object sender, string e)
         {
@@ -292,11 +347,71 @@ namespace EvolutiveSystem_01
             telegramma.BufferDati = bufferContent;
 
         }
-
         private void CmdCnf_ExecuteCmdSync(object sender, string e)
         {
             telegramma.BufferDati = null;
         }
+        private void CmdCnf_ExecuteDBStruct(object sender, string e)
+        {
+            int DbID = 0;
+            int.TryParse(lblIdSel.Text, out DbID);
+            XElement dbIdentifierElement;
+            switch (rtxtMonitor.Text)
+            {
+                case "ListOnly":
+                    {
+                        XElement RequestDetails = new XElement("RequestDetails", rtxtMonitor.Text);
+                        XElement bufferContent = new XElement("BufferDati", RequestDetails);
+                        telegramma.BufferDati = bufferContent;
+                    }
+                    break;
+                case "StructureOnly":
+                    {
+                        if (DbID > 0)
+                        {
+                            dbIdentifierElement = new XElement("DatabaseIdentifier",
+                                                new XAttribute("Type", "Id"),
+                                                DbID.ToString());
+                        }
+                        else
+                        {
+                            string db = Path.GetFileNameWithoutExtension(Path.GetFileName(lblDb.Text));
+                            dbIdentifierElement = new XElement("DatabaseIdentifier",
+                                                            new XAttribute("Type", "Name"),
+                                                            db);
+                        }
+                        XElement RequestDetails = new XElement("RequestDetails", rtxtMonitor.Text);
+                        XElement bufferContent = new XElement("BufferDati", // Nome descrittivo, NON "BufferDati"
+                                        dbIdentifierElement,
+                                        RequestDetails);
+                        telegramma.BufferDati = bufferContent;
+                    }
+                    break;
+                case "Full":
+                    {
+                        if (DbID > 0)
+                        {
+                            dbIdentifierElement = new XElement("DatabaseIdentifier",
+                                                new XAttribute("Type", "Id"),
+                                                DbID.ToString());
+                        }
+                        else
+                        {
+                            string db = Path.GetFileNameWithoutExtension(Path.GetFileName(lblDb.Text));
+                            dbIdentifierElement = new XElement("DatabaseIdentifier",
+                                                            new XAttribute("Type", "Name"),
+                                                            db);
+                        }
+                        XElement RequestDetails = new XElement("RequestDetails", rtxtMonitor.Text);
+                        XElement bufferContent = new XElement("BufferDati", // Nome descrittivo, NON "BufferDati"
+                                        dbIdentifierElement,
+                                        RequestDetails);
+                        telegramma.BufferDati = bufferContent;
+                    }
+                    break;
+            }
+        }
+
         #endregion
         public string TxtSendData { get { return this.txtSendData; } }
     }

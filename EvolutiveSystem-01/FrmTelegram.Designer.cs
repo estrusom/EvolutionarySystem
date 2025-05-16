@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmTelegram));
             this.btnAnnullaSend = new System.Windows.Forms.Button();
             this.gbSelCmd = new System.Windows.Forms.GroupBox();
+            this.lblMonitor = new System.Windows.Forms.Label();
+            this.rtxtMonitor = new System.Windows.Forms.RichTextBox();
             this.lblIdSel = new System.Windows.Forms.Label();
             this.lblDenDbIdSel = new System.Windows.Forms.Label();
             this.lblDb = new System.Windows.Forms.Label();
@@ -64,11 +66,24 @@
             this.btnSaveDb = new System.Windows.Forms.Button();
             this.txtDbSave = new System.Windows.Forms.TextBox();
             this.lblDenSelDb = new System.Windows.Forms.Label();
+            this.gbSelRequest = new System.Windows.Forms.GroupBox();
+            this.btnSelRqDb = new System.Windows.Forms.Button();
+            this.txtDbRq = new System.Windows.Forms.TextBox();
+            this.dbStructReqAnnulla = new System.Windows.Forms.Button();
+            this.BtnDbStructRecOk = new System.Windows.Forms.Button();
+            this.rbFull = new System.Windows.Forms.RadioButton();
+            this.rbStructureOnly = new System.Windows.Forms.RadioButton();
+            this.rbListOnly = new System.Windows.Forms.RadioButton();
+            this.chbRqPerId = new System.Windows.Forms.CheckBox();
+            this.lblRqDbSel = new System.Windows.Forms.Label();
+            this.lblDenRqDbSel = new System.Windows.Forms.Label();
+            this.lblRqId = new System.Windows.Forms.Label();
             this.gbSelCmd.SuspendLayout();
             this.pnlbtn.SuspendLayout();
             this.gbCompilaBufferTx.SuspendLayout();
             this.gbActionTypeLoadDb.SuspendLayout();
             this.gbActionSaveDatabase.SuspendLayout();
+            this.gbSelRequest.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnAnnullaSend
@@ -85,6 +100,8 @@
             // 
             // gbSelCmd
             // 
+            this.gbSelCmd.Controls.Add(this.lblMonitor);
+            this.gbSelCmd.Controls.Add(this.rtxtMonitor);
             this.gbSelCmd.Controls.Add(this.lblIdSel);
             this.gbSelCmd.Controls.Add(this.lblDenDbIdSel);
             this.gbSelCmd.Controls.Add(this.lblDb);
@@ -101,10 +118,28 @@
             this.gbSelCmd.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gbSelCmd.Location = new System.Drawing.Point(0, 0);
             this.gbSelCmd.Name = "gbSelCmd";
-            this.gbSelCmd.Size = new System.Drawing.Size(738, 203);
+            this.gbSelCmd.Size = new System.Drawing.Size(818, 203);
             this.gbSelCmd.TabIndex = 36;
             this.gbSelCmd.TabStop = false;
             this.gbSelCmd.Text = "Seezione comandi e parametri di trasmissione";
+            // 
+            // lblMonitor
+            // 
+            this.lblMonitor.AutoSize = true;
+            this.lblMonitor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblMonitor.Location = new System.Drawing.Point(591, 110);
+            this.lblMonitor.Name = "lblMonitor";
+            this.lblMonitor.Size = new System.Drawing.Size(66, 18);
+            this.lblMonitor.TabIndex = 48;
+            this.lblMonitor.Text = "Monitor";
+            // 
+            // rtxtMonitor
+            // 
+            this.rtxtMonitor.Location = new System.Drawing.Point(591, 136);
+            this.rtxtMonitor.Name = "rtxtMonitor";
+            this.rtxtMonitor.Size = new System.Drawing.Size(166, 52);
+            this.rtxtMonitor.TabIndex = 47;
+            this.rtxtMonitor.Text = "";
             // 
             // lblIdSel
             // 
@@ -153,7 +188,7 @@
             this.chkbCRC.AutoSize = true;
             this.chkbCRC.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.chkbCRC.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chkbCRC.Location = new System.Drawing.Point(530, 65);
+            this.chkbCRC.Location = new System.Drawing.Point(601, 65);
             this.chkbCRC.Name = "chkbCRC";
             this.chkbCRC.Size = new System.Drawing.Size(156, 22);
             this.chkbCRC.TabIndex = 42;
@@ -197,7 +232,7 @@
             this.cmbCommand.FormattingEnabled = true;
             this.cmbCommand.Location = new System.Drawing.Point(160, 29);
             this.cmbCommand.Name = "cmbCommand";
-            this.cmbCommand.Size = new System.Drawing.Size(526, 28);
+            this.cmbCommand.Size = new System.Drawing.Size(607, 28);
             this.cmbCommand.TabIndex = 38;
             this.cmbCommand.SelectedIndexChanged += new System.EventHandler(this.cmbCommand_SelectedIndexChanged);
             // 
@@ -237,7 +272,7 @@
             this.pnlbtn.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.pnlbtn.Location = new System.Drawing.Point(0, 584);
             this.pnlbtn.Name = "pnlbtn";
-            this.pnlbtn.Size = new System.Drawing.Size(738, 62);
+            this.pnlbtn.Size = new System.Drawing.Size(818, 62);
             this.pnlbtn.TabIndex = 37;
             // 
             // btnOkSend
@@ -270,7 +305,7 @@
             this.gbCompilaBufferTx.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gbCompilaBufferTx.Location = new System.Drawing.Point(0, 400);
             this.gbCompilaBufferTx.Name = "gbCompilaBufferTx";
-            this.gbCompilaBufferTx.Size = new System.Drawing.Size(738, 184);
+            this.gbCompilaBufferTx.Size = new System.Drawing.Size(818, 184);
             this.gbCompilaBufferTx.TabIndex = 38;
             this.gbCompilaBufferTx.TabStop = false;
             this.gbCompilaBufferTx.Text = "Telegramma compilato";
@@ -281,7 +316,7 @@
             this.rtxtBuffer.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.rtxtBuffer.Location = new System.Drawing.Point(3, 18);
             this.rtxtBuffer.Name = "rtxtBuffer";
-            this.rtxtBuffer.Size = new System.Drawing.Size(732, 163);
+            this.rtxtBuffer.Size = new System.Drawing.Size(812, 163);
             this.rtxtBuffer.TabIndex = 0;
             this.rtxtBuffer.Text = "";
             // 
@@ -293,7 +328,7 @@
             this.gbActionTypeLoadDb.Controls.Add(this.txtFileDb);
             this.gbActionTypeLoadDb.Controls.Add(this.lblDenDbName);
             this.gbActionTypeLoadDb.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbActionTypeLoadDb.Location = new System.Drawing.Point(48, 213);
+            this.gbActionTypeLoadDb.Location = new System.Drawing.Point(117, 209);
             this.gbActionTypeLoadDb.Name = "gbActionTypeLoadDb";
             this.gbActionTypeLoadDb.Size = new System.Drawing.Size(659, 135);
             this.gbActionTypeLoadDb.TabIndex = 39;
@@ -361,7 +396,7 @@
             this.gbActionSaveDatabase.Controls.Add(this.txtDbSave);
             this.gbActionSaveDatabase.Controls.Add(this.lblDenSelDb);
             this.gbActionSaveDatabase.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbActionSaveDatabase.Location = new System.Drawing.Point(12, 253);
+            this.gbActionSaveDatabase.Location = new System.Drawing.Point(12, 260);
             this.gbActionSaveDatabase.Name = "gbActionSaveDatabase";
             this.gbActionSaveDatabase.Size = new System.Drawing.Size(659, 134);
             this.gbActionSaveDatabase.TabIndex = 40;
@@ -460,15 +495,155 @@
             this.lblDenSelDb.TabIndex = 43;
             this.lblDenSelDb.Text = "Database name:";
             // 
+            // gbSelRequest
+            // 
+            this.gbSelRequest.Controls.Add(this.lblRqId);
+            this.gbSelRequest.Controls.Add(this.lblRqDbSel);
+            this.gbSelRequest.Controls.Add(this.lblDenRqDbSel);
+            this.gbSelRequest.Controls.Add(this.chbRqPerId);
+            this.gbSelRequest.Controls.Add(this.btnSelRqDb);
+            this.gbSelRequest.Controls.Add(this.txtDbRq);
+            this.gbSelRequest.Controls.Add(this.dbStructReqAnnulla);
+            this.gbSelRequest.Controls.Add(this.BtnDbStructRecOk);
+            this.gbSelRequest.Controls.Add(this.rbFull);
+            this.gbSelRequest.Controls.Add(this.rbStructureOnly);
+            this.gbSelRequest.Controls.Add(this.rbListOnly);
+            this.gbSelRequest.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbSelRequest.Location = new System.Drawing.Point(39, 216);
+            this.gbSelRequest.Name = "gbSelRequest";
+            this.gbSelRequest.Size = new System.Drawing.Size(718, 144);
+            this.gbSelRequest.TabIndex = 41;
+            this.gbSelRequest.TabStop = false;
+            this.gbSelRequest.Text = "Definizione richieste info al DB";
+            this.gbSelRequest.Visible = false;
+            // 
+            // btnSelRqDb
+            // 
+            this.btnSelRqDb.Location = new System.Drawing.Point(610, 21);
+            this.btnSelRqDb.Name = "btnSelRqDb";
+            this.btnSelRqDb.Size = new System.Drawing.Size(43, 39);
+            this.btnSelRqDb.TabIndex = 50;
+            this.btnSelRqDb.Text = "...";
+            this.btnSelRqDb.UseVisualStyleBackColor = true;
+            this.btnSelRqDb.Click += new System.EventHandler(this.btnSelRqDb_Click);
+            // 
+            // txtDbRq
+            // 
+            this.txtDbRq.Location = new System.Drawing.Point(13, 21);
+            this.txtDbRq.Name = "txtDbRq";
+            this.txtDbRq.Size = new System.Drawing.Size(593, 22);
+            this.txtDbRq.TabIndex = 49;
+            // 
+            // dbStructReqAnnulla
+            // 
+            this.dbStructReqAnnulla.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.dbStructReqAnnulla.Location = new System.Drawing.Point(563, 97);
+            this.dbStructReqAnnulla.Name = "dbStructReqAnnulla";
+            this.dbStructReqAnnulla.Size = new System.Drawing.Size(90, 31);
+            this.dbStructReqAnnulla.TabIndex = 48;
+            this.dbStructReqAnnulla.Text = "Annulla";
+            this.dbStructReqAnnulla.UseVisualStyleBackColor = true;
+            this.dbStructReqAnnulla.Click += new System.EventHandler(this.dbStructReqAnnulla_Click);
+            // 
+            // BtnDbStructRecOk
+            // 
+            this.BtnDbStructRecOk.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.BtnDbStructRecOk.Location = new System.Drawing.Point(492, 97);
+            this.BtnDbStructRecOk.Name = "BtnDbStructRecOk";
+            this.BtnDbStructRecOk.Size = new System.Drawing.Size(65, 31);
+            this.BtnDbStructRecOk.TabIndex = 47;
+            this.BtnDbStructRecOk.Text = "Ok";
+            this.BtnDbStructRecOk.UseVisualStyleBackColor = true;
+            this.BtnDbStructRecOk.Click += new System.EventHandler(this.BtnDbStructRecOk_Click);
+            // 
+            // rbFull
+            // 
+            this.rbFull.AutoSize = true;
+            this.rbFull.Checked = true;
+            this.rbFull.Location = new System.Drawing.Point(274, 61);
+            this.rbFull.Name = "rbFull";
+            this.rbFull.Size = new System.Drawing.Size(63, 20);
+            this.rbFull.TabIndex = 2;
+            this.rbFull.TabStop = true;
+            this.rbFull.Tag = "Full";
+            this.rbFull.Text = "Tutto";
+            this.rbFull.UseVisualStyleBackColor = true;
+            // 
+            // rbStructureOnly
+            // 
+            this.rbStructureOnly.AutoSize = true;
+            this.rbStructureOnly.Location = new System.Drawing.Point(133, 61);
+            this.rbStructureOnly.Name = "rbStructureOnly";
+            this.rbStructureOnly.Size = new System.Drawing.Size(119, 20);
+            this.rbStructureOnly.TabIndex = 1;
+            this.rbStructureOnly.Tag = "StructureOnly";
+            this.rbStructureOnly.Text = "Solo struttura";
+            this.rbStructureOnly.UseVisualStyleBackColor = true;
+            // 
+            // rbListOnly
+            // 
+            this.rbListOnly.AutoSize = true;
+            this.rbListOnly.Location = new System.Drawing.Point(18, 61);
+            this.rbListOnly.Name = "rbListOnly";
+            this.rbListOnly.Size = new System.Drawing.Size(93, 20);
+            this.rbListOnly.TabIndex = 0;
+            this.rbListOnly.Tag = "ListOnly";
+            this.rbListOnly.Text = "Solo lista";
+            this.rbListOnly.UseVisualStyleBackColor = true;
+            // 
+            // chbRqPerId
+            // 
+            this.chbRqPerId.AutoSize = true;
+            this.chbRqPerId.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.chbRqPerId.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chbRqPerId.Location = new System.Drawing.Point(18, 107);
+            this.chbRqPerId.Name = "chbRqPerId";
+            this.chbRqPerId.Size = new System.Drawing.Size(150, 22);
+            this.chbRqPerId.TabIndex = 51;
+            this.chbRqPerId.Text = "Richiesta per ID";
+            this.chbRqPerId.UseVisualStyleBackColor = true;
+            this.chbRqPerId.CheckedChanged += new System.EventHandler(this.chbRqPerId_CheckedChanged);
+            // 
+            // lblRqDbSel
+            // 
+            this.lblRqDbSel.AutoSize = true;
+            this.lblRqDbSel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblRqDbSel.Location = new System.Drawing.Point(191, 85);
+            this.lblRqDbSel.Name = "lblRqDbSel";
+            this.lblRqDbSel.Size = new System.Drawing.Size(41, 18);
+            this.lblRqDbSel.TabIndex = 53;
+            this.lblRqDbSel.Text = "none";
+            // 
+            // lblDenRqDbSel
+            // 
+            this.lblDenRqDbSel.AutoSize = true;
+            this.lblDenRqDbSel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDenRqDbSel.Location = new System.Drawing.Point(17, 85);
+            this.lblDenRqDbSel.Name = "lblDenRqDbSel";
+            this.lblDenRqDbSel.Size = new System.Drawing.Size(175, 18);
+            this.lblDenRqDbSel.TabIndex = 52;
+            this.lblDenRqDbSel.Text = "Database selezionate:";
+            // 
+            // lblRqId
+            // 
+            this.lblRqId.AutoSize = true;
+            this.lblRqId.Location = new System.Drawing.Point(192, 107);
+            this.lblRqId.Name = "lblRqId";
+            this.lblRqId.Size = new System.Drawing.Size(19, 16);
+            this.lblRqId.TabIndex = 54;
+            this.lblRqId.Text = "...";
+            this.lblRqId.Visible = false;
+            // 
             // FrmTelegram
             // 
             this.AcceptButton = this.btnOkDb;
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnAnnullaSend;
-            this.ClientSize = new System.Drawing.Size(738, 646);
-            this.Controls.Add(this.gbActionTypeLoadDb);
+            this.ClientSize = new System.Drawing.Size(818, 646);
+            this.Controls.Add(this.gbSelRequest);
             this.Controls.Add(this.gbActionSaveDatabase);
+            this.Controls.Add(this.gbActionTypeLoadDb);
             this.Controls.Add(this.gbCompilaBufferTx);
             this.Controls.Add(this.pnlbtn);
             this.Controls.Add(this.gbSelCmd);
@@ -489,6 +664,8 @@
             this.gbActionTypeLoadDb.PerformLayout();
             this.gbActionSaveDatabase.ResumeLayout(false);
             this.gbActionSaveDatabase.PerformLayout();
+            this.gbSelRequest.ResumeLayout(false);
+            this.gbSelRequest.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -529,5 +706,19 @@
         private System.Windows.Forms.Label lblIdSel;
         private System.Windows.Forms.Label lblDenDbIdSel;
         private System.Windows.Forms.Label lblDb;
+        private System.Windows.Forms.GroupBox gbSelRequest;
+        private System.Windows.Forms.RadioButton rbFull;
+        private System.Windows.Forms.RadioButton rbStructureOnly;
+        private System.Windows.Forms.RadioButton rbListOnly;
+        private System.Windows.Forms.Button dbStructReqAnnulla;
+        private System.Windows.Forms.Button BtnDbStructRecOk;
+        private System.Windows.Forms.RichTextBox rtxtMonitor;
+        private System.Windows.Forms.Label lblMonitor;
+        private System.Windows.Forms.Button btnSelRqDb;
+        private System.Windows.Forms.TextBox txtDbRq;
+        private System.Windows.Forms.CheckBox chbRqPerId;
+        private System.Windows.Forms.Label lblRqDbSel;
+        private System.Windows.Forms.Label lblDenRqDbSel;
+        private System.Windows.Forms.Label lblRqId;
     }
 }

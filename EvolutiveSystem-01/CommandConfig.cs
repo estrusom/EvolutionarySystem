@@ -12,6 +12,7 @@ namespace EvolutiveSystem_01
         public event EventHandler<string> ExecuteCmdSync;
         public event EventHandler<string> ExecuteOpenDB;
         public event EventHandler<string> ExecuteSaveDB;
+        public event EventHandler<string> ExecuteDBStruct;
         public void CmdSync(string SomeData)
         {
             ExecuteCmdSync?.Invoke(this, SomeData);
@@ -23,6 +24,10 @@ namespace EvolutiveSystem_01
         public void CmdSaveDB(string SomeData)
         {
             ExecuteSaveDB?.Invoke(this, SomeData);
+        }
+        public void CmdStructDb(string SomeData)
+        {
+            ExecuteDBStruct?.Invoke(this, SomeData);
         }
     }
 }

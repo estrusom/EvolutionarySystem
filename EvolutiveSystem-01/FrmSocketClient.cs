@@ -128,39 +128,61 @@ namespace EvolutiveSystem_01
         }
         private void BtnCloseConnection_Click(object sender, EventArgs e)
         {
-            if (sk.isConnect)
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
             {
-                sk.CloseSocket();
+                if (sk.isConnect)
+                {
+                    sk.CloseSocket();
+                    tssComStatus.Text = "Close";
+                    tssComStatus.ForeColor = Color.Green;
+                }
+            }
+            catch (Exception ex)
+            {
+                string errMsg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                _logger.Log(LogLevel.ERROR, errMsg);
+                MessageBox.Show(errMsg, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
                 this.btnConnect.Enabled = true;
                 this.btnSend.Enabled = false;
                 this.btnCloseConnection.Enabled = false;
-                tssComStatus.Text = "Close";
-                tssComStatus.ForeColor = Color.Green;
             }
         }
         private void BtnSend_Click(object sender, EventArgs e)
         {
-            if (sk.isConnect)
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
             {
-                if (txtSendData.Text.Length > 0)
+                if (sk.isConnect)
                 {
-                    sk.SendString(txtSendData.Text);
+                    if (txtSendData.Text.Length > 0)
+                    {
+                        sk.SendString(txtSendData.Text);
 
-                    string rxData = sk.ReceiveMessage().Trim();
-                    ASCIIEncoding dencoding = new ASCIIEncoding();
-                    int init = rxData.IndexOf(SocketMessageSerialize.Base64Start) + SocketMessageSerialize.Base64Start.Length;
-                    int end = rxData.IndexOf(SocketMessageSerialize.Base64End);
-                    xmlSv = Encoding.UTF8.GetString(Convert.FromBase64String(rxData.Substring(init, end - init)));
-                    rtbBufferRx.AppendText(xmlSv + Environment.NewLine);
+                        string rxData = sk.ReceiveMessage().Trim();
+                        ASCIIEncoding dencoding = new ASCIIEncoding();
+                        int init = rxData.IndexOf(SocketMessageSerialize.Base64Start) + SocketMessageSerialize.Base64Start.Length;
+                        int end = rxData.IndexOf(SocketMessageSerialize.Base64End);
+                        xmlSv = Encoding.UTF8.GetString(Convert.FromBase64String(rxData.Substring(init, end - init)));
+                        rtbBufferRx.AppendText(xmlSv + Environment.NewLine);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Nessun dato da trasmettere", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
                 }
                 else
                 {
-                    MessageBox.Show("Nessun dato da trasmettere", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("La comunicazzione è chiusa", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
-            }
-            else
+            }catch (Exception ex)
             {
-                MessageBox.Show("La comunicazzione è chiusa", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                string errMsg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                _logger.Log(LogLevel.ERROR, errMsg);
+                MessageBox.Show(errMsg, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         private void BtnConnect_Click(object sender, EventArgs e)

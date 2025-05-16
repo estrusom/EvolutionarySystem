@@ -1,4 +1,9 @@
-﻿using AsyncSocketServer;
+﻿/*
+ * 2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database *** VER 1.0.0.1 - 25.05.16.9
+ * 2025.05.16 adesso il percorso del file lo vado a prendere dalla classe Database campo dalla classe FilePath
+ * 2025.05.16 Aggiunta handler di gestione del comando richiesta sato del database 
+ */
+using AsyncSocketServer;
 using CommandHandlers.Properties;
 using EvolutiveSystem.Core;
 using MasterLog;
@@ -92,38 +97,40 @@ namespace CommandHandlers
                 {
                     Command = command.Substring(1, command.Length - 2),
                     SendingTime = DateTime.Now,
-                    BufferDati= new XElement("SyncDetails",
-                                        new XElement("ServerTime", DateTime.UtcNow.ToString("o")), // Orario del server in formato ISO 8601
-                                        new XElement("Status", "OK")), // Esempio di stato
-                                        // Aggiungi qui altre informazioni di sincronizzazione se necessario
+                    BufferDati = new XElement("SyncDetails",
+                                new XElement("ServerTime", DateTime.UtcNow.ToString("o")), // Orario del server in formato ISO 8601
+                                new XElement("Status", "OK")), // Esempio di stato
+                                                               // Aggiungi qui altre informazioni di sincronizzazione se necessario
                     Token = asl.TokenSocket.ToString(),
                     CRC = 0
                 };
                 if (Param == null)
                 {
-                    throw (new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante."));
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
                 }
                 XElement filePathElement = Param.Element("FilePath");
                 if (filePathElement == null || string.IsNullOrWhiteSpace(filePathElement.Value))
                 {
-                    throw (new Exception("File non trovato"));
+                    throw new Exception("File non trovato");
                 }
                 string dbFilePath = filePathElement.Value;
                 Database loadedDb= DatabaseSerializer.DeserializeFromXmlFile(dbFilePath);
                 if (filePathElement == null || string.IsNullOrWhiteSpace(filePathElement.Value))
                 {
-                    throw (new Exception($"Comando OpenDb ricevuto da {asl.CallerIpAddress} ma FilePath mancante o vuoto nel BufferDati."));
+                    throw new Exception($"Comando OpenDb ricevuto da {asl.CallerIpAddress} ma FilePath mancante o vuoto nel BufferDati.");
                 }
                 if (!File.Exists(dbFilePath))
                 {
-                    throw (new Exception($"il file{dbFilePath} ricevuto da  {asl.CallerIpAddress} no è sato trovato."));
+                    throw new Exception($"il file{dbFilePath} ricevuto da  {asl.CallerIpAddress} no è sato trovato.");
                 }
+                loadedDb.FilePath = dbFilePath; //2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database ***
                 _loadedDatabases.Add(loadedDb);
 
                 XElement bufferContent = new XElement("DatabaseInfo",
                                             new XElement("FilePath", dbFilePath) // Utile per il client sapere da dove è stato caricato
                                             );
                 string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
+                _loger.Log(LogLevel.DEBUG, telegramGenerate);
                 ASCIIEncoding encoding = new ASCIIEncoding();
                 byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
                 string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
@@ -180,7 +187,7 @@ namespace CommandHandlers
                 };
                 if (Param == null)
                 {
-                    throw (new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante."));
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
                 }
 
                 // Estrai l'identificatore del database e il percorso
@@ -196,15 +203,9 @@ namespace CommandHandlers
 
                 string identifierType = dbIdentifierElement.Attribute("Type")?.Value;
                 string identifierValue = dbIdentifierElement.Value;
+                /*2025.05.16 adesso il percorso del file lo vado a prendere dalla classe Database campo dalla classe FilePath
                 string saveFilePath = filePathElement.Value;
-
-                if (string.IsNullOrWhiteSpace(saveFilePath))
-                {
-                    // _logger.LogWarning($"Comando CmdSaveDb: Percorso file salvataggio mancante.");
-                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
-                    throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} ma percorso file salvataggio mancante.");
-                }
-
+                */
                 Database databaseToSave = null;
                 if (identifierType?.Equals("Id", StringComparison.OrdinalIgnoreCase) == true && int.TryParse(identifierValue, out int dbId))
                 {
@@ -220,12 +221,31 @@ namespace CommandHandlers
                     // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
                     throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} Identificatore database non valido (Type='{identifierType}', Value='{identifierValue}').");
                 }
-
                 if (databaseToSave == null)
                 {
                     // _logger.LogWarning($"Comando CmdSaveDb: Database con identificatore '{identifierValue}' non trovato.");
                     // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
                     throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress}. Database con identificatore '{identifierValue}' non trovato sul server.");
+                }
+                string saveFilePath = databaseToSave.FilePath;
+
+                if (string.IsNullOrWhiteSpace(saveFilePath))
+                {
+                    Console.WriteLine($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} per database '{databaseToSave.DatabaseName}', ma percorso file non memorizzato.");
+                    // _logger.LogWarning($"Comando CmdSaveDb: Percorso file non memorizzato per database '{databaseToSave.DatabaseName}'.");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} per database '{databaseToSave.DatabaseName}', ma percorso file non memorizzato.database. Caricare prima il database da file.");
+                }
+
+                _loger.Log(LogLevel.INFO, $"Salvataggio database '{databaseToSave.DatabaseName}' in corso su: {saveFilePath}");
+                DatabaseSerializer.SerializeToXmlFile(databaseToSave, saveFilePath);
+                _loger.Log(LogLevel.INFO, $"Database '{databaseToSave.DatabaseName}' salvato con successo.");
+
+                if (string.IsNullOrWhiteSpace(saveFilePath))
+                {
+                    // _logger.LogWarning($"Comando CmdSaveDb: Percorso file salvataggio mancante.");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} ma percorso file salvataggio mancante.");
                 }
 
                 DatabaseSerializer.SerializeToXmlFile(databaseToSave, saveFilePath);
@@ -235,6 +255,7 @@ namespace CommandHandlers
                                         new XElement("Database", $"Db {databaseToSave.DatabaseName}caricato"),
                                         new XElement("Status", "OK")); // Esempio di stato
                 string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
+                _loger.Log(LogLevel.DEBUG, telegramGenerate);
                 ASCIIEncoding encoding = new ASCIIEncoding();
                 byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
                 string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
@@ -287,6 +308,154 @@ namespace CommandHandlers
 
                 // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
                 throw new Exception($"Errore generico durante l'elaborazione del comando CmdSaveDb: {ex.Message}");
+            }
+        }
+        /// <summary>
+        /// Handler di gestione del comando richiesta sato del database 2025.05.16
+        /// </summary>
+        /// <param name="DvCmd"></param>
+        /// <param name="Param"></param>
+        /// <param name="asl"></param>
+        public void CmdStructDb(SocketCommand DvCmd,XElement Param, AsyncSocketListener asl)
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
+            {
+                string command = checkCommand(DvCmd.CmdStructDb, DvCmd);
+                response = new SocketMessageStructure
+                {
+                    Command = command.Substring(1, command.Length - 2),
+                    SendingTime = DateTime.Now,
+                    BufferDati = new XElement("BufferDati"),
+                    Token = asl.TokenSocket.ToString(),
+                    CRC = 0
+                };
+                if (Param == null)
+                {
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
+                }
+                XElement dbIdentifierElement = Param.Element("DatabaseIdentifier");
+                XElement requestDetailsElement = Param.Element("RequestDetails"); // Opzionale
+
+                string identifierType = dbIdentifierElement?.Attribute("Type")?.Value;
+                string identifierValue = dbIdentifierElement?.Value;
+                string requestDetails = requestDetailsElement?.Value ?? "Full"; // Default a "Full" se non specificato
+
+                // --- Gestione della richiesta "ListOnly" ---
+                // Se non viene fornito un identificatore specifico E la richiesta è "ListOnly",
+                // restituiamo una lista di tutti i database caricati.
+                if (dbIdentifierElement == null && requestDetails.Equals("ListOnly", StringComparison.OrdinalIgnoreCase))
+                {
+                    _loger.Log (LogLevel.INFO, $"Comando CmdRequestDbState ricevuto da {asl.CallerIpAddress}. Richiesta lista database caricati.");
+                    // *** Usa il metodo helper normalizzato per creare la risposta della lista ***
+                    response.BufferDati = new XElement("BufferDati", CreateDatabaseListResponse(_loadedDatabases));
+                }
+                // Se la richiesta non è "ListOnly" ma manca l'identificatore, è un errore.
+                else if (dbIdentifierElement == null && !requestDetails.Equals("ListOnly", StringComparison.OrdinalIgnoreCase))
+                {
+                    // _logger.LogWarning($"Comando CmdRequestDbState: Identificatore database mancante per richiesta dettagliata.");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception($"Comando CmdRequestDbState ricevuto da {asl.CallerIpAddress} ma Identificatore database mancante per richiesta dettagliata. ");
+                }
+                Database databaseToReport = null;
+                if (identifierType?.Equals("Id", StringComparison.OrdinalIgnoreCase) == true && int.TryParse(identifierValue, out int dbId))
+                {
+                    databaseToReport = _loadedDatabases.FirstOrDefault(db => db.DatabaseId == dbId);
+                }
+                else if (identifierType?.Equals("Name", StringComparison.OrdinalIgnoreCase) == true && !string.IsNullOrWhiteSpace(identifierValue))
+                {
+                    databaseToReport = _loadedDatabases.FirstOrDefault(db => db.DatabaseName.Equals(identifierValue, StringComparison.OrdinalIgnoreCase));
+                }
+                else if (!requestDetails.Equals("ListOnly", StringComparison.OrdinalIgnoreCase))
+                {
+                    // _logger.LogWarning($"Comando CmdRequestDbState: Identificatore database non valido (Type='{identifierType}', Value='{identifierValue}').");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception($"Comando CmdRequestDbState ricevuto da {asl.CallerIpAddress}. Identificatore database non valido o tipo sconosciuto Type='{identifierType}', Value='{identifierValue}'");
+                }
+                if (databaseToReport == null && (!requestDetails.Equals("ListOnly", StringComparison.OrdinalIgnoreCase)))
+                {
+                    // _logger.LogWarning($"Comando CmdRequestDbState: Database con identificatore '{identifierValue}' non trovato.");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception ($"Comando CmdRequestDbState ricevuto da {asl.CallerIpAddress}.Database con identificatore '{identifierValue}' non trovato sul server.");
+                }
+                XElement responseBufferContent = null; // Contenuto per il BufferDati della risposta
+                if (requestDetails.Equals("Full", StringComparison.OrdinalIgnoreCase) || requestDetails.Equals("StructureOnly", StringComparison.OrdinalIgnoreCase))
+                {
+                    Database dbToSerialize = CloneDatabaseForSerialization(databaseToReport, requestDetails.Equals("StructureOnly", StringComparison.OrdinalIgnoreCase));
+                    string dbXmlContent = DatabaseSerializer.SerializeToXmlString(dbToSerialize);
+                    try
+                    {
+                        // Il risultato della serializzazione di un Database è un elemento <Database>
+                        XElement dbContentElement = XElement.Parse(dbXmlContent);
+                        // Creiamo un wrapper per il BufferDati della risposta
+                        responseBufferContent = new XElement("DatabaseStateDetails", dbContentElement);
+
+                        //response.BufferDati.Add(CreateDatabaseListResponse(_loadedDatabases));
+                        response.BufferDati.Add(responseBufferContent);
+                    }
+                    catch (Exception parseEx)
+                    {
+                        // _logger.LogError("Errore nel parsing XML del database serializzato per risposta:", parseEx);
+                        // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                        throw new Exception ($"Errore interno nella serializzazione del database per la risposta: {parseEx.Message}");
+                    }
+                }
+                else if (!requestDetails.Equals("ListOnly", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Tipo di richiesta dettagliata non supportato
+                    // _logger.LogWarning($"Comando CmdRequestDbState: Tipo di richiesta dettagliata '{requestDetails}' non supportato.");
+                    // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
+                    throw new Exception($"Comando CmdRequestDbState ricevuto da {asl.CallerIpAddress}. Tipo di richiesta dettagliata '{requestDetails}' non supportato per CmdRequestDbState.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Gestione generica degli errori
+                throw new Exception ($"Errore durante la gestione del comando CmdRequestDbState: {ex.Message}");
+                // _logger.LogError($"Errore durante la gestione del comando CmdRequestDbState:", ex);
+            }
+            string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
+            _loger.Log(LogLevel.DEBUG, telegramGenerate);
+            ASCIIEncoding encoding = new ASCIIEncoding();
+            byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+            string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+
+            asl.Send(asl.Handler, txtSendData);
+        }
+        #region private methods
+        private Database CloneDatabaseForSerialization(Database originalDb, bool structureOnly)
+        {
+            if (originalDb == null) return null;
+
+            // Serializza e deserializza per creare un clone "profondo" e rimuovere i riferimenti Parent
+            // Questo metodo sfrutta il DatabaseSerializer per creare una copia disconnessa.
+            // È un modo semplice per clonare, ma potrebbe non essere il più performante per oggetti molto grandi.
+            try
+            {
+                // Serializza l'originale in una stringa XML
+                string originalXml = DatabaseSerializer.SerializeToXmlString(originalDb);
+
+                // Deserializza la stringa XML in un nuovo oggetto Database
+                Database clonedDb = DatabaseSerializer.DeserializeFromXmlString(originalXml);
+
+                // Se richiesto solo la struttura, rimuovi i DataRecords dal clone
+                if (structureOnly && clonedDb != null && clonedDb.Tables != null)
+                {
+                    foreach (var table in clonedDb.Tables)
+                    {
+                        // Sostituisci la lista DataRecords con una nuova lista vuota
+                        table.DataRecords = new System.Collections.Generic.List<SerializableDictionary<string, object>>();
+                    }
+                }
+
+                return clonedDb;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Errore durante la clonazione del database per serializzazione: {ex.Message}");
+                // _logger.LogError("Errore durante la clonazione del database per serializzazione:", ex);
+                // Potresti voler lanciare di nuovo l'eccezione o restituire null a seconda della gestione degli errori desiderata.
+                throw new InvalidOperationException($"Impossibile clonare il database per serializzazione: {ex.Message}", ex);
             }
         }
         /// <summary>
@@ -361,5 +530,27 @@ namespace CommandHandlers
             }
             return ret;
         }
+        /// <summary>
+        /// Crea un messaggio di risposta contenente la lista dei database caricati.
+        /// Questo è un helper specifico per la risposta DbListResponse.
+        /// </summary>
+        /// <param name="originalToken">Il token del messaggio originale.</param>
+        /// <param name="databaseList">La lista dei database caricati.</param>
+        /// <returns>Un messaggio di risposta con la lista dei database.</returns>
+        private XElement CreateDatabaseListResponse(System.Collections.Generic.List<Database> databaseList)
+        {
+            // Prepara il contenuto specifico per il BufferDati della risposta
+            XElement dbListElement = new XElement("LoadedDatabases");
+            foreach (var db in databaseList)
+            {
+                dbListElement.Add(new XElement("DatabaseInfo",
+                                    new XElement("DatabaseId", db.DatabaseId),
+                                    new XElement("DatabaseName", db.DatabaseName)));
+            }
+
+            // *** Usa il metodo helper normalizzato per creare la risposta di successo ***
+            return dbListElement;
+        }
+        #endregion
     }
 }

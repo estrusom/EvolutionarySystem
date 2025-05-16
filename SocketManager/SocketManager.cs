@@ -269,13 +269,13 @@ namespace SocketManager
         {
             try
             {
-                byte[] data = new byte[1048];
+                byte[] data = new byte[65535];
                 int m = client.Receive(data);
                 return Encoding.ASCII.GetString(data);
             }
-            catch
+            catch (Exception ex)
             {
-                throw;
+                throw new Exception(ex.Message);
             }
         }
         /// <summary>
