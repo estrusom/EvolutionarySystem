@@ -1,7 +1,8 @@
 ﻿/* changelog
   2025.05.14 aggiunto campo AddToCombobox. Determina se il comando è da aggiungere alla combobox dei comandi da inviare 
   2025.05.14 *** Implementa IXmlSerializable *** 
-  2025.05.16 aggiunto il comando per richiedere lo satto del db al server
+  2025.05.16 aggiunto il comando per richiedere lo stato del db al server
+  2025.05.21 Aggiunto al serializzatore il campo MessageType
  */
 using MessaggiErrore;
 using SocketManagerInfo.Properties;
@@ -39,12 +40,28 @@ namespace SocketManagerInfo
         [XmlElement("Command")]
         public string Command { get; set; }
 
+        /// <summary>
+        /// Type of message (Tipo di messaggio). Utilizzato principalmente per le notifiche autonome Server -> UI.
+        /// Esempi: "Info", "Warning", "Error"
+        /// </summary>
+        [XmlElement("MessageType")] // *** Nuovo: Specifica il nome dell'elemento XML per il tipo di messaggio ***
+        public string MessageType { get; set; } // Tipo di messaggio come stringa
+
+        /// <summary>
+        /// Sending date (Orario di invio).
+        /// </summary>
         [XmlElement("SendingTime")]
         public DateTime SendingTime { get; set; }
 
+        /// <summary>
+        /// Token univoco per correlare richieste e risposte, o identificare una notifica.
+        /// </summary>
         [XmlElement("Token")]
         public string Token { get; set; }
 
+        /// <summary>
+        /// CRC (Cyclic Redundancy Check) per la verifica dell'integrità (uso futuro).
+        /// </summary>
         [XmlElement("CRC")]
         public int CRC { get; set; }
 
@@ -68,9 +85,10 @@ namespace SocketManagerInfo
         public SocketMessageStructure() { }
 
         // Costruttore di esempio (opzionale)
-        public SocketMessageStructure(string command, XElement bufferDati, string token = null, int crc = 0)
+        public SocketMessageStructure(string command, string messageType, XElement bufferDati, string token = null, int crc = 0)
         {
             Command = command;
+            MessageType = messageType; //2025.05.21
             SendingTime = DateTime.UtcNow;
             BufferDati = bufferDati;
             Token = token ?? Guid.NewGuid().ToString(); // Genera un token se non fornito
@@ -102,6 +120,12 @@ namespace SocketManagerInfo
             if (reader.IsStartElement("Command"))
             {
                 Command = reader.ReadElementContentAsString();
+            }
+
+            // Legge <MessageType>
+            if (reader.IsStartElement("MessageType"))
+            {
+                MessageType = reader.ReadElementContentAsString();
             }
 
             // Legge <SendingTime>
@@ -151,6 +175,9 @@ namespace SocketManagerInfo
             // Scrive <Command>
             writer.WriteElementString("Command", Command);
 
+            // Scrive <MessageType>
+            writer.WriteElementString("MessageType", MessageType); //2025.05.21 Aggiunto al serializzatore il campo MessageType
+
             // Scrive <SendingTime>
             writer.WriteElementString("SendingTime", SendingTime.ToString("o")); // Formato ISO 8601
 
@@ -182,7 +209,7 @@ namespace SocketManagerInfo
     /// <summary>
     /// Classe contenente le funzioni per serializzare e de serializzare la struttura di comunicazione fra client e server
     /// </summary>
-    public static class SocketMessageSerialize
+    public static class SocketMessageSerializer
     {
         public static string SerializeUTF8(SocketMessageStructure messageStructure)
         {
@@ -620,7 +647,41 @@ namespace SocketManagerInfo
         #endregion
 
     }
-    public class SemanticServerInteractionCommands
+    /// <summary>
+    /// Classe per la definizione dei custom attribute per i messaggi tricevuti dal socket semantico
+    /// </summary>
+    public class MessageAttribute: System.Attribute
+    {
+        /// <summary>
+        /// Defines the name of the command
+        /// </summary>
+        public string Description { get; set; }
+        /// <summary>
+        /// If 0, Command requires token control.
+        /// If 1, the command must acquire the token for managing the concurrency of the socket server.
+        /// if 2, The command does not support tokens.
+        /// </summary>
+        public byte TockenManaging { get; set; } //02.04.2021 gestione accesso concorrente alla tavoletta 
+    }
+    /// <summary>
+    /// Classe contenente la lista dei messaggi che posso ricevere da scoket semantic
+    /// </summary>
+    public class SocketMessage
+    {
+        private const char stx = '\u0002';
+        private const char etx = '\u0003';
+        private const string eof = "<eof>";
+        private string msg00 = "Info";
+        private string msg01 = "Warning";
+        private string msg02 = "Error";
+        [MessageAttribute(Description = "Informazioni provenienti dal server semantico", TockenManaging = 1)]
+        public string Info { get { return this.msg00; } }
+        [MessageAttribute(Description = "Avvisi provenienti dal server semantico", TockenManaging = 1)]
+        public string Warning { get { return this.msg01; } }
+        [MessageAttribute(Description = "Errori occorsi nel server semantico", TockenManaging = 1)]
+        public string Error { get { return this.msg02; } }
+    }
+    public class SockeClientAddress
     {
 
     }

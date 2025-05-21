@@ -423,6 +423,8 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "FrmEvolutiveSystem";
             this.Text = "Evolutive DB - test";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FrmEvolutiveSystem_FormClosing);
+            this.Load += new System.EventHandler(this.FrmEvolutiveSystem_Load);
             this.panelCommands.ResumeLayout(false);
             this.gbSocketServer.ResumeLayout(false);
             this.gbServiceManager.ResumeLayout(false);

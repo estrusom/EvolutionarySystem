@@ -1,4 +1,5 @@
-﻿using EvolutiveSystem.UI.Forms;
+﻿using AsyncSocketServer;
+using EvolutiveSystem.UI.Forms;
 using EvolutiveSystem_01.Properties;
 using MasterLog;
 using MessaggiErrore;
@@ -25,16 +26,19 @@ namespace EvolutiveSystem_01
 {
     public partial class FrmSocketClient : Form
     {
+        private AsyncSocketListener asl;
         private Logger _logger;
         private SocketClient sk;
         private ToolTip toolTip;
         string xmlSv = "";
-        public FrmSocketClient(Logger logger)
+        public FrmSocketClient(Logger logger, AsyncSocketListener Asl)
         {
             InitializeComponent();
+            this.asl = Asl;
             this._logger = logger;
             sk = new SocketClient(_logger);
         }
+        #region form events
         private void FrmSocketClient_Load(object sender, EventArgs e)
         {
             #region configura bottoni
@@ -88,7 +92,6 @@ namespace EvolutiveSystem_01
             this.btnSend.Enabled = false;
             this.btnCloseConnection.Enabled = false;
         }
-
         private void FrmSocketClient_FormClosing(object sender, FormClosingEventArgs e)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
@@ -110,6 +113,7 @@ namespace EvolutiveSystem_01
                 }
             }
         }
+        #endregion
         #region buttons events
         private void BtnAttrezzi_Click(object sender, EventArgs e)
         {
@@ -118,7 +122,7 @@ namespace EvolutiveSystem_01
         }
         private void BtnCommand_Click(object sender, EventArgs e)
         {
-            FrmTelegram setTelegram = new FrmTelegram();
+            FrmTelegram setTelegram = new FrmTelegram(asl);
             setTelegram.ShowDialog();
             if (setTelegram.DialogResult == DialogResult.OK)
             {
@@ -161,11 +165,11 @@ namespace EvolutiveSystem_01
                     if (txtSendData.Text.Length > 0)
                     {
                         sk.SendString(txtSendData.Text);
-
+                        
                         string rxData = sk.ReceiveMessage().Trim();
                         ASCIIEncoding dencoding = new ASCIIEncoding();
-                        int init = rxData.IndexOf(SocketMessageSerialize.Base64Start) + SocketMessageSerialize.Base64Start.Length;
-                        int end = rxData.IndexOf(SocketMessageSerialize.Base64End);
+                        int init = rxData.IndexOf(SocketMessageSerializer.Base64Start) + SocketMessageSerializer.Base64Start.Length;
+                        int end = rxData.IndexOf(SocketMessageSerializer.Base64End);
                         xmlSv = Encoding.UTF8.GetString(Convert.FromBase64String(rxData.Substring(init, end - init)));
                         rtbBufferRx.AppendText(xmlSv + Environment.NewLine);
                     }
@@ -224,7 +228,7 @@ namespace EvolutiveSystem_01
         {
             if (xmlSv.Length > 0)
             {
-                SocketMessageStructure Telegram = SocketMessageSerialize.DeserializeUTF8(xmlSv);
+                SocketMessageStructure Telegram = SocketMessageSerializer.DeserializeUTF8(xmlSv);
                 richTextBoxDebug.AppendText(Environment.NewLine);
                 richTextBoxDebug.AppendText("********************************************************" + Environment.NewLine);
                 richTextBoxDebug.AppendText(string.Format("Command: {0}", Telegram.Command) + Environment.NewLine);
@@ -285,6 +289,5 @@ namespace EvolutiveSystem_01
         }
 
         #endregion
-
     }
 }

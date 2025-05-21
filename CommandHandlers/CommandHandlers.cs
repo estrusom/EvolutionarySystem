@@ -2,14 +2,17 @@
  * 2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database *** VER 1.0.0.1 - 25.05.16.9
  * 2025.05.16 adesso il percorso del file lo vado a prendere dalla classe Database campo dalla classe FilePath
  * 2025.05.16 Aggiunta handler di gestione del comando richiesta sato del database 
+ * 2025.05.19 Aggiunta la comunicazione di IP Address e IP Port per il client asincrono
  */
 using AsyncSocketServer;
 using CommandHandlers.Properties;
 using EvolutiveSystem.Core;
 using MasterLog;
 using MessaggiErrore;
+using SocketManager;
 using SocketManagerInfo;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -26,6 +29,7 @@ namespace CommandHandlers
 {
     public partial class ClsCommandHandlers
     {
+        // private readonly ConcurrentDictionary<string, string> _connectedUiEndpoints;
         private const string prefisso = "<CommandHandlers>";
         private Logger _loger = null;
         private string lastCmdExec = "";
@@ -40,31 +44,111 @@ namespace CommandHandlers
         {
             _loger = Log;
         }
+        public  ClsCommandHandlers(Logger Log, ConcurrentDictionary<string, string> connectedUiEndpoints)
+        {
+            _loger = Log;
+            //_connectedUiEndpoints = connectedUiEndpoints;
+        }
         /// <summary>
+        /// 2025.05.19 Aggiunta la comunicazione di IP Address e IP Port per il client asincrono
         /// Controllo esistenze e connessione stabile col server socket
         /// </summary>
         /// <param name="DvCmd">comando da eseguire</param>
         /// <param name="Param">parametri da aggiungere al campo data della classse SocketMessageStructure</param>
         /// <param name="asl">Riferimenti al socket server</param>
         /// <exception cref="Exception"></exception>
-        public void CmdSync(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl)
+        public void CmdSync(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl, ConcurrentDictionary<string, SemanticClientSocket> connectedUiEndpoints)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            string uiIpAddress = null;
+            int uiPort = 0;
+            string uiEndpointKey = "N/A:N/A"; // Valore di default in caso di errore di parsing
             try
             {
+                if (Param == null)
+                {
+                    throw new Exception($"Comando CmdSync ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
+                }
+                XElement UiIpAddressElement = Param.Element("UiIpAddress");
+                if (UiIpAddressElement == null || string.IsNullOrWhiteSpace(UiIpAddressElement.Value))
+                {
+                    throw new Exception("IP server socket non trovato");
+                }
+                XElement UiPortElement = Param.Element("UiPort");
+                if (UiPortElement== null || string.IsNullOrWhiteSpace(UiIpAddressElement.Value))
+                {
+                    throw new Exception("IP port socket non trovato");
+                }
+
+
+                uiIpAddress = UiIpAddressElement.Value;
+                if (!int.TryParse(UiPortElement.Value, out uiPort)) // Usa TryParse
+                {
+                    Console.WriteLine($"Server Error: Formato porta UI non valido nel BufferDati di CmdSync ricevuto: {UiPortElement.Value}");
+                    // eventLog1.WriteEntry($"Formato porta UI non valido nel BufferDati di CmdSync ricevuto: {UiPortElement.Value}", EventLogEntryType.Warning);
+                    throw new Exception($"Formato porta non valido: {UiPortElement.Value}"); // Messaggio di errore più specifico
+                }
                 string command = checkCommand(DvCmd.CmdSync, DvCmd);
+
+                uiEndpointKey = $"{uiIpAddress}:{uiPort}";
+                SemanticClientSocket clientSocket = new SemanticClientSocket(uiIpAddress, uiPort, this._loger);
+                bool connected = Task.Run(() => clientSocket.ConnectAsync()).Result; // Tenta la connessione asincrona
+                string addedstatus = "";
+                if (connected)
+                {
+                    bool added = connectedUiEndpoints.TryAdd(uiEndpointKey, clientSocket); // Chiave e Valore sono la stringa dell'endpoint
+                    addedstatus = "";
+                    if (added)
+                    {
+                        // L'aggiunta ha avuto successo: la chiave "IP:Porta" non esisteva.
+                        // Questo è un nuovo endpoint UI che si sta sincronizzando e registrando per le notifiche.
+                        // addedstatus= string.Format($"Server: Endpoint UI '{uiEndpointKey}' added successfully to dictionary for Connect-on-Demand notifications.");
+                        addedstatus = "Chiave aggiunta";
+                        // eventLog1.WriteEntry($"Endpoint UI '{uiEndpointKey}' aggiunto a dictionary.", EventLogEntryType.Information);
+
+                        // *** NOTA: Per il modello Connect-on-Demand, NON creiamo un SemanticClientSocket qui. ***
+                        // *** La creazione del SemanticClientSocket avverrà al momento dell'invio della notifica. ***
+
+                    }
+                    else
+                    {
+                        // L'aggiunta è fallita: la chiave "IP:Porta" esisteva già nella dictionary.
+                        // Questo significa che il server ha già registrato un client UI con questo endpoint per le notifiche.
+                        // Assumiamo che sia la stessa UI che si sta risincronizzando o che sia già nota.
+                        //addedstatus = string.Format($"Server: Endpoint UI '{uiEndpointKey}' already exists in the dictionary for Connect-on-Demand notifications. No new entry added.");
+                        string ping = asl.Ping(asl.CallerIpAddress);
+                        addedstatus = "Chiave già presente";
+                        // eventLog1.WriteEntry($"Endpoint UI '{uiEndpointKey}' già registrato.", EventLogEntryType.Information);
+
+                        // Non c'è un'istanza di client socket da smaltire in questo modello, perché non l'abbiamo creata qui.
+                        //clientSocket.Disconnect();
+                        connectedUiEndpoints.TryRemove(uiEndpointKey, out SemanticClientSocket tryRemoveSocket);
+                        added = connectedUiEndpoints.TryAdd(uiEndpointKey, clientSocket);
+                    }
+                }
+                else
+                {
+                    clientSocket.Disconnect();
+                }
+
                 response = new SocketMessageStructure
                 {
                     Command = command.Substring(1, command.Length - 2),
                     SendingTime = DateTime.Now,
-                    BufferDati = null,
+                    BufferDati = new XElement("BufferDati",
+                    new XElement("TCPIP",
+                    new XElement("ipAddress", uiIpAddress),
+                    new XElement("ipPort", uiPort.ToString()),
+                    new XElement("Stato", addedstatus))),
                     Token = asl.TokenSocket.ToString(),
                     CRC = 0
                 };
-                string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
+
+                string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
                 ASCIIEncoding encoding = new ASCIIEncoding();
                 byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
-                string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
                 asl.Send(asl.Handler, txtSendData);
             }
             catch (Exception ex)
@@ -90,20 +174,11 @@ namespace CommandHandlers
         public void CmdOpenDB(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            string txtSendData = "";
             try
             {
                 string command = checkCommand(DvCmd.CmdOpenDB, DvCmd);
-                response = new SocketMessageStructure
-                {
-                    Command = command.Substring(1, command.Length - 2),
-                    SendingTime = DateTime.Now,
-                    BufferDati = new XElement("SyncDetails",
-                                new XElement("ServerTime", DateTime.UtcNow.ToString("o")), // Orario del server in formato ISO 8601
-                                new XElement("Status", "OK")), // Esempio di stato
-                                                               // Aggiungi qui altre informazioni di sincronizzazione se necessario
-                    Token = asl.TokenSocket.ToString(),
-                    CRC = 0
-                };
+                
                 if (Param == null)
                 {
                     throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
@@ -114,7 +189,7 @@ namespace CommandHandlers
                     throw new Exception("File non trovato");
                 }
                 string dbFilePath = filePathElement.Value;
-                Database loadedDb= DatabaseSerializer.DeserializeFromXmlFile(dbFilePath);
+                Database loadedDb = DatabaseSerializer.DeserializeFromXmlFile(dbFilePath);
                 if (filePathElement == null || string.IsNullOrWhiteSpace(filePathElement.Value))
                 {
                     throw new Exception($"Comando OpenDb ricevuto da {asl.CallerIpAddress} ma FilePath mancante o vuoto nel BufferDati.");
@@ -124,16 +199,41 @@ namespace CommandHandlers
                     throw new Exception($"il file{dbFilePath} ricevuto da  {asl.CallerIpAddress} no è sato trovato.");
                 }
                 loadedDb.FilePath = dbFilePath; //2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database ***
-                _loadedDatabases.Add(loadedDb);
 
-                XElement bufferContent = new XElement("DatabaseInfo",
-                                            new XElement("FilePath", dbFilePath) // Utile per il client sapere da dove è stato caricato
-                                            );
-                string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
-                _loger.Log(LogLevel.DEBUG, telegramGenerate);
-                ASCIIEncoding encoding = new ASCIIEncoding();
-                byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
-                string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                Database existingDbById = _loadedDatabases.FirstOrDefault(db => db.DatabaseId == loadedDb.DatabaseId);
+                Database existingDbByName = _loadedDatabases.FirstOrDefault(db => db.DatabaseName.Equals(loadedDb.DatabaseName, StringComparison.OrdinalIgnoreCase));
+                if (existingDbById != null || existingDbByName != null)
+                {
+                    string conflictMessage = $"Database con ID {loadedDb.DatabaseId} ('{loadedDb.DatabaseName}') è già caricato sul server (conflitto per ID o Nome).";
+                    throw new Exception(conflictMessage);
+                }
+                else
+                {
+                    _loadedDatabases.Add(loadedDb);
+
+                    response = new SocketMessageStructure
+                    {
+                        Command = command.Substring(1, command.Length - 2),
+                        SendingTime = DateTime.Now,
+                        BufferDati = new XElement("BufferDati",
+                                                new XElement("DatabaseInfo",
+                                                new XElement("DatabaseId", loadedDb.DatabaseId), // Orario del server in formato ISO 8601
+                                                new XElement("DatabaseName", loadedDb.DatabaseName),
+                                                new XElement("FilePath", dbFilePath))), // Esempio di stato
+                                                                                        // Aggiungi qui altre informazioni di sincronizzazione se necessario
+                                                                                        // Aggiungi qui altre informazioni di sincronizzazione se necessario
+                        Token = asl.TokenSocket.ToString(),
+                        CRC = 0
+                    };
+                    string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                    _loger.Log(LogLevel.DEBUG, telegramGenerate);
+                    ASCIIEncoding encoding = new ASCIIEncoding();
+                    byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                    //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                    txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                }
+
+                    
                 asl.Send(asl.Handler, txtSendData);
 
             }
@@ -254,12 +354,12 @@ namespace CommandHandlers
                                         new XElement("ServerTime", DateTime.UtcNow.ToString("o")), // Orario del server in formato ISO 8601
                                         new XElement("Database", $"Db {databaseToSave.DatabaseName}caricato"),
                                         new XElement("Status", "OK")); // Esempio di stato
-                string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
+                string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
                 _loger.Log(LogLevel.DEBUG, telegramGenerate);
                 ASCIIEncoding encoding = new ASCIIEncoding();
                 byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
-                string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
-
+                //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
                 asl.Send(asl.Handler, txtSendData);
             }
 
@@ -414,12 +514,12 @@ namespace CommandHandlers
                 throw new Exception ($"Errore durante la gestione del comando CmdRequestDbState: {ex.Message}");
                 // _logger.LogError($"Errore durante la gestione del comando CmdRequestDbState:", ex);
             }
-            string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
+            string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
             _loger.Log(LogLevel.DEBUG, telegramGenerate);
             ASCIIEncoding encoding = new ASCIIEncoding();
             byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
-            string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
-
+            //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+            string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
             asl.Send(asl.Handler, txtSendData);
         }
         #region private methods

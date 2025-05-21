@@ -6,10 +6,13 @@
 /* changelog
  25.05.14 nel form FrmTelegram è stata aggiunto una combobox da cui scegliere il comando da generare
 */
+using AsyncSocketServer;
 using EvolutiveSystem;
 using EvolutiveSystem.Core;
 using EvolutiveSystem_01.Properties;
 using MasterLog;
+using MessaggiErrore;
+using SocketManagerInfo;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -19,11 +22,16 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.ServiceProcess;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using ToolTip = System.Windows.Forms.ToolTip;
 
@@ -31,7 +39,14 @@ namespace EvolutiveSystem_01
 {
     public partial class FrmEvolutiveSystem : Form
     {
+        #region istanza classi socket server
+        private AsyncSocketListener asl;
+        protected AsyncSocketThread scktThrd;
+        private SocketMessageStructure response = null;
+        protected Thread thSocket;
+        #endregion
         private Logger _logger;
+        protected Mutex SyncMtxLogger = new Mutex();
         private int swDebug = 0;
         protected string _path = "";
         private string _serviceName = "SemanticProcessor";
@@ -43,13 +58,25 @@ namespace EvolutiveSystem_01
         private ToolTip toolTip;
         public FrmEvolutiveSystem()
         {
-            InitializeComponent();
-            swDebug = Convert.ToInt32(ConfigurationManager.AppSettings["DebugLev"]);
-            _path = ConfigurationManager.AppSettings["FolderLOG"];
-            _logger = new Logger(_path, "EvolutiveSystem_01");
-            _logger.SwLogLevel = swDebug;
-            _logger.Log(LogLevel.INFO, string.Format("Log path:{0}", _logger.GetPercorsoCompleto()));
-            this.InitializeCustomLogic();
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
+            {
+                InitializeComponent();
+                swDebug = Convert.ToInt32(ConfigurationManager.AppSettings["DebugLev"]);
+                _path = ConfigurationManager.AppSettings["FolderLOG"];
+                _logger = new Logger(_path, "UIEvSystem", SyncMtxLogger);
+                _logger.SwLogLevel = swDebug;
+                _logger.Log(LogLevel.INFO, string.Format("Log path:{0}", _logger.GetPercorsoCompleto()));
+                this.InitializeCustomLogic();
+                this.StartServerSocket();
+                this.StartThread();
+            }
+            catch (Exception ex)
+            {
+                string errMsg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                _logger.Log(LogLevel.ERROR, errMsg);
+                MessageBox.Show(errMsg, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
         #region private methods
         /// <summary>
@@ -656,7 +683,6 @@ namespace EvolutiveSystem_01
             // dgvDataRecords.UserAddedRow += DgvDataRecords_UserAddedRow; 06/05/25 21:25
             // dgvDataRecords.UserDeletedRow += dgvDataRecords_UserDeletedRow;
         }
-
         /// <summary>
         /// Configura le colonne per un DataGridView che mostra i *dati* dei record.
         /// Le colonne corrispondono ai nomi dei campi della tabella.
@@ -741,55 +767,6 @@ namespace EvolutiveSystem_01
             // dgv.CellFormatting += dgvDataRecords_CellFormatting;
             // dgv.CellParsing += dgvDataRecords_CellParsing;
         }
-        /*
-        /// <summary>
-        /// Popola un DataGridView con i *dati* (record) forniti.
-        /// </summary>
-        /// <param name="dgv">Il DataGridView da popolare.</param>
-        /// <param name="dataRecords">La lista di record da visualizzare (List<Dictionary<string, object>>).</param>
-        private void PopulateDataRecordsDataGridView(DataGridView dgv, List<Dictionary<string, object>> dataRecords)
-        {
-            if (dgv == null || dataRecords == null) return;
-
-            // Usa un BindingList per permettere al DataGridView di rilevare automaticamente le modifiche
-            // BindingList<Dictionary<string, object>> non funziona direttamente per il data binding automatico
-            // delle colonne con DataPropertyName.
-            // Un DataTable è spesso più adatto per legare List<Dictionary<string, object>> a un DataGridView.
-
-            DataTable dt = new DataTable();
-
-            // Crea le colonne del DataTable in base ai campi della tabella (se non già fatto)
-            if (dgv.Columns.Count > 0 && dt.Columns.Count == 0)
-            {
-                foreach (DataGridViewColumn dgvCol in dgv.Columns)
-                {
-                    dt.Columns.Add(dgvCol.Name, typeof(object)); // Usa object per flessibilità, gestisci tipi specifici in CellFormatting/Parsing
-                }
-            }
-
-            // Popola il DataTable con i dati dai record
-            foreach (var record in dataRecords)
-            {
-                DataRow row = dt.NewRow();
-                foreach (var field in record)
-                {
-                    // Assicurati che la colonna esista prima di assegnare il valore
-                    if (dt.Columns.Contains(field.Key))
-                    {
-                        row[field.Key] = field.Value ?? DBNull.Value; // Gestisci valori null
-                    }
-                }
-                dt.Rows.Add(row);
-            }
-
-            dgv.DataSource = dt; // Lega il DataTable al DataGridView
-
-            // *** Dovrai gestire gli eventi CellFormatting e CellParsing del DataGridView
-            // *** per convertire correttamente i tipi di dati tra object e la visualizzazione/editing.
-            // dgv.CellFormatting += dgvDataRecords_CellFormatting;
-            // dgv.CellParsing += dgvDataRecords_CellParsing;
-        }
-        */
         /// <summary>
         /// Evidenzia un campo specifico nella ListView (se presente).
         /// Per evidenziare la riga delle proprietà del campo selezionato.
@@ -880,6 +857,222 @@ namespace EvolutiveSystem_01
                 }
             }
             return null;
+        }
+        #region methods per socket server
+        /// <summary>
+        /// Enabling the server socket
+        /// </summary>
+        private void StartServerSocket()
+        {
+            asl = new AsyncSocketListener(ConfigurationManager.AppSettings["RemotePortList"], _logger);
+            asl.Echo = false;
+            asl.SwDebug = swDebug;
+            asl.DataFromSocket += Asl_DataFromSocket;
+            asl.ErrorFromSocket += Asl_ErrorFromSocket;
+            asl.TokenSocket = 0x7FFFFFFF;
+        }
+        /// <summary>
+        /// Avvio thread per server socket asincrono
+        /// </summary>
+        private void StartThread()
+        {
+            scktThrd = new AsyncSocketThread();
+            scktThrd.Log = _logger;
+            scktThrd.AsyncSocketListener = asl;
+            scktThrd.Interval = 100;
+            thSocket = new Thread(scktThrd.AsyncSocket);
+        }
+        /// <summary>
+        /// Metodo che viene eseguito sul thread della UI per mostrare il contenuto del BufferDati
+        /// in una MessageBox.
+        /// </summary>
+        /// <param name="message">L'oggetto SocketMessageStructure ricevuto.</param>
+        private string MessageFromSocket(SocketMessageStructure message)
+        {
+            // *** Questo codice viene eseguito sul thread della UI! È sicuro aggiornare i controlli UI qui. ***
+            string messageText = "";
+            if (message != null)
+            {
+                string bufferContent = "BufferDati è nullo o vuoto.";
+                if (message.BufferDati != null)
+                {
+                    // Converti l'XElement BufferDati in una stringa per mostrarlo
+                    // Puoi usare ToString() per ottenere la rappresentazione XML dell'elemento e del suo contenuto.
+                    bufferContent = message.BufferDati.ToString(SaveOptions.DisableFormatting); // Disabilita formattazione per stringa compatta
+                    // O ToString(SaveOptions.None) per una stringa indentata e leggibile
+                }
+
+                string messageType = message.MessageType ?? "N/A"; // Usa MessageType se disponibile
+                string command = message.Command ?? "N/A"; // Usa Command se disponibile
+                string token = message.Token ?? "N/A"; // Usa Token se disponibile
+
+                // Costruisci il messaggio da mostrare nella MessageBox
+                messageText = $"Messaggio Ricevuto:\n" +
+                                        $"- Tipo: {messageType}\n" +
+                                        $"- Comando: {command}\n" +
+                                        $"- Token: {token}\n" +
+                                        $"- BufferDati:\n{bufferContent}";
+
+                // Mostra la MessageBox (questa operazione deve avvenire sul thread della UI)
+                
+
+                // TODO: Qui potresti anche aggiungere la logica per processare il messaggio ricevuto
+                // in base al suo MessageType (Info, Warning, Error) o Command,
+                // aggiornando l'area di monitoraggio o altri controlli UI.
+                // Esempio: AppendToMonitor($"[{messageType}] {message.BufferDati?.Value}"); // Se vuoi solo il valore testuale nel monitor
+                // O una logica di dispatching più complessa...
+            }
+            return messageText;
+        }
+        #endregion
+        #region method gestione scm
+        // --- Metodo Helper per ottenere l'istanza di ServiceController ---
+        /// <summary>
+        /// Recupera l'istanza di ServiceController per il servizio specificato.
+        /// </summary>
+        /// <param name="serviceName">Il nome del servizio Windows.</param>
+        /// <returns>L'oggetto ServiceController, o null se il servizio non è trovato.</returns>
+        private ServiceController GetServiceController(string serviceName)
+        {
+            try
+            {
+                // Ottiene tutti i servizi installati sul computer locale
+                ServiceController[] scServices = ServiceController.GetServices();
+
+                // Cerca il servizio con il nome specificato
+                var service = scServices.FirstOrDefault(sc => sc.ServiceName == serviceName);
+
+                return service;
+            }
+            catch (Exception ex)
+            {
+                // Gestisci eventuali errori (es. permessi insufficienti)
+                AppendToMonitor($"Errore nel recuperare ServiceController per '{serviceName}': {ex.Message}");
+                UpdateStatus($"Errore ServiceController: {ex.Message}");
+                return null;
+            }
+        }
+        // --- Metodo per aggiornare lo stato di abilitazione dei pulsanti di controllo servizio ---
+        /// <summary>
+        /// Aggiorna lo stato di abilitazione dei pulsanti Start, Pause, Stop
+        /// in base allo stato corrente del servizio Windows.
+        /// </summary>
+        private void UpdateServiceControlButtonsState()
+        {
+            // Assicurati che i pulsanti esistano nel designer
+            if (btnServiceStart == null || btnServicePause == null || btnServiceStop == null)
+            {
+                // Controlli non ancora inizializzati o non presenti
+                return;
+            }
+
+            ServiceController service = GetServiceController(_serviceName);
+
+            // Se il servizio non è trovato o ci sono errori, disabilita tutto
+            if (service == null)
+            {
+                btnServiceStart.Enabled = false;
+                btnServicePause.Enabled = false;
+                btnServiceStop.Enabled = false;
+                UpdateStatus($"Servizio '{_serviceName}' non trovato.");
+                return;
+            }
+
+            // Aggiorna lo stato dei pulsanti in base allo stato del servizio
+            switch (service.Status)
+            {
+                case ServiceControllerStatus.Running:
+                    btnServiceStart.Enabled = false; // Già avviato
+                    btnServicePause.Enabled = service.CanPauseAndContinue; // Abilita pausa solo se supportata
+                    btnServiceStop.Enabled = true; // Può essere fermato
+                    UpdateStatus($"Servizio '{_serviceName}' in esecuzione.");
+                    break;
+                case ServiceControllerStatus.Stopped:
+                    btnServiceStart.Enabled = true; // Può essere avviato
+                    btnServicePause.Enabled = false; // Non può essere messo in pausa
+                    btnServiceStop.Enabled = false; // Già fermo
+                    UpdateStatus($"Servizio '{_serviceName}' fermo.");
+                    break;
+                case ServiceControllerStatus.Paused:
+                    btnServiceStart.Enabled = false; // Non può essere avviato (è in pausa)
+                    btnServicePause.Enabled = service.CanPauseAndContinue; // Può essere ripreso se supportato
+                    btnServiceStop.Enabled = true; // Può essere fermato
+                    UpdateStatus($"Servizio '{_serviceName}' in pausa.");
+                    break;
+                case ServiceControllerStatus.StartPending:
+                case ServiceControllerStatus.StopPending:
+                case ServiceControllerStatus.ContinuePending:
+                case ServiceControllerStatus.PausePending:
+                    // Durante le transizioni, disabilita tutti i pulsanti per evitare operazioni concorrenti
+                    btnServiceStart.Enabled = false;
+                    btnServicePause.Enabled = false;
+                    btnServiceStop.Enabled = false;
+                    UpdateStatus($"Servizio '{_serviceName}' in transizione: {service.Status}");
+                    break;
+                default:
+                    // Stato sconosciuto o errore
+                    btnServiceStart.Enabled = false;
+                    btnServicePause.Enabled = false;
+                    btnServiceStop.Enabled = false;
+                    UpdateStatus($"Servizio '{_serviceName}' stato sconosciuto: {service.Status}");
+                    break;
+            }
+        }
+        /// <summary>
+        /// Verifica se l'applicazione corrente è in esecuzione con privilegi amministrativi.
+        /// </summary>
+        /// <returns>True se l'applicazione è amministratore, altrimenti False.</returns>
+        private bool IsRunningAsAdministrator()
+        {
+            // Ottiene l'identità Windows dell'utente corrente.
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            // Crea un oggetto WindowsPrincipal basato sull'identità.
+            WindowsPrincipal principal = new WindowsPrincipal(identity);
+
+            // Controlla se l'utente è membro del gruppo Administrators.
+            // Questo è il modo standard per verificare i privilegi amministrativi su Windows.
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
+        }
+        #endregion
+        #endregion
+        #region form events
+        private void FrmEvolutiveSystem_Load(object sender, EventArgs e)
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
+            {
+                thSocket.Start();
+            }
+            catch (Exception ex)
+            {
+                string errMsg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                _logger.Log(LogLevel.ERROR, errMsg);
+                MessageBox.Show(errMsg, "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private void FrmEvolutiveSystem_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
+            {
+                scktThrd.StopThread = true;
+                asl.CloseServerSocket(3);
+                asl.allDone.Reset();
+            }
+            catch (Exception ex)
+            {
+                string errMsg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                _logger.Log(LogLevel.ERROR, errMsg);
+            }
+            /*
+            XElement bufferDatiContent = new XElement("BufferDati");
+
+            if (!string.IsNullOrWhiteSpace(localIpAddress))
+            {
+                bufferDatiContent.Add(new XElement("UiIpAddress", localIpAddress));
+            }
+            bufferDatiContent.Add(new XElement("UiPort", uiListenPort.ToString()));
+            */
         }
         #endregion
         #region Datagreedview events
@@ -1628,7 +1821,7 @@ namespace EvolutiveSystem_01
         /// <exception cref="NotImplementedException"></exception>
         private void BtnSocket_Click(object sender, EventArgs e)
         {
-            FrmSocketClient fSocket = new FrmSocketClient(_logger);
+            FrmSocketClient fSocket = new FrmSocketClient(_logger, asl);
             fSocket.ShowDialog();
         }
         #endregion
@@ -1671,113 +1864,58 @@ namespace EvolutiveSystem_01
             }
         }
         #endregion
-
-        // --- Metodo Helper per ottenere l'istanza di ServiceController ---
-        /// <summary>
-        /// Recupera l'istanza di ServiceController per il servizio specificato.
-        /// </summary>
-        /// <param name="serviceName">Il nome del servizio Windows.</param>
-        /// <returns>L'oggetto ServiceController, o null se il servizio non è trovato.</returns>
-        private ServiceController GetServiceController(string serviceName)
+        #region Async socket serve events
+        private void Asl_ErrorFromSocket(object sender, string e)
         {
+            evolutionMonitor.AppendText(e);
+            _logger.Log(LogLevel.ERROR, e);
+        }
+
+        private void Asl_DataFromSocket(object sender, SocketManagerInfo.SocketMessageStructure e)
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            Socket Handler = sender as Socket;
             try
             {
-                // Ottiene tutti i servizi installati sul computer locale
-                ServiceController[] scServices = ServiceController.GetServices();
+                string txtSendData = "";
+                response = new SocketMessageStructure
+                {
+                    Command = null,
+                    CRC = 0,
+                    MessageType = e.MessageType,
+                    SendingTime = DateTime.Now,
+                    Token = e.Token,
+                    BufferDati = new XElement("BufferDati",
+                    new XElement("DataRx", e.SendingTime),
+                    new XElement("Status", "OK"))
+                };
+                string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                _logger.Log(LogLevel.DEBUG, telegramGenerate);
+                ASCIIEncoding encoding = new ASCIIEncoding();
+                byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                asl.Send(Handler, txtSendData);
+                _logger.Log(MasterLog.LogLevel.DEBUG, string.Format("{0} funzione: {1}", Handler.Connected, thisMethod.Name));
 
-                // Cerca il servizio con il nome specificato
-                var service = scServices.FirstOrDefault(sc => sc.ServiceName == serviceName);
+                if (this.InvokeRequired)
+                {
 
-                return service;
-            }
-            catch (Exception ex)
+                    this.BeginInvoke((MethodInvoker)delegate
+                    {
+                        // Questo codice all'interno del delegate viene eseguito sul thread della UI.
+                        evolutionMonitor.AppendText(MessageFromSocket(e) + Environment.NewLine);
+                    });
+                }
+                else
+                {
+                    evolutionMonitor.AppendText(MessageFromSocket(e) + Environment.NewLine);
+                }
+            }catch(Exception ex)
             {
-                // Gestisci eventuali errori (es. permessi insufficienti)
-                AppendToMonitor($"Errore nel recuperare ServiceController per '{serviceName}': {ex.Message}");
-                UpdateStatus($"Errore ServiceController: {ex.Message}");
-                return null;
+                string errMsg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                _logger.Log(LogLevel.ERROR, errMsg);
             }
         }
-        // --- Metodo per aggiornare lo stato di abilitazione dei pulsanti di controllo servizio ---
-        /// <summary>
-        /// Aggiorna lo stato di abilitazione dei pulsanti Start, Pause, Stop
-        /// in base allo stato corrente del servizio Windows.
-        /// </summary>
-        private void UpdateServiceControlButtonsState()
-        {
-            // Assicurati che i pulsanti esistano nel designer
-            if (btnServiceStart == null || btnServicePause == null || btnServiceStop == null)
-            {
-                // Controlli non ancora inizializzati o non presenti
-                return;
-            }
-
-            ServiceController service = GetServiceController(_serviceName);
-
-            // Se il servizio non è trovato o ci sono errori, disabilita tutto
-            if (service == null)
-            {
-                btnServiceStart.Enabled = false;
-                btnServicePause.Enabled = false;
-                btnServiceStop.Enabled = false;
-                UpdateStatus($"Servizio '{_serviceName}' non trovato.");
-                return;
-            }
-
-            // Aggiorna lo stato dei pulsanti in base allo stato del servizio
-            switch (service.Status)
-            {
-                case ServiceControllerStatus.Running:
-                    btnServiceStart.Enabled = false; // Già avviato
-                    btnServicePause.Enabled = service.CanPauseAndContinue; // Abilita pausa solo se supportata
-                    btnServiceStop.Enabled = true; // Può essere fermato
-                    UpdateStatus($"Servizio '{_serviceName}' in esecuzione.");
-                    break;
-                case ServiceControllerStatus.Stopped:
-                    btnServiceStart.Enabled = true; // Può essere avviato
-                    btnServicePause.Enabled = false; // Non può essere messo in pausa
-                    btnServiceStop.Enabled = false; // Già fermo
-                    UpdateStatus($"Servizio '{_serviceName}' fermo.");
-                    break;
-                case ServiceControllerStatus.Paused:
-                    btnServiceStart.Enabled = false; // Non può essere avviato (è in pausa)
-                    btnServicePause.Enabled = service.CanPauseAndContinue; // Può essere ripreso se supportato
-                    btnServiceStop.Enabled = true; // Può essere fermato
-                    UpdateStatus($"Servizio '{_serviceName}' in pausa.");
-                    break;
-                case ServiceControllerStatus.StartPending:
-                case ServiceControllerStatus.StopPending:
-                case ServiceControllerStatus.ContinuePending:
-                case ServiceControllerStatus.PausePending:
-                    // Durante le transizioni, disabilita tutti i pulsanti per evitare operazioni concorrenti
-                    btnServiceStart.Enabled = false;
-                    btnServicePause.Enabled = false;
-                    btnServiceStop.Enabled = false;
-                    UpdateStatus($"Servizio '{_serviceName}' in transizione: {service.Status}");
-                    break;
-                default:
-                    // Stato sconosciuto o errore
-                    btnServiceStart.Enabled = false;
-                    btnServicePause.Enabled = false;
-                    btnServiceStop.Enabled = false;
-                    UpdateStatus($"Servizio '{_serviceName}' stato sconosciuto: {service.Status}");
-                    break;
-            }
-        }
-        /// <summary>
-        /// Verifica se l'applicazione corrente è in esecuzione con privilegi amministrativi.
-        /// </summary>
-        /// <returns>True se l'applicazione è amministratore, altrimenti False.</returns>
-        private bool IsRunningAsAdministrator()
-        {
-            // Ottiene l'identità Windows dell'utente corrente.
-            WindowsIdentity identity = WindowsIdentity.GetCurrent();
-            // Crea un oggetto WindowsPrincipal basato sull'identità.
-            WindowsPrincipal principal = new WindowsPrincipal(identity);
-
-            // Controlla se l'utente è membro del gruppo Administrators.
-            // Questo è il modo standard per verificare i privilegi amministrativi su Windows.
-            return principal.IsInRole(WindowsBuiltInRole.Administrator);
-        }
+        #endregion
     }
 }

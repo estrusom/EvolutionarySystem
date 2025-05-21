@@ -252,6 +252,7 @@ namespace MasterLog
         /// <param name="nome"></param>
         /// <param name="SyncLogMutex"></param>
         /// <param name="numeroStorico"></param>
+        /// QUA
         public Logger(string percorso, string nome, Mutex SyncLogMutex, int numeroStorico = 0)
         {
             #region percorso

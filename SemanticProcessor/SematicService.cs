@@ -1,4 +1,7 @@
-﻿using AsyncSocketServer;
+﻿//Change log
+// 2025.05.20 lista per accessi concorrenti al clien socket asincrono
+// 2025.05.20 gestione invio in modalità asincrona alle UI connesse
+using AsyncSocketServer;
 using CommandHandlers;
 using MasterLog;
 using MessaggiErrore;
@@ -22,6 +25,9 @@ using System.Threading.Tasks;
 using System.Xml;
 using SemanticProcessor;
 using System.Xml.Linq;
+using System.Collections.Concurrent;
+using SocketManager;
+using EvolutiveSystem.Core;
 
 namespace SemanticProcessor
 {
@@ -101,6 +107,8 @@ namespace SemanticProcessor
         private const int K_MILLI = 2500;
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool SetServiceStatus(System.IntPtr handle, ref ServiceStatus serviceStatus);
+        // Componente EventLog per scrivere nel registro eventi di Windows
+        private EventLog eventLog1;
         private Timer SchedularWD;  //Watch dog scheduling time
         protected Logger _logger;
         private int TimerWatchDog = 0;
@@ -114,7 +122,6 @@ namespace SemanticProcessor
         private volatile bool _isRunning = false; // volatile per garantire visibilità tra thread
         // Flag per indicare se il processo semantico è in pausa
         private volatile bool _isPaused = false; // volatile per garantire visibilità tra thread
-        private CancellationTokenSource _cancellationTokenSource;
 
         private static string ServicePath = ""; //22.03.2022 Gestione riavvio tablet per timeout, nome della cartella ove risiede ilò servizio
         protected Mutex SyncMtxLogger = new Mutex();
@@ -130,9 +137,20 @@ namespace SemanticProcessor
         private int CommandRunning = 0; // se true c'è un comando in corso 
         #endregion
         private string VersionDate = "07.05.2025";// Cambiare ad ogni release 
+
+        private List<Database> _loadedDatabases;
+        private readonly ConcurrentDictionary<string, SemanticClientSocket> _connectedUiClients;
+        private ClsCommandHandlers _commandHandlers;
+        #region dichiarazioni per gestire la concorrenza d'accesso a canale socket
+        private static ConcurrentDictionary<string, string> concurrentData = new ConcurrentDictionary<string, string>(); //2025.05.20 lista per accessi concorrenti al clien socket asincrono
+        private ConcurrentQueue<Tuple<SocketMessageStructure, Socket>> _receivedMessageQueue;
+
+        #endregion
+
 #if DEBUG
         private bool firstInDebug = false;
 #endif
+
         /// <summary>
         /// costrutt
         /// </summary>
@@ -142,6 +160,17 @@ namespace SemanticProcessor
             try
             {
                 InitializeComponent();
+
+#if !DEBUG
+
+                eventLog1 = new EventLog();
+                if (!EventLog.SourceExists("SemanticProcessorSource"))
+                {
+                    EventLog.CreateEventSource("SemanticProcessorSource", "SemanticProcessorLog");
+                }
+                eventLog1.Source = "SemanticProcessorSource";
+                eventLog1.Log = "SemanticProcessorLog";
+#endif
 
                 this.CanPauseAndContinue = true; // *** Abilita la capacità di pausa/ripresa ***
                 this.CanStop = true;
@@ -155,7 +184,12 @@ namespace SemanticProcessor
                 _logger.SwLogLevel = swDebug;
                 _logger.Log(LogLevel.INFO, string.Format("Log path:{0}", _logger.GetPercorsoCompleto()));
                 today = DateTime.Now;
-                commandHandlers = new ClsCommandHandlers(_logger);
+
+                //_receivedMessageQueue = new ConcurrentQueue<Tuple<SocketMessageStructure, Socket>>();
+                //_loadedDatabases = new List<Database>();
+                _connectedUiClients = new ConcurrentDictionary<string, SocketManager.SemanticClientSocket>();
+
+                commandHandlers = new ClsCommandHandlers(_logger, concurrentData);
                 StartServerSocket();
                 if (swDebug > 0)
                 {
@@ -242,7 +276,7 @@ namespace SemanticProcessor
                 _isRunning = true; // Imposta il flag di esecuzione
                 _isPaused = false; // Assicurati che non sia in pausa all'avvio
                 _pauseEvent.Set(); // Assicurati che l'evento di pausa sia segnalato (non bloccato)
-                _cancellationTokenSource = new CancellationTokenSource(); // Crea un nuovo token di cancellazione
+                //_cancellationTokenSource = new CancellationTokenSource(); // Crea un nuovo token di cancellazione
 
                 serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
                 SetServiceStatus(this.ServiceHandle, ref serviceStatus);
@@ -270,10 +304,10 @@ namespace SemanticProcessor
                                     // Assicurati che il thread non sia bloccato in pausa prima di segnalare l'arresto
                 _pauseEvent.Set(); // Sblocca il ManualResetEvent nel caso fosse in pausa
                                    // Segnala l'annullamento tramite CancellationTokenSource
-                if (_cancellationTokenSource != null)
-                {
-                    _cancellationTokenSource.Cancel();
-                }
+                //if (_cancellationTokenSource != null)
+                //{
+                //    _cancellationTokenSource.Cancel();
+                //}
 
                 if (asl != null)
                 {
@@ -281,11 +315,11 @@ namespace SemanticProcessor
                     asl.CloseServerSocket(1000);
                     scktThrd.StopThread = true;
                 }
-                if (_cancellationTokenSource != null)
-                {
-                    _cancellationTokenSource.Dispose();
-                    _cancellationTokenSource = null;
-                }
+                //if (_cancellationTokenSource != null)
+                //{
+                //    _cancellationTokenSource.Dispose();
+                //    _cancellationTokenSource = null;
+                //}
 
                 ServiceStatus serviceStatus = new ServiceStatus();
                 serviceStatus.dwCurrentState = ServiceState.SERVICE_STOP_PENDING;
@@ -301,6 +335,123 @@ namespace SemanticProcessor
                 _logger.Log(LogLevel.ERROR, string.Format("{0} pos= {1}", ClsMessaggiErrore.CustomMsg(ex, thisMethod), 0));
             }
         }
+        #region async send
+        private async Task NotificaTutteLeUIs(SocketMessageStructure notifica)
+        {
+            foreach (var clientSocketPair in _connectedUiClients)
+            {
+                string clientId = clientSocketPair.Key;
+                SemanticClientSocket clientSocket = clientSocketPair.Value;
+
+                try
+                {
+                    clientSocket.MessageSentFailed += ClientSocket_MessageSentFailed;
+                    // Non è necessario connettersi qui, dovremmo già essere connessi.
+                    // Controlla lo stato della connessione se necessario.
+                    // if (!clientSocket.IsConnected) { ... }
+
+                    if (_logger == null)
+                    {
+                        eventLog1.WriteEntry($"Invio notifica '{notifica.MessageType}' (Token: {notifica.Token}) alla UI {clientId}.");
+                    }
+                    else
+                    {
+                        _logger.Log(LogLevel.INFO, $"Invio notifica '{notifica.MessageType}' (Token: {notifica.Token}) alla UI {clientId}.");
+                    }
+                    bool inviato = await clientSocket.SendMessageAsync(notifica);
+                    if (inviato)
+                    {
+                        if (_logger == null)
+                        {
+                            eventLog1.WriteEntry($"Notifica inviata. Attendo ACK dalla UI {clientId}.");
+                        }
+                        else
+                        {
+                            _logger.Log(LogLevel.INFO, $"Notifica inviata. Attendo ACK dalla UI {clientId}.");
+                        }
+
+                        SocketMessageStructure ack = await clientSocket.ReceiveMessageAsync(timeoutMs: 30000); // Timeout di 3 secondi per l'ACK
+
+                        if (ack != null && ack.MessageType == "INFO" && ack.Token == notifica.Token) 
+                        {
+                            if (_logger == null)
+                            {
+                                eventLog1.WriteEntry($"Ricevuto ACK dalla UI {clientId} per notifica '{notifica.MessageType}' (Token: {notifica.Token}).");
+                            }
+                            else
+                            {
+                                _logger.Log(LogLevel.INFO, $"Ricevuto ACK dalla UI {clientId} per notifica '{notifica.MessageType}' (Token: {notifica.Token})");
+                            }
+                                
+                        }
+                        else
+                        {
+                            string responseInfo = ack != null ? $"Comando='{ack.Command}', Token='{ack.Token}'" : "Nessuna risposta ricevuta (timeout).";
+                            if (_logger == null)
+                            {
+                                eventLog1.WriteEntry($"Nessun ACK valido ricevuto dalla UI {clientId} per notifica '{notifica.MessageType}' (Token: {notifica.Token}). Risposta: {responseInfo}", EventLogEntryType.Warning);
+                            }
+                            else
+                            {
+                                _logger.Log(LogLevel.WARNING, $"Nessun ACK valido ricevuto dalla UI {clientId} per notifica '{notifica.MessageType}' (Token: {notifica.Token}). Risposta: {responseInfo}");
+                            }
+                                
+                            // Qui potresti decidere di gestire la mancata ricezione dell'ACK
+                        }
+                    }
+                    else
+                    {
+                        if (_logger == null)
+                        {
+                            eventLog1.WriteEntry($"Fallito l'invio della notifica alla UI {clientId}.", EventLogEntryType.Warning);
+                        }
+                        else
+                        {
+                            _logger.Log(LogLevel.WARNING, $"Fallito l'invio della notifica alla UI {clientId}.");
+                        }
+                            
+                        // Gestisci il fallimento dell'invio a questo client
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (_logger == null)
+                    {
+                        eventLog1.WriteEntry($"Errore durante la comunicazione con la UI {clientId}: {ex.Message}", EventLogEntryType.Error);
+                    }
+                    else
+                    {
+                        _logger.Log(LogLevel.ERROR, $"Errore durante la comunicazione con la UI {clientId}: {ex.Message}");
+                    }
+
+                    // Potresti voler gestire qui la disconnessione o il tentativo di riconnessione
+                }
+                finally
+                {
+                    clientSocket.MessageSentFailed -= ClientSocket_MessageSentFailed;
+                }
+                // Non chiudiamo la connessione qui, poiché sono connessioni persistenti gestite da _connectedUiClients.
+            }
+        }
+
+        private void ClientSocket_MessageSentFailed(object sender, SemanticClientSocket.MessageSentEventArgs e)
+        {
+            SemanticClientSocket locaClient = sender as SemanticClientSocket;
+            //locaClient.IsConnected = false;
+        }
+
+        public async Task EseguiNotificaUIs()
+        {
+            SocketMessageStructure notifica = new SocketMessageStructure
+            {
+                MessageType = "NuoviDatiDisponibili",
+                Token = Guid.NewGuid().ToString(),
+                BufferDati = new System.Xml.Linq.XElement("Data", $"Dati aggiornati alle {DateTime.Now}")
+            };
+
+            await NotificaTutteLeUIs(notifica);
+        }
+        #endregion
         /// <summary>
         /// Service duty cycle
         /// </summary>
@@ -410,6 +561,39 @@ namespace SemanticProcessor
 #if !DEBUG
                                 manageService();
 #endif
+                                string pathFileCtrl = Path.Combine(Directory.GetCurrentDirectory(), "CheckFile.txt");
+                                if (File.Exists(pathFileCtrl))
+                                {
+                                    _logger.Log(LogLevel.INFO, $"Trovato file:{pathFileCtrl}");
+                                    Random randomGenerator = new Random();
+                                    int token = randomGenerator.Next(0, int.MaxValue);
+                                    string msgFile = "";
+                                    using (StreamReader sr = new StreamReader(pathFileCtrl))
+                                    {
+                                        msgFile = sr.ReadToEnd();
+                                        _logger.Log(LogLevel.INFO, string.Format("Time: {0} Message: {1}", DateTime.Now, msgFile));
+                                    }
+                                    SocketMessageStructure msg = new SocketMessageStructure()
+                                    {
+                                        Command = null,
+                                        SendingTime = DateTime.Now,
+                                        Token = token.ToString(),
+                                        MessageType = "INFO",
+                                        BufferDati = new XElement("BufferDati",new XElement("message", msgFile))
+                                    };
+                                    //string telegramGenerate = SocketMessageSerializer.SerializeUTF8(msg);
+                                    //ASCIIEncoding encoding = new ASCIIEncoding();
+                                    //byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                                    ////string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                                    //string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                                    Task.Run(() => NotificaTutteLeUIs(msg));
+                                    foreach (var clientSocketPair in _connectedUiClients)
+                                    {
+                                        _logger.Log(LogLevel.DEBUG, $"*** Is Connect = {clientSocketPair.Value.IsConnected} ***");
+                                        
+                                    }
+                                    File.Delete(pathFileCtrl);  
+                                }
                                 _logger.Log(LogLevel.DEBUG, thSocket.IsAlive ? "Thread is alive" : "Thread is dead");
                                 this.SemaforoDC = false;
                             }
@@ -559,7 +743,7 @@ namespace SemanticProcessor
             asl.TokenSocket = 0x7FFFFFFF;
         }
         /// <summary>
-        /// 
+        /// Avvio thread per server soc
         /// </summary>
         private void StartThread()
         {
@@ -725,8 +909,9 @@ namespace SemanticProcessor
                     myO.Response = new object();
                     erCnt = 4;
                     string metodo;
+                    MethodInfo myMethod = null;
                     //MethodInfo myMethod = tyCommandHandlers.GetMethod(cmdCom.CommandSocket, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(SocketCommand), typeof(string), typeof(AsyncSocketListener) }, null);
-                    MethodInfo myMethod = tyCommandHandlers.GetMethod(
+                    myMethod = tyCommandHandlers.GetMethod(
                         cmdCom.CommandSocket, // Nome del metodo
                         BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
                         myCustomBinder, // Usa il tuo binder per la risoluzione
@@ -746,7 +931,24 @@ namespace SemanticProcessor
                     }
                     else
                     {
-                        throw new Exception("Command not found");
+                        myMethod = tyCommandHandlers.GetMethod(
+                        cmdCom.CommandSocket, // Nome del metodo
+                        BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
+                        myCustomBinder, // Usa il tuo binder per la risoluzione
+                        new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener), typeof(ConcurrentDictionary<string, SemanticClientSocket>) }, // Tipi dei parametri (verifica che siano corretti!)
+                        null
+                        );// Modificatori
+                        if (myMethod != null)
+                        {
+                            metodo = myMethod.Name;
+                            _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                            _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
+                            object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.BufferDati, asl, _connectedUiClients });
+                        }
+                        else
+                        {
+                            throw new Exception("Command not found");
+                        }
                     }
                     /*
                     Type TyPaxAires8 = typeof(PAXAires8Com);
@@ -993,14 +1195,16 @@ namespace SemanticProcessor
                 {
                     Command = "Error",
                     SendingTime = DateTime.Now,
-                    BufferDati = new XElement("ErrorDetails", new XElement("Message", errMsg)),  
+                    BufferDati = new XElement("BufferDati",
+                                    new XElement("ErrorDetails", new XElement("Message", errMsg))),  
                     Token = asl.TokenSocket.ToString(),
                     CRC = 0
                 };
-                string telegramGenerate = SocketMessageSerialize.SerializeUTF8(response);
+                string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
                 ASCIIEncoding encoding = new ASCIIEncoding();
                 byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
-                string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
                 _logger.Log(LogLevel.ERROR, errMsg);
                 asl.Send(Handler, string.Format(SemSerRes.sktErrRecive, txtSendData, cmdCom.Eof));
             }
@@ -1018,7 +1222,8 @@ namespace SemanticProcessor
         {
             CommandRunning = 0;
             Socket Handler = sender as Socket;
-            asl.Send(Handler, e);
+            // asl.Send(Handler, e); 2025.05.18 Secondo me non serve.
+            _logger.Log(LogLevel.ERROR, e);
 
         }
         #endregion

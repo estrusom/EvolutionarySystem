@@ -19,20 +19,24 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 using System.Security.Cryptography;
 using EvolutiveSystem.Core;
 using System.Xml.Linq;
+using AsyncSocketServer;
+using System.Net;
 
 namespace EvolutiveSystem_01
 {
     public partial class FrmTelegram : Form
     {
+        private AsyncSocketListener asl;
         private System.Windows.Forms.ToolTip toolTip;
         private string TelegramGenerate = "";
         private string txtSendData = "";
         private SocketMessageStructure testStruct = new SocketMessageStructure();
         private CommandConfig cmdCnf;
         private SocketMessageStructure telegramma;
-        public FrmTelegram()
+        public FrmTelegram(AsyncSocketListener Asl)
         {
             InitializeComponent();
+            this.asl = Asl;
             this.telegramma = new SocketMessageStructure();
             this.cmdCnf = new CommandConfig();
             cmdCnf.ExecuteCmdSync += CmdCnf_ExecuteCmdSync;
@@ -164,7 +168,7 @@ namespace EvolutiveSystem_01
             {
                 telegramma.CRC = telegramma.GetHashCode();
             }
-            TelegramGenerate = SocketMessageSerialize.SerializeUTF8(telegramma);
+            TelegramGenerate = SocketMessageSerializer.SerializeUTF8(telegramma);
             rtxtBuffer.AppendText(TelegramGenerate);
         }
         private void btnOkSend_Click(object sender, EventArgs e)
@@ -349,7 +353,28 @@ namespace EvolutiveSystem_01
         }
         private void CmdCnf_ExecuteCmdSync(object sender, string e)
         {
-            telegramma.BufferDati = null;
+            string localIpAddress = "";
+            if (asl.SrvIpAddress.Count > 0)
+            {
+                localIpAddress = asl.SrvIpAddress[asl.SrvIpAddress.Count - 1].ToString();
+            }
+
+            XElement bufferDatiContent = new XElement("BufferDati"); // Crea l'elemento <BufferDati> vuoto
+
+            // Aggiungi l'elemento UiIpAddress solo se l'IP locale è stato trovato
+            if (!string.IsNullOrWhiteSpace(localIpAddress))
+            {
+                // Aggiunge <UiIpAddress>...</UiIpAddress> come figlio di bufferDatiContent
+                bufferDatiContent.Add(new XElement("UiIpAddress", localIpAddress));
+           }
+            else
+            {
+            }
+
+            // Aggiunge l'elemento UiPort (assumendo che uiListenPort sia sempre valido)
+            // Aggiunge <UiPort>...</UiPort> come figlio di bufferDatiContent
+            bufferDatiContent.Add(new XElement("UiPort", asl.SrvPort.ToString()));
+            telegramma.BufferDati = bufferDatiContent;
         }
         private void CmdCnf_ExecuteDBStruct(object sender, string e)
         {

@@ -76,6 +76,10 @@
       <Project>{86479DBC-394F-4EE6-B833-4241DC4543F9}</Project>
       <Name>SocketManagerInfo</Name>
     </ProjectReference>
+    <ProjectReference Include="..\SocketManager\SocketManager.csproj">
+      <Project>{D628C45F-2369-4E52-9CB6-EF7D6E1888DD}</Project>
+      <Name>SocketManager</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="RRU_EvolutiveSystem.pfx" />
