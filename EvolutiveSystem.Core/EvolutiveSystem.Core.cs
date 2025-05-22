@@ -2,7 +2,7 @@
  * changelog
  * 2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database ***
  * 2025.05.22 Aggiornato: SerializableDictionary per gestire correttamente i tipi 'object' con GetKnownTypes().
- *
+ * 2025.05.22 Aggiornato per poter essere integrato in MIU.Core
  */
 using System;
 using System.Collections.Generic;
@@ -277,7 +277,7 @@ namespace EvolutiveSystem.Core
         /// dopo la deserializzazione.
         /// </summary>
         /// <param name="database">Il database deserializzato.</param>
-        private static void RestoreParentReferences(Database database)
+        public static void RestoreParentReferences(Database database) // Reso pubblico per essere chiamato esternamente se necessario
         {
             if (database == null) return;
 
