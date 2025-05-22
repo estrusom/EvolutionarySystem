@@ -1,0 +1,1 @@
+sc failure WinTTabServiceCom-01 reset= 5 actions= restart/15000/run/15000

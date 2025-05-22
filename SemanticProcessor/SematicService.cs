@@ -561,7 +561,8 @@ namespace SemanticProcessor
 #if !DEBUG
                                 manageService();
 #endif
-                                string pathFileCtrl = Path.Combine(Directory.GetCurrentDirectory(), "CheckFile.txt");
+                                string pathFileCtrl = Path.Combine(ServicePath, "CheckFile.txt");
+                                _logger.Log(LogLevel.DEBUG, $"Check file {pathFileCtrl}");
                                 if (File.Exists(pathFileCtrl))
                                 {
                                     _logger.Log(LogLevel.INFO, $"Trovato file:{pathFileCtrl}");

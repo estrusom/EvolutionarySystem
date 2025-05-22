@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // Le informazioni generali relative a un assembly sono controllate dal seguente 
 // set di attributi. Modificare i valori di questi attributi per modificare le informazioni
 // associate a un assembly.
-[assembly: AssemblyTitle("SemanticProcessor")]
-[assembly: AssemblyDescription("Risoluzione di sistemi formali auto evolventi")]
+[assembly: AssemblyTitle("MIU.Core")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("RRU Evolutive System")]
-[assembly: AssemblyProduct("SemanticProcessor")]
-[assembly: AssemblyCopyright("Copyright ©  2025 Evolutive System")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("MIU.Core")]
+[assembly: AssemblyCopyright("Copyright ©  2025")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Se il progetto viene esposto a COM, il GUID seguente verrà utilizzato come ID della libreria dei tipi
-[assembly: Guid("f3a3a795-935e-48a9-af0e-0649beb752fa")]
+[assembly: Guid("08be24df-cae2-4056-a14e-80aae6d10c87")]
 
 // Le informazioni sulla versione di un assembly sono costituite dai seguenti quattro valori:
 //
@@ -29,5 +29,5 @@ using System.Runtime.InteropServices;
 //      Numero di build
 //      Revisione
 //
-[assembly: AssemblyVersion("1.0.1.2")]
-[assembly: AssemblyFileVersion("25.05.21.22")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

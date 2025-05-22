@@ -91,6 +91,8 @@ namespace EvolutiveSystem_01
             this.btnConnect.Enabled = true;
             this.btnSend.Enabled = false;
             this.btnCloseConnection.Enabled = false;
+            this.statusStrip1.ShowItemToolTips = true;
+            this.tssDenComStatus.Text = "Stato comunicazione socket";
         }
         private void FrmSocketClient_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -139,7 +141,8 @@ namespace EvolutiveSystem_01
                 {
                     sk.CloseSocket();
                     tssComStatus.Text = "Close";
-                    tssComStatus.ForeColor = Color.Green;
+                    tssComStatus.ForeColor = Color.Blue;
+                    tssComStatus.ToolTipText = "Close";
                 }
             }
             catch (Exception ex)
@@ -172,6 +175,14 @@ namespace EvolutiveSystem_01
                         int end = rxData.IndexOf(SocketMessageSerializer.Base64End);
                         xmlSv = Encoding.UTF8.GetString(Convert.FromBase64String(rxData.Substring(init, end - init)));
                         rtbBufferRx.AppendText(xmlSv + Environment.NewLine);
+                        sk.CloseSocket();
+                        btnSend.Enabled = false;
+                        btnConnect.Enabled = true;
+                        btnCloseConnection.Enabled= false;
+                        tssComStatus.Text = "Close";
+                        tssComStatus.ForeColor = Color.Blue;
+                        tssComStatus.ToolTipText = "Close";
+
                     }
                     else
                     {
@@ -195,7 +206,8 @@ namespace EvolutiveSystem_01
             try
             {
                 sk.ConnectToServer(txtIPaddress.Text, Convert.ToInt32(txtIPport.Text));
-                this.btnConnect.Enabled = false;
+                tssComStatus.ToolTipText = $"End Point{sk.SocketAddress.ToString()}:{sk.SocketPort}";
+                 this.btnConnect.Enabled = false;
                 this.btnSend.Enabled = true;
                 this.btnCloseConnection.Enabled = true;
                 tssComStatus.Text = "Open";
@@ -241,6 +253,14 @@ namespace EvolutiveSystem_01
             {
                 MessageBox.Show("Nessun dato da deserializzare", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+        private void tsmClrRx_Click(object sender, EventArgs e)
+        {
+            rtbBufferRx.Text = "";
+        }
+        private void tsmClrTx_Click(object sender, EventArgs e)
+        {
+            txtSendData.Text = "";
         }
         #endregion
         #region textbox events

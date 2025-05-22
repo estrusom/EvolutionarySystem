@@ -1,7 +1,8 @@
 ﻿/*
  * changelog
  * 2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database ***
- * 
+ * 2025.05.22 Aggiornato: SerializableDictionary per gestire correttamente i tipi 'object' con GetKnownTypes().
+ *
  */
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,7 @@ namespace EvolutiveSystem.Core
         bool EncryptedField { get; set; }
         ulong Registry { get; set; }
     }
+
     public class Field : IFieldData // Ho rinominato per chiarezza e generalità
     {
         // Proprietà specifiche di un Campo
@@ -40,8 +42,7 @@ namespace EvolutiveSystem.Core
 
         // *** Composizione/Riferimento per la Provenienza: Un Campo appartiene a una Tabella ***
         // Questo riferimento permette di risalire alla tabella madre direttamente.
-        // [XmlIgnore] // Ignora questa proprietà durante la serializzazione XML per evitare riferimenti circolari
-        [XmlIgnore]
+        [XmlIgnore] // Ignora questa proprietà durante la serializzazione XML per evitare riferimenti circolari
         public Table ParentTable { get; set; } // Ho rinominato la classe Tabella
 
         // Costruttore vuoto per la serializzazione
@@ -59,11 +60,8 @@ namespace EvolutiveSystem.Core
             Value = value;
             TableName = parentTable?.TableName; // Imposta il nome della tabella di appartenenza
         }
-
-        // Se hai bisogno di un identificatore logico (es. "PostulateField"),
-        // potresti aggiungerlo qui, magari come Enum per maggiore sicurezza.
-        // public string LogicalType { get; set; }
     }
+
     // Classe per rappresentare una singola Tabella (Table)
     // NON eredita da Field.
     public class Table
@@ -77,19 +75,13 @@ namespace EvolutiveSystem.Core
 
         // *** Composizione/Riferimento per la Provenienza: Una Tabella appartiene a un Database ***
         // Questo riferimento permette di risalire al database madre direttamente.
-        // [XmlIgnore] // Ignora questa proprietà durante la serializzazione XML per evitare riferimenti circolari
-        [XmlIgnore]
+        [XmlIgnore] // Ignora questa proprietà durante la serializzazione XML per evitare riferimenti circolari
         public Database ParentDatabase { get; set; } // Ho rinominato la classe Database
 
         // *** Composizione: Una Tabella CONTIENE una lista di Record (dati) ***
         // Ogni record è un dizionario che mappa il nome del campo al suo valore.
         // Usiamo SerializableDictionary per permettere la serializzazione XML.
         public List<SerializableDictionary<string, object>> DataRecords { get; set; } = new List<SerializableDictionary<string, object>>();
-
-
-        // Se hai bisogno di un identificatore logico (es. "PostulateTable", "RuleTable"),
-        // potresti aggiungerlo qui, magari come Enum.
-        // public string LogicalType { get; set; }
 
         // Costruttore vuoto per la serializzazione
         public Table() { }
@@ -115,6 +107,7 @@ namespace EvolutiveSystem.Core
             }
         }
     }
+
     // Classe per rappresentare un singolo Database (Database)
     // NON eredita da Table o Field.
     public class Database
@@ -130,13 +123,8 @@ namespace EvolutiveSystem.Core
         [XmlIgnore] // Non serializzare questa proprietà nel file XML
         public string FilePath { get; set; }
 
-
         // *** Composizione: Un Database CONTIENE una lista di Tabelle ***
         public List<Table> Tables { get; set; } = new List<Table>(); // Inizializzata per evitare NullReferenceException
-
-        // Se hai bisogno di un identificatore logico (es. "EuclideanSemantics"),
-        // potresti aggiungerlo qui, magari come Enum.
-        // public string LogicalType { get; set; }
 
         // Costruttore vuoto per la serializzazione
         public Database() { }
@@ -160,6 +148,7 @@ namespace EvolutiveSystem.Core
             }
         }
     }
+
     /// <summary>
     /// Classe statica per gestire la serializzazione e deserializzazione
     /// degli oggetti Database in formato XML.
@@ -171,29 +160,29 @@ namespace EvolutiveSystem.Core
         /// Questo è necessario per serializzare proprietà di tipo 'object' (come Field.Value)
         /// e per la classe SerializableDictionary che contiene object.
         /// </summary>
-        private static Type[] GetKnownTypes()
+        public static Type[] GetKnownTypes() // Reso pubblico per essere accessibile da SerializableDictionary
         {
             return new Type[]
             {
                 typeof(string), // Esempio: se Field.Value può essere una stringa
-                typeof(bool),   // Esempio: se Field.Value può essere un booleano
-                typeof(int),    // System.Int32
-                typeof(short),  // System.Int16
-                typeof(long),   // System.Int64
-                typeof(uint),   // System.UInt32
-                typeof(ulong),  // System.UInt64
+                typeof(bool),    // Esempio: se Field.Value può essere un booleano
+                typeof(int),     // System.Int32
+                typeof(short),   // System.Int16
+                typeof(long),    // System.Int64
+                typeof(uint),    // System.UInt32
+                typeof(ulong),   // System.UInt64
                 typeof(DateTime), // DateTime
                 typeof(StringBuilder), // StringBuilder
                 // Aggiungi qui tutti gli altri tipi concreti che la proprietà 'Value'
-                // nella tua classe Field può assumere.
+                // nella tua classe Field o nei valori di SerializableDictionary
+                // possono assumere.
                 // Esempio: typeof(MyCustomClass), typeof(List<int>), ecc.
 
-                // *** Aggiunto: Dobbiamo informare XmlSerializer che potrebbe incontrare
-                // istanze di SerializableDictionary<string, object> ***
+                // Dobbiamo informare XmlSerializer che potrebbe incontrare
+                // istanze di SerializableDictionary<string, object>
                 typeof(SerializableDictionary<string, object>)
             };
         }
-
 
         /// <summary>
         /// Serializza un oggetto Database in un file XML.
@@ -315,6 +304,7 @@ namespace EvolutiveSystem.Core
             }
         }
     }
+
     /// <summary>
     /// Classe helper per serializzare Dictionary<TKey, TValue> con XmlSerializer.
     /// Eredita da Dictionary e implementa IXmlSerializable.
@@ -334,8 +324,9 @@ namespace EvolutiveSystem.Core
         /// </summary>
         public void ReadXml(System.Xml.XmlReader reader)
         {
+            // Passa i tipi noti al serializzatore del valore per gestire 'object'
             XmlSerializer keySerializer = new XmlSerializer(typeof(TKey));
-            XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue));
+            XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue), DatabaseSerializer.GetKnownTypes());
 
             bool wasEmpty = reader.IsEmptyElement;
             reader.Read();
@@ -352,14 +343,7 @@ namespace EvolutiveSystem.Core
                 reader.ReadEndElement(); // Legge l'elemento </key>
 
                 reader.ReadStartElement("value"); // Legge l'elemento <value>
-                                                  // NOTA: Se TValue è object, qui potresti aver bisogno di un XmlSerializer
-                                                  // che conosce i tipi noti, simile a quello usato per Database.
-                                                  // Per semplicità, assumiamo che TValue sia serializzabile direttamente o un tipo noto.
-                                                  // Se TValue è object, dovrai passare i knownTypes qui.
-                                                  // Esempio con knownTypes (richiede un costruttore diverso per valueSerializer):
-                                                  // XmlSerializer valueSerializerWithKnownTypes = new XmlSerializer(typeof(TValue), new Type[] { typeof(string), typeof(int), typeof(bool), ... });
-                                                  // TValue value = (TValue)valueSerializerWithKnownTypes.Deserialize(reader);
-                TValue value = (TValue)valueSerializer.Deserialize(reader); // Deserializza il valore
+                TValue value = (TValue)valueSerializer.Deserialize(reader); // Deserializza il valore usando il serializzatore con tipi noti
                 reader.ReadEndElement(); // Legge l'elemento </value>
 
                 this.Add(key, value); // Aggiunge la coppia chiave-valore al dizionario
@@ -375,8 +359,9 @@ namespace EvolutiveSystem.Core
         /// </summary>
         public void WriteXml(System.Xml.XmlWriter writer)
         {
+            // Passa i tipi noti al serializzatore del valore per gestire 'object'
             XmlSerializer keySerializer = new XmlSerializer(typeof(TKey));
-            XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue));
+            XmlSerializer valueSerializer = new XmlSerializer(typeof(TValue), DatabaseSerializer.GetKnownTypes());
 
             foreach (TKey key in this.Keys)
             {
@@ -387,20 +372,14 @@ namespace EvolutiveSystem.Core
                 writer.WriteEndElement(); // Scrive l'elemento </key>
 
                 writer.WriteStartElement("value"); // Scrive l'elemento <value>
-                                                   // NOTA: Se TValue è object, qui potresti aver bisogno di un XmlSerializer
-                                                   // che conosce i tipi noti, simile a quello usato per Database.
-                                                   // Per semplicità, assumiamo che TValue sia serializzabile direttamente o un tipo noto.
-                                                   // Se TValue è object, dovrai passare i knownTypes qui.
-                                                   // Esempio con knownTypes (richiede un costruttore diverso per valueSerializer):
-                                                   // XmlSerializer valueSerializerWithKnownTypes = new XmlSerializer(typeof(TValue), new Type[] { typeof(string), typeof(int), typeof(bool), ... });
-                                                   // valueSerializerWithKnownTypes.Serialize(writer, this[key]);
-                valueSerializer.Serialize(writer, this[key]); // Serializza il valore
+                valueSerializer.Serialize(writer, this[key]); // Serializza il valore usando il serializzatore con tipi noti
                 writer.WriteEndElement(); // Scrive l'elemento </value>
 
                 writer.WriteEndElement(); // Scrive l'elemento </item>
             }
         }
     }
+
     // Esempio di come potresti usare un Enum per i tipi logici, se necessario
     public enum SemanticElementType
     {

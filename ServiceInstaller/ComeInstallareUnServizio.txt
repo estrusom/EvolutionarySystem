@@ -1,0 +1,18 @@
+Come installare / disinstallare  un servizio con PowerShell
+
+- PowerShell deve essere eseguito come amministratore
+- Aggiunge un servizio
+	new-Service -Name "WinPAXserviceCom" -BinaryPathNAme WinPAXtab.exe
+- Elimina un servizio
+	sc.exe delete "WinPAXserviceCom"
+
+Come installare / disinstallare un servizo con installutil 
+
+- Avviare command prompt come amministratore
+- Per installare il servizio eseguire il comando 
+	installutil SemanticProcessor.exe
+- Per disinstallare il servizio eseguire il comando
+	installutil /U SemanticProcessor.exe
+
+XDOVE SI TROVA INSTALUTIL?
+C:\Windows\WinSxS\x86_installutil_b03f5f7f11d50a3a_10.0.18362.1_none_3a0f8e72b5ec2d93

@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InputBoxForm", "InputBoxFor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Core", "EvolutiveSystem.Core\EvolutiveSystem.Core.csproj", "{A193E8C9-5AFA-4D49-ADFA-F25891B1A8EB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MIU.Core", "MIU.Core\MIU.Core.csproj", "{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -91,6 +93,14 @@ Global
 		{A193E8C9-5AFA-4D49-ADFA-F25891B1A8EB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A193E8C9-5AFA-4D49-ADFA-F25891B1A8EB}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{A193E8C9-5AFA-4D49-ADFA-F25891B1A8EB}.Release|ARM64.Build.0 = Release|Any CPU
+		{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

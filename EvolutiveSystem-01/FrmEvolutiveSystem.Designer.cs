@@ -56,7 +56,7 @@
             this.lblDenTblName = new System.Windows.Forms.Label();
             this.lblDenDbName = new System.Windows.Forms.Label();
             this.tabControlDetails = new System.Windows.Forms.TabControl();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.CmdStructDb = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.treeViewContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.panelCommands.SuspendLayout();
@@ -234,8 +234,8 @@
             this.toolStripStatusLabelDen.Font = new System.Drawing.Font("Segoe UI Semibold", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.toolStripStatusLabelDen.ForeColor = System.Drawing.Color.Blue;
             this.toolStripStatusLabelDen.Name = "toolStripStatusLabelDen";
-            this.toolStripStatusLabelDen.Size = new System.Drawing.Size(122, 28);
-            this.toolStripStatusLabelDen.Text = "toolStripLabel1";
+            this.toolStripStatusLabelDen.Size = new System.Drawing.Size(148, 28);
+            this.toolStripStatusLabelDen.Text = "Messaggi di stato:";
             // 
             // toolStripStatusLabel
             // 
@@ -282,7 +282,7 @@
             this.splitContainerLeft.Panel2.Controls.Add(this.evolutionMonitor);
             this.splitContainerLeft.Panel2.Controls.Add(this.pnlDetail);
             this.splitContainerLeft.Size = new System.Drawing.Size(548, 773);
-            this.splitContainerLeft.SplitterDistance = 382;
+            this.splitContainerLeft.SplitterDistance = 381;
             this.splitContainerLeft.TabIndex = 0;
             // 
             // dbTreeView
@@ -290,7 +290,7 @@
             this.dbTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dbTreeView.Location = new System.Drawing.Point(0, 0);
             this.dbTreeView.Name = "dbTreeView";
-            this.dbTreeView.Size = new System.Drawing.Size(548, 382);
+            this.dbTreeView.Size = new System.Drawing.Size(548, 381);
             this.dbTreeView.TabIndex = 0;
             this.dbTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.dbTreeView_AfterSelect);
             this.dbTreeView.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.dbTreeView_NodeMouseClick);
@@ -305,7 +305,7 @@
             this.listViewFields.LabelEdit = true;
             this.listViewFields.Location = new System.Drawing.Point(0, 64);
             this.listViewFields.Name = "listViewFields";
-            this.listViewFields.Size = new System.Drawing.Size(548, 197);
+            this.listViewFields.Size = new System.Drawing.Size(548, 198);
             this.listViewFields.TabIndex = 4;
             this.listViewFields.UseCompatibleStateImageBehavior = false;
             this.listViewFields.View = System.Windows.Forms.View.Details;
@@ -313,7 +313,7 @@
             // evolutionMonitor
             // 
             this.evolutionMonitor.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.evolutionMonitor.Location = new System.Drawing.Point(0, 261);
+            this.evolutionMonitor.Location = new System.Drawing.Point(0, 262);
             this.evolutionMonitor.Name = "evolutionMonitor";
             this.evolutionMonitor.Size = new System.Drawing.Size(548, 126);
             this.evolutionMonitor.TabIndex = 3;
@@ -377,7 +377,7 @@
             // 
             // tabControlDetails
             // 
-            this.tabControlDetails.Controls.Add(this.tabPage1);
+            this.tabControlDetails.Controls.Add(this.CmdStructDb);
             this.tabControlDetails.Controls.Add(this.tabPage2);
             this.tabControlDetails.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControlDetails.Location = new System.Drawing.Point(0, 0);
@@ -386,22 +386,22 @@
             this.tabControlDetails.Size = new System.Drawing.Size(1094, 773);
             this.tabControlDetails.TabIndex = 0;
             // 
-            // tabPage1
+            // CmdStructDb
             // 
-            this.tabPage1.Location = new System.Drawing.Point(4, 25);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(1086, 744);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "tabPage1";
-            this.tabPage1.UseVisualStyleBackColor = true;
+            this.CmdStructDb.Location = new System.Drawing.Point(4, 25);
+            this.CmdStructDb.Name = "CmdStructDb";
+            this.CmdStructDb.Padding = new System.Windows.Forms.Padding(3);
+            this.CmdStructDb.Size = new System.Drawing.Size(1086, 744);
+            this.CmdStructDb.TabIndex = 0;
+            this.CmdStructDb.Text = "tabPage1";
+            this.CmdStructDb.UseVisualStyleBackColor = true;
             // 
             // tabPage2
             // 
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(1086, 744);
+            this.tabPage2.Size = new System.Drawing.Size(1086, 749);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -460,7 +460,7 @@
         private System.Windows.Forms.Label lblDbName;
         private System.Windows.Forms.Label lblTblName;
         private System.Windows.Forms.TabControl tabControlDetails;
-        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage CmdStructDb;
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.ContextMenuStrip treeViewContextMenu;
         private System.Windows.Forms.ToolStripLabel toolStripStatusLabelDen;

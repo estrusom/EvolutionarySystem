@@ -60,6 +60,9 @@
             this.lblIpAddress = new System.Windows.Forms.Label();
             this.spcOutput = new System.Windows.Forms.SplitContainer();
             this.richTextBoxDebug = new System.Windows.Forms.RichTextBox();
+            this.tsmClrRx = new System.Windows.Forms.ToolStripMenuItem();
+            this.tsmClrTx = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.ctxTools.SuspendLayout();
             this.pnlCommand.SuspendLayout();
             this.pnlCmdSocket.SuspendLayout();
@@ -90,33 +93,36 @@
             this.tsmDecodificaComando,
             this.tsmDeserializzaComando,
             this.toolStripSeparator2,
+            this.tsmClrRx,
+            this.tsmClrTx,
+            this.toolStripSeparator3,
             this.tsmDeserializzaComandoClose});
             this.ctxTools.Name = "ctxTools";
-            this.ctxTools.Size = new System.Drawing.Size(226, 82);
+            this.ctxTools.Size = new System.Drawing.Size(251, 164);
             // 
             // tsmDecodificaComando
             // 
             this.tsmDecodificaComando.Name = "tsmDecodificaComando";
-            this.tsmDecodificaComando.Size = new System.Drawing.Size(225, 24);
+            this.tsmDecodificaComando.Size = new System.Drawing.Size(251, 24);
             this.tsmDecodificaComando.Text = "Decodifica comando";
             this.tsmDecodificaComando.Click += new System.EventHandler(this.tsmDecodificaComando_Click);
             // 
             // tsmDeserializzaComando
             // 
             this.tsmDeserializzaComando.Name = "tsmDeserializzaComando";
-            this.tsmDeserializzaComando.Size = new System.Drawing.Size(225, 24);
+            this.tsmDeserializzaComando.Size = new System.Drawing.Size(251, 24);
             this.tsmDeserializzaComando.Text = "Deserializza comando";
             this.tsmDeserializzaComando.Click += new System.EventHandler(this.tsmDeserializzaComando_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(222, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(248, 6);
             // 
             // tsmDeserializzaComandoClose
             // 
             this.tsmDeserializzaComandoClose.Name = "tsmDeserializzaComandoClose";
-            this.tsmDeserializzaComandoClose.Size = new System.Drawing.Size(225, 24);
+            this.tsmDeserializzaComandoClose.Size = new System.Drawing.Size(251, 24);
             this.tsmDeserializzaComandoClose.Text = "Close";
             // 
             // pnlCommand
@@ -225,9 +231,10 @@
             // tssDenComStatus
             // 
             this.tssDenComStatus.Font = new System.Drawing.Font("Segoe UI Semibold", 8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.tssDenComStatus.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(192)))), ((int)(((byte)(0)))));
             this.tssDenComStatus.Name = "tssDenComStatus";
-            this.tssDenComStatus.Size = new System.Drawing.Size(142, 19);
-            this.tssDenComStatus.Text = "toolStripStatusLabel1";
+            this.tssDenComStatus.Size = new System.Drawing.Size(185, 19);
+            this.tssDenComStatus.Text = "Stato comunicazione socket";
             // 
             // tssComStatus
             // 
@@ -236,6 +243,7 @@
             this.tssComStatus.Name = "tssComStatus";
             this.tssComStatus.Size = new System.Drawing.Size(42, 19);
             this.tssComStatus.Text = "Close";
+            this.tssComStatus.ToolTipText = "Close";
             // 
             // spcDebug
             // 
@@ -380,6 +388,25 @@
             this.richTextBoxDebug.TabIndex = 0;
             this.richTextBoxDebug.Text = "";
             // 
+            // tsmClrRx
+            // 
+            this.tsmClrRx.Name = "tsmClrRx";
+            this.tsmClrRx.Size = new System.Drawing.Size(251, 24);
+            this.tsmClrRx.Text = "Cancella ricezione dati";
+            this.tsmClrRx.Click += new System.EventHandler(this.tsmClrRx_Click);
+            // 
+            // tsmClrTx
+            // 
+            this.tsmClrTx.Name = "tsmClrTx";
+            this.tsmClrTx.Size = new System.Drawing.Size(250, 24);
+            this.tsmClrTx.Text = "Cancella trasmissione dati";
+            this.tsmClrTx.Click += new System.EventHandler(this.tsmClrTx_Click);
+            // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(248, 6);
+            // 
             // FrmSocketClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -450,5 +477,8 @@
         private System.Windows.Forms.ToolStripMenuItem tsmDeserializzaComandoClose;
         private System.Windows.Forms.RichTextBox richTextBoxDebug;
         private System.Windows.Forms.ToolStripMenuItem tsmDeserializzaComando;
+        private System.Windows.Forms.ToolStripMenuItem tsmClrRx;
+        private System.Windows.Forms.ToolStripMenuItem tsmClrTx;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
     }
 }
