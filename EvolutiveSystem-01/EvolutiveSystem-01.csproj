@@ -74,6 +74,12 @@
     <Compile Include="FrmEvolutiveSystem.Designer.cs">
       <DependentUpon>FrmEvolutiveSystem.cs</DependentUpon>
     </Compile>
+    <Compile Include="FrmOutput.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmOutput.Designer.cs">
+      <DependentUpon>FrmOutput.cs</DependentUpon>
+    </Compile>
     <Compile Include="FrmSocketClient.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -99,6 +105,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FrmEvolutiveSystem.resx">
       <DependentUpon>FrmEvolutiveSystem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmOutput.resx">
+      <DependentUpon>FrmOutput.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FrmSocketClient.resx">
       <DependentUpon>FrmSocketClient.cs</DependentUpon>
@@ -171,6 +180,10 @@
       <Project>{c4be31ba-71ec-420f-ad75-58c661011b5a}</Project>
       <Name>MessaggiErrore</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
+      <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
+      <Name>MIU.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SocketManagerInfo\SocketManagerInfo.csproj">
       <Project>{86479DBC-394F-4EE6-B833-4241DC4543F9}</Project>
       <Name>SocketManagerInfo</Name>
@@ -206,6 +219,21 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\tools_disk_19657.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\button_reload_15002.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\data-analysis_icon-icons.com_52842.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\filesystems_thefolder_653.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\icons8-save-close-481.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\trash_empty_recycle_delete_delete_9752.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,10 +1,14 @@
 ﻿/*
+/*
     https://icon-icons.com/it/categoria/Applicazione/4
     https://icons8.it/icon/set/button-cancel/ios
 	https://convertico.com/
  */
 /* changelog
- 25.05.14 nel form FrmTelegram è stata aggiunto una combobox da cui scegliere il comando da generare
+ 2025.05.14 nel form FrmTelegram è stata aggiunto una combobox da cui scegliere il comando da generare
+ 2025.05.22 Aggiunto: Riferimento alla tabella attualmente selezionata nella TreeView
+ 2025.05.24 aggiunti tipi floatin point
+ 2025.05.25 aggiunta gestione per autoincremento indici
 */
 using AsyncSocketServer;
 using EvolutiveSystem;
@@ -12,6 +16,7 @@ using EvolutiveSystem.Core;
 using EvolutiveSystem_01.Properties;
 using MasterLog;
 using MessaggiErrore;
+using MIU.Core;
 using SocketManagerInfo;
 using System;
 using System.Collections.Generic;
@@ -56,6 +61,12 @@ namespace EvolutiveSystem_01
         // Riferimento al database attualmente selezionato o attivo nell'UI
         private Database currentDatabase;
         private ToolTip toolTip;
+        // 2025.05.22 Aggiunto: Riferimento alla tabella attualmente selezionata nella TreeView
+        private Table _currentActiveTableInUI;
+        // 2025.05.22 Aggiunto: Riferimento al DataGridView dei record attualmente visualizzato
+        private DataGridView _currentActiveDataGridView;
+        private DataGridView dgvDataRecords;
+
         public FrmEvolutiveSystem()
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
@@ -144,6 +155,16 @@ namespace EvolutiveSystem_01
                 btnCloseAllDatabases.Click += BtnCloseAllDatabases_Click;
                 toolTip.SetToolTip(btnCloseAllDatabases, "Chiude tutti i database semantici caricati."); // Aggiunto ToolTip
             }
+            if (btnRicaricaDB != null)
+            {
+                btnRicaricaDB.Click += BtnRicaricaDB_Click;
+                toolTip.SetToolTip(btnRicaricaDB, "Riapre l'ultimo database chiuso"); // Aggiunto ToolTip
+            }
+            if (btnAnalysis != null)
+            {
+                btnAnalysis.Click += BtnAnalysis_Click;
+                toolTip.SetToolTip(btnAnalysis, "Analisi dati database"); // Aggiunto ToolTip
+            }
             if(btnServiceStart != null)
             {
                 btnServiceStart.Click += BtnServiceStart_Click;
@@ -201,11 +222,15 @@ namespace EvolutiveSystem_01
                 addFieldMenuItem.Tag = "AddField";
                 addFieldMenuItem.Click += ContextMenuItem_Click;
 
-                treeViewContextMenu.Items.Add(new ToolStripSeparator()); // Separatore
+                //treeViewContextMenu.Items.Add(new ToolStripSeparator()); // Separatore
 
                 ToolStripItem deleteItem = treeViewContextMenu.Items.Add("Elimina");
                 deleteItem.Tag = "Delete";
                 deleteItem.Click += ContextMenuItem_Click;
+
+                ToolStripItem modifyItem = treeViewContextMenu.Items.Add("Modifica");
+                modifyItem.Tag = "Modify";
+                modifyItem.Click += ContextMenuItem_Click;
 
                 // Puoi aggiungere altre voci qui se necessario
             }
@@ -262,6 +287,7 @@ namespace EvolutiveSystem_01
             string newDataType = "string"; // Placeholder
             bool isKey = false; // Placeholder
             bool isEncrypted = false; // Placeholder
+            bool autoIncrement = false;
             ulong registryValue = 0; // Placeholder
             object fieldValue = null; // Placeholder
 
@@ -269,7 +295,7 @@ namespace EvolutiveSystem_01
             int newFieldId = targetTable.Fields.Count > 0 ? targetTable.Fields.Max(f => f.Id) + 1 : 1;
 
             // Crea la nuova istanza della classe Field
-            Field newField = new Field(newFieldId, newFieldName, newDataType, isKey, isEncrypted, registryValue, targetTable, fieldValue);
+            Field newField = new Field(newFieldId, autoIncrement, newFieldName, newDataType, isKey, isEncrypted, registryValue, targetTable, fieldValue);
             FrmAddField frmAddField = new FrmAddField(newField);
             if (frmAddField.ShowDialog() == DialogResult.OK)
             {
@@ -282,6 +308,7 @@ namespace EvolutiveSystem_01
                 newField.Value = frmAddField.Field.Value;
                 newField.Registry = frmAddField.Field.Registry;
                 newField.Value = frmAddField.Field.Value;
+                newField.PrimaryKeyAutoIncrement = frmAddField.Field.PrimaryKeyAutoIncrement;
             }
             // Aggiungi il nuovo campo alla lista della tabella
             targetTable.AddField(newField); // Usa il metodo AddField per impostare il ParentTable
@@ -375,6 +402,47 @@ namespace EvolutiveSystem_01
             }
         }
         /// <summary>
+        /// Logica per m,odificare un campo
+        /// </summary>
+        private void ModifySelectedItem(Field targeField, Table targetTable)
+        {
+            //Field newField = new Field(newFieldId, autoIncrement, newFieldName, newDataType, isKey, isEncrypted, registryValue, targetTable, fieldValue);
+
+            FrmAddField frmAddField = new FrmAddField(targeField);
+            if (frmAddField.ShowDialog() == DialogResult.OK) 
+            {
+                targeField.DataType = frmAddField.Field.DataType;
+                targeField.Id = frmAddField.Field.Id;
+                targeField.ElementType = frmAddField.Field.ElementType;
+                targeField.EncryptedField = frmAddField.Field.EncryptedField;
+                targeField.FieldName = frmAddField.Field.FieldName;
+                targeField.Key = frmAddField.Field.Key;
+                targeField.Value = frmAddField.Field.Value;
+                targeField.Registry = frmAddField.Field.Registry;
+                targeField.Value = frmAddField.Field.Value;
+                targeField.PrimaryKeyAutoIncrement = frmAddField.Field.PrimaryKeyAutoIncrement;
+            }
+            TreeNode tableNode = dbTreeView.Nodes.Cast<TreeNode>().SelectMany(dbNode => dbNode.Nodes.Cast<TreeNode>()).FirstOrDefault(tNode => tNode.Tag == targetTable);
+            if (tableNode != null)
+            {
+                TreeNode newFieldNode = new TreeNode($"{targeField.FieldName} ({targeField.DataType})");
+                newFieldNode.Tag = targeField; // Associa l'oggetto Field al nodo
+                //tableNode.Nodes.Add(newFieldNode); // Aggiungi il nodo campo sotto la tabella selezionata
+
+                // Espandi il nodo della tabella per mostrare il nuovo campo
+                tableNode.Expand();
+
+                // Aggiorna la ListView per mostrare il nuovo campo aggiunto (proprietà)
+                PopulateFieldsListView(targetTable.Fields);
+
+                // Aggiorna il DataGridView dei dati record se la tab della tabella è attualmente visibile
+                UpdateDataRecordsDataGridView(targetTable);
+
+                AppendToMonitor($"Aggiunto nuovo campo '{targeField}' alla tabella '{targetTable.TableName}'.");
+                UpdateStatus($"Campo '{targeField}' modificato.");
+            }
+        }
+        /// <summary>
         /// Configura le colonne della ListView per visualizzare le proprietà della classe Field.
         /// RIPRISTINATO: Questa ListView mostra le *proprietà* dei campi, non i dati dei record.
         /// </summary>
@@ -394,6 +462,7 @@ namespace EvolutiveSystem_01
                 listViewFields.Columns.Add("Criptato", 70, HorizontalAlignment.Center);
                 listViewFields.Columns.Add("Registry", 100, HorizontalAlignment.Left);
                 listViewFields.Columns.Add("Tipo Elemento", 100, HorizontalAlignment.Left);
+                listViewFields.Columns.Add("(Incremento automatico)", 100, HorizontalAlignment.Left);
                 // Il valore del campo non viene mostrato in questa ListView, ma nei dati del DataGridView
 
                 // Opzionale: Permetti all'utente di riordinare le colonne
@@ -481,6 +550,7 @@ namespace EvolutiveSystem_01
                          item.SubItems.Add(field.EncryptedField.ToString());
                          item.SubItems.Add(field.Registry.ToString());
                          item.SubItems.Add(field.ElementType.ToString()); // Mostra il tipo logico
+                         item.SubItems.Add(field.PrimaryKeyAutoIncrement.ToString());
                          item.Tag = field; // Associa l'oggetto Field all'elemento della ListView
                          listViewFields.Items.Add(item); // Aggiungi l'elemento alla ListView
                      }
@@ -613,75 +683,670 @@ namespace EvolutiveSystem_01
                 }
             }
         }
-        /// <summary>
-        /// Aggiunge una TabPage per mostrare i *dati* (record) di una Tabella in un DataGridView.
-        /// Questa tab viene creata solo quando si seleziona una Tabella.
-        /// </summary>
-        /// <param name="table">La Tabella i cui dati devono essere visualizzati.</param>
-        private void AddTableDataRecordsTab(Table table)
+        //private Type GetTypeForFieldType(string fieldType)
+        //{
+        //    if (fieldType.Equals("int", StringComparison.OrdinalIgnoreCase)) return typeof(int);
+        //    if (fieldType.Equals("bool", StringComparison.OrdinalIgnoreCase)) return typeof(bool);
+        //    if (fieldType.Equals("double", StringComparison.OrdinalIgnoreCase)) return typeof(double);
+        //    // Aggiungi altri tipi se necessario (es. DateTime, decimal)
+        //    return typeof(string); // Default a stringa
+        //}
+        // Funzione helper per ottenere il tipo CLR dal tipo di campo stringa
+        // Questa funzione assume che la tua classe Field abbia una proprietà 'DataType' di tipo stringa.
+        private Type GetTypeForFieldType(string dataType)
         {
-            if (tabControlDetails == null || table == null) return;
-
-            // Controlla se esiste già una TabPage per i dati di questa tabella
-            TabPage existingPage = null;
+            if (dataType.Equals("int", StringComparison.OrdinalIgnoreCase)) return typeof(int);
+            if (dataType.Equals("bool", StringComparison.OrdinalIgnoreCase)) return typeof(bool);
+            if (dataType.Equals("double", StringComparison.OrdinalIgnoreCase)) return typeof(double);
+            // Aggiungi altri tipi se necessario (es. DateTime, decimal)
+            return typeof(string); // Default a stringa
+        }
+        /// <summary>
+        /// Aggiunge una nuova TabPage al tabControlDetails per visualizzare i record di una tabella,
+        /// o seleziona una tab esistente se già aperta.
+        /// </summary>
+        /// <param name="tableName">Il nome della tabella da visualizzare.</param>
+        /// <param name="database">Il database a cui appartiene la tabella.</param>
+        private void AddTableDataRecordsTab(string tableName, Database database)
+        {
+            // Cerca se la tab per questa tabella e database esiste già
             foreach (TabPage page in tabControlDetails.TabPages)
             {
-                if (page.Tag is Tuple<Table, string> pageTag && pageTag.Item1 == table && pageTag.Item2 == "DataRecords")
+                // Controlla se il testo della tab (nome tabella) corrisponde
+                // E se l'oggetto Database nel Tag della tab è la stessa istanza del database passato
+                if (page.Text.Equals(tableName, StringComparison.OrdinalIgnoreCase) && page.Tag is Database existingDb && existingDb == database)
                 {
-                    existingPage = page;
-                    break;
+                    tabControlDetails.SelectedTab = page; // Seleziona la tab esistente
+                                                          // Aggiorna _currentActiveDataGridView al DataGridView della tab esistente
+                    DataGridView existingDgv = page.Controls[0] as DataGridView;
+                    if (existingDgv != null)
+                    {
+                        _currentActiveDataGridView = existingDgv;
+                        // Assicurati che _currentActiveTableInUI sia aggiornata correttamente
+                        _currentActiveTableInUI = database.Tables.FirstOrDefault(t => t.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+                    }
+                    AppendToMonitor($"Tab '{tableName}' già aperta per il database '{database.DatabaseName}', selezionata.");
+                    UpdateStatus($"Tab '{tableName}' già aperta, selezionata.");
+                    return; // Tab già aperta, esci
                 }
             }
 
-            if (existingPage != null)
+            // Se la tab non esiste, creala
+            TabPage dataRecordsTabPage = new TabPage(tableName);
+            dataRecordsTabPage.Name = tableName;
+            dataRecordsTabPage.Tag = database; // Associa l'intera istanza del database alla TabPage
+
+            dgvDataRecords = new DataGridView();
+            dgvDataRecords.Dock = DockStyle.Fill;
+            dgvDataRecords.AllowUserToAddRows = true;
+            dgvDataRecords.AllowUserToDeleteRows = true;
+            dgvDataRecords.ReadOnly = false; // Permetti la modifica
+            dgvDataRecords.AutoGenerateColumns = true; // Genera colonne automaticamente
+
+            // Trova la tabella nel database usando la tua classe Table
+            Table table = database.Tables.FirstOrDefault(t => t.TableName.Equals(tableName, StringComparison.OrdinalIgnoreCase));
+
+            if (table != null)
             {
-                // Se la pagina esiste, selezionala
-                tabControlDetails.SelectedTab = existingPage;
-                return; // Non creare una nuova pagina
+                // Crea una DataTable per il DataGridView
+                DataTable dt = new DataTable(tableName);
+
+                // Aggiungi le colonne alla DataTable basandoti sui CAMPI (Fields) della tabella
+                // Utilizza la tua classe Field e la sua proprietà DataType
+                foreach (var field in table.Fields)
+                {
+                    // Determina il tipo di colonna in base al tipo di campo usando field.DataType
+                    Type columnType = GetTypeForFieldType(field.DataType); // Usa la tua proprietà DataType
+
+                    DataColumn dc = new DataColumn(field.FieldName, columnType);
+                    dc.AllowDBNull = true; // O false, a seconda della tua logica di business
+                    dt.Columns.Add(dc);
+                }
+
+                // Popola la DataTable con i record esistenti
+                // Utilizza la tua List<SerializableDictionary<string, object>> DataRecords
+                foreach (var recordDict in table.DataRecords) // Corretto: 'recordDict' è già il SerializableDictionary
+                {
+                    DataRow dr = dt.NewRow();
+                    foreach (var field in table.Fields) // Itera sui campi per ottenere i nomi attesi
+                    {
+                        string fieldName = field.FieldName;
+                        // Accedi ai valori del dizionario direttamente su 'recordDict'
+                        if (recordDict.ContainsKey(fieldName) && dt.Columns.Contains(fieldName)) // Corretto: recordDict.ContainsKey
+                        {
+                            try
+                            {
+                                Type targetType = dt.Columns[fieldName].DataType;
+                                object value = recordDict[fieldName]; // Corretto: recordDict[fieldName]
+                                                                      // Gestisci DBNull.Value per i null
+                                if (value == null)
+                                {
+                                    dr[fieldName] = DBNull.Value;
+                                }
+                                else
+                                {
+                                    object convertedValue = Convert.ChangeType(value, targetType);
+                                    dr[fieldName] = convertedValue;
+                                }
+                            }
+                            catch (FormatException)
+                            {
+                                dr[fieldName] = DBNull.Value; // Assegna DBNull.Value per valori non validi
+                                AppendToMonitor($"Avviso: Errore di formato per il campo '{fieldName}' nel record. Valore non valido.");
+                            }
+                            catch (InvalidCastException)
+                            {
+                                dr[fieldName] = DBNull.Value; // Assegna DBNull.Value per valori non validi
+                                AppendToMonitor($"Avviso: Errore di cast per il campo '{fieldName}' nel record. Valore non valido.");
+                            }
+                            catch (Exception ex) // Cattura altri errori generici durante la conversione
+                            {
+                                dr[fieldName] = DBNull.Value;
+                                AppendToMonitor($"Errore generico durante la conversione per il campo '{fieldName}': {ex.Message}");
+                            }
+                        }
+                        else if (dt.Columns.Contains(fieldName))
+                        {
+                            dr[fieldName] = DBNull.Value; // Imposta a DBNull se il record non ha il valore
+                        }
+                    }
+                    dt.Rows.Add(dr);
+                }
+
+                dgvDataRecords.DataSource = dt;
+
+                // Associa i gestori eventi per il DataGridView
+                dgvDataRecords.DataError += DgvDataRecords_DataError;
+                dgvDataRecords.UserAddedRow += DgvDataRecords_UserAddedRow;
+                dgvDataRecords.UserDeletedRow += DgvDataRecords_UserDeletedRow;
+                dgvDataRecords.UserDeletingRow += DgvDataRecords_UserDeletingRow;
+                dgvDataRecords.CellValueChanged += DgvDataRecords_CellValueChanged;
+                dgvDataRecords.RowValidated += DgvDataRecords_RowValidated;
+
+                dataRecordsTabPage.Controls.Add(dgvDataRecords);
+
+                // Aggiungi la TabPage al TabControl
+                tabControlDetails.TabPages.Add(dataRecordsTabPage);
+
+                // Seleziona la nuova TabPage
+                tabControlDetails.SelectedTab = dataRecordsTabPage;
+
+                // FONDAMENTALE: Aggiorna _currentActiveDataGridView e _currentActiveTableInUI qui
+                _currentActiveDataGridView = dgvDataRecords;
+                _currentActiveTableInUI = table; // Imposta la tabella attiva in UI
+
+                UpdateStatus($"Tab '{tableName}' aperta.");
+            }
+            else
+            {
+                MessageBox.Show($"Tabella '{tableName}' non trovata nel database '{database.DatabaseName}'.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                dataRecordsTabPage.Dispose(); // Rimuovi la tab creata se la tabella non è stata trovata
+            }
+        }
+
+        private void DgvDataRecords_RowValidated(object sender, DataGridViewCellEventArgs e)
+        {
+            DataGridView dgv = (DataGridView)sender;
+            string primaryKeyFieldName = "";
+            if (dgv.DataSource == null || !(dgv.DataSource is DataTable dt)) return;
+            if (_currentActiveTableInUI == null) return;
+
+            // *** CORREZIONE: Accedi alla riga tramite dgv.Rows[e.RowIndex] ***
+            // Ignora gli eventi che non sono per righe di dati valide (es. header)
+            if (e.RowIndex < 0) return;
+
+            // Recupera la riga del DataGridView
+            DataGridViewRow validatedRow = dgv.Rows[e.RowIndex];
+
+            // Se la riga è la riga "nuova riga" (placeholder), ignorala.
+            // Dobbiamo usare validatedRow.IsNewRow, non e.Row.IsNewRow
+            if (validatedRow.IsNewRow)
+            {
+                return;
             }
 
+            DataRow dr = null;
+            try
+            {
+                // Recupera la DataRow corrispondente alla riga validata nel DataGridView.
+                dr = dt.Rows[e.RowIndex];
+            }
+            catch (IndexOutOfRangeException)
+            {
+                AppendToMonitor($"Avviso: Impossibile trovare DataRow per l'indice {e.RowIndex} in RowValidated.");
+                return;
+            }
 
-            // Crea una nuova TabPage per i dati dei record
-            TabPage dataRecordsTabPage = new TabPage($"Dati Record: {table.TableName}");
-            // Usiamo una Tuple nel Tag per identificare sia la tabella che il tipo di tab
-            dataRecordsTabPage.Tag = new Tuple<Table, string>(table, "DataRecords");
+            SerializableDictionary<string, object> recordToUpdate = null;
+            int recordIndex = e.RowIndex;
 
+            // ===================================================================================================
+            // Logica per distinguere Nuovi Record da Record Esistenti Modificati
+            // ===================================================================================================
+            // Questa condizione si verifica quando una riga è stata appena aggiunta al DataTable
+            // e non ancora presente nella nostra lista _currentActiveTableInUI.DataRecords.
+            // L'indice della riga validata (e.RowIndex) dovrebbe essere uguale al numero attuale di record nella lista.
+            if (recordIndex >= 0 && recordIndex < dt.Rows.Count && recordIndex == _currentActiveTableInUI.DataRecords.Count)
+            {
+                // È una nuova riga che è stata appena commessa alla DataTable.
+                // Dobbiamo creare un nuovo SerializableDictionary e popolarlo con TUTTI i valori della riga.
+                recordToUpdate = new SerializableDictionary<string, object>();
+                #region *** INIZIO MODIFICHE PER L'AUTOINCREMENTO ***
+                Field autoIncrementPrimaryKeyField = _currentActiveTableInUI.Fields.FirstOrDefault(f => f.Key && f.PrimaryKeyAutoIncrement);
 
-            // Crea un nuovo DataGridView per i dati
-            DataGridView dgvDataRecords = new DataGridView();
-            dgvDataRecords.Dock = DockStyle.Fill; // Riempi la TabPage
-            dgvDataRecords.AutoGenerateColumns = false; // Non generare colonne automaticamente
-            dgvDataRecords.AllowUserToAddRows = true; // Permetti l'aggiunta di nuove righe
-            dgvDataRecords.AllowUserToDeleteRows = true; // Permetti l'eliminazione di righe
-            dgvDataRecords.ReadOnly = false; // Permetti la modifica dei dati
-            dgvDataRecords.Tag = table; // Associa la tabella al DataGridView
+                if (autoIncrementPrimaryKeyField != null)
+                {
+                    primaryKeyFieldName = autoIncrementPrimaryKeyField.FieldName;
+                    Type primaryKeyType = GetTypeForFieldType(autoIncrementPrimaryKeyField.DataType);
+                    object nextId = null;
 
-            // Configura le colonne del DataGridView in base ai campi della tabella
-            ConfigureDataRecordsDataGridViewColumns(dgvDataRecords, table.Fields);
+                    // Trova il valore massimo corrente della chiave primaria
+                    if (_currentActiveTableInUI.DataRecords.Any() && _currentActiveTableInUI.DataRecords.First().ContainsKey(primaryKeyFieldName))
+                    {
+                        dynamic maxId = null;
+                        foreach (var record in _currentActiveTableInUI.DataRecords)
+                        {
+                            if (record.ContainsKey(primaryKeyFieldName) && record[primaryKeyFieldName] != null)
+                            {
+                                dynamic currentValue = Convert.ChangeType(record[primaryKeyFieldName], primaryKeyType);
+                                if (maxId == null || currentValue > maxId)
+                                {
+                                    maxId = currentValue;
+                                }
+                            }
+                        }
 
-            // Popola il DataGridView con i dati dei record della tabella
-            // *** Nota: La classe Table ha ora una struttura per i "record" (DataRecords). ***
-            // *** Dovrai implementare PopulateDataRecordsDataGridView per legare questa struttura al DataGridView. ***
-            PopulateDataRecordsDataGridView(dgvDataRecords, table.DataRecords);
+                        // Calcola il prossimo ID
+                        if (maxId != null)
+                        {
+                            if (primaryKeyType == typeof(int)) nextId = (int)maxId + 1;
+                            else if (primaryKeyType == typeof(uint)) nextId = (uint)maxId + 1;
+                            else if (primaryKeyType == typeof(long)) nextId = (long)maxId + 1;
+                            else if (primaryKeyType == typeof(ulong)) nextId = (ulong)maxId + 1;
+                            // Aggiungi altri tipi numerici se necessario (short, ushort, etc.)
+                        }
+                        else
+                        {
+                            // Se non ci sono record, inizia da 1 (o un altro valore iniziale se preferisci)
+                            if (primaryKeyType == typeof(int) || primaryKeyType == typeof(uint) || primaryKeyType == typeof(long) || primaryKeyType == typeof(ulong))
+                            {
+                                nextId = Convert.ChangeType(1, primaryKeyType);
+                            }
+                        }
 
-            // Aggiungi il DataGridView alla TabPage
-            dataRecordsTabPage.Controls.Add(dgvDataRecords);
+                        // Imposta il valore autoincrementale nel nuovo record
+                        if (nextId != null)
+                        {
+                            recordToUpdate[primaryKeyFieldName] = nextId;
+                        }
+                    }
+                    else
+                    {
+                        // Se non ci sono record e la tabella ha una chiave primaria autoincrementale, inizia da 1
+                        if (primaryKeyType == typeof(int) || primaryKeyType == typeof(uint) || primaryKeyType == typeof(long) || primaryKeyType == typeof(ulong))
+                        {
+                            recordToUpdate[primaryKeyFieldName] = Convert.ChangeType(1, primaryKeyType);
+                        }
+                    }
+                }
+                #endregion *** FINE MODIFICHE PER L'AUTOINCREMENTO ***
+                // Popola il nuovo record con i valori dalla riga del DataGridView
+                foreach (DataGridViewColumn column in dgv.Columns)
+                {
+                    // Ignora le colonne non visibili o che non corrispondono a un campo dati
+                    if (!column.Visible || string.IsNullOrEmpty(column.DataPropertyName))
+                    {
+                        continue;
+                    }
 
-            // Aggiungi la TabPage al TabControl
-            tabControlDetails.TabPages.Add(dataRecordsTabPage);
+                    string fieldName = column.DataPropertyName; // Usa DataPropertyName per il nome del campo
+                    object cellValue = validatedRow.Cells[column.Index].Value; // Accedi alla cella tramite validatedRow
 
-            // Seleziona la nuova TabPage
-            tabControlDetails.SelectedTab = dataRecordsTabPage;
+                    // Converti DBNull.Value in null per il tuo dizionario
+                    if (cellValue == DBNull.Value)
+                    {
+                        recordToUpdate[fieldName] = null;
+                    }
+                    else
+                    {
+                        // Tenta di convertire il valore al tipo di campo atteso
+                        Field correspondingField = _currentActiveTableInUI.Fields.FirstOrDefault(f => f.FieldName.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+                        if (correspondingField != null)
+                        {
+                            try
+                            {
+                                Type targetType = GetTypeForFieldType(correspondingField.DataType);
+                                object convertedValue = Convert.ChangeType(cellValue, targetType);
+                                recordToUpdate[fieldName] = convertedValue;
+                            }
+                            catch (Exception ex)
+                            {
+                                AppendToMonitor($"Errore di conversione per il campo '{fieldName}' durante l'aggiunta del nuovo record in RowValidated: {ex.Message}");
+                                recordToUpdate[fieldName] = null; // In caso di errore, imposta a null
+                            }
+                        }
+                        else
+                        {
+                            // Se il campo non è trovato nella definizione della tabella, salva il valore così com'è
+                            recordToUpdate[fieldName] = cellValue;
+                        }
+                    }
+                }
+                // ===============================================================================================
+                // NUOVO: Controllo Unicità Chiave Primaria per Nuovi Record
+                // Usiamo _currentActiveTableInUI.PrimaryKeyFieldName che è già stato popolato.
+                // ===============================================================================================
+                primaryKeyFieldName = _currentActiveTableInUI.PrimaryKeyFieldName;
 
-            // *** Aggiunto: Associa il gestore eventi per la validazione della riga ***
-            // Questo evento si verifica dopo che l'utente ha finito di modificare una riga (inclusa una nuova riga)
-            // e i valori sono stati committati al DataSource.
-            dgvDataRecords.RowValidated += DgvDataRecords_RowValidated;
+                if (!string.IsNullOrEmpty(primaryKeyFieldName)) // Se una chiave primaria è definita per la tabella
+                {
+                    object newPkValue = recordToUpdate.ContainsKey(primaryKeyFieldName) ? recordToUpdate[primaryKeyFieldName] : null;
 
-            // *** Qui potresti associare eventi al DataGridView per gestire modifiche, aggiunte, eliminazioni dei DATI ***
-            // dgvDataRecords.CellValueChanged += dgvDataRecords_CellValueChanged;
-            // dgvDataRecords.UserAddedRow += DgvDataRecords_UserAddedRow; 06/05/25 21:25
-            // dgvDataRecords.UserDeletedRow += dgvDataRecords_UserDeletedRow;
+                    bool isDuplicate = false;
+                    foreach (var existingRecord in _currentActiveTableInUI.DataRecords)
+                    {
+                        object existingPkValue = existingRecord.ContainsKey(primaryKeyFieldName) ? existingRecord[primaryKeyFieldName] : null;
+
+                        // Confronta i valori della chiave primaria. Usiamo Equals per un confronto robusto.
+                        if (Equals(newPkValue, existingPkValue))
+                        {
+                            isDuplicate = true;
+                            break; // Trovato un duplicato
+                        }
+                    }
+
+                    if (isDuplicate)
+                    {
+                        MessageBox.Show($"Impossibile aggiungere il record: il valore per la chiave primaria '{primaryKeyFieldName}' = '{newPkValue}' esiste già.", "Errore di integrità", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        AppendToMonitor($"Errore: Tentativo di aggiungere un record con chiave primaria duplicata nella tabella '{_currentActiveTableInUI.TableName}'. Valore: '{newPkValue}'.");
+
+                        // Annulla l'aggiunta della riga nel DataGridView e nel DataTable
+                        if (dt.Rows.Count > e.RowIndex && dt.Rows[e.RowIndex].RowState == DataRowState.Added)
+                        {
+                            dt.Rows[e.RowIndex].Delete(); // Segna la riga per la cancellazione
+                            dt.AcceptChanges(); // Applica la cancellazione
+                        }
+                        // Potresti anche voler riportare il focus sulla riga o sulla cella problematica
+                        return; // Esce dal metodo per prevenire l'aggiunta del record
+                    }
+                }
+                _currentActiveTableInUI.DataRecords.Add(recordToUpdate);
+                AppendToMonitor($"Nuovo record completo aggiunto alla tabella '{_currentActiveTableInUI.TableName}' tramite RowValidated.");
+
+                // Decidi qui se vuoi salvare il database automaticamente dopo ogni nuovo record.
+                // SaveDatabase();
+            }
+            else
+            {
+                // Se non è una nuova riga (cioè è una riga esistente che è stata modificata),
+                // allora la sua gestione spetta a CellValueChanged.
+                // Non facciamo nulla qui per le modifiche di righe esistenti.
+                UpdateStatus($"Riga esistente all'indice {e.RowIndex} validata. Le modifiche sono gestite da CellValueChanged.");
+            }
+        }
+        #region eventi datagrid view
+        private void DgvDataRecords_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            // Ignora gli eventi che non sono per righe/colonne di dati valide (es. header o fuori dai limiti)
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+
+            DataGridView dgv = (DataGridView)sender;
+            if (dgv.DataSource == null || !(dgv.DataSource is DataTable dt)) return;
+            if (_currentActiveTableInUI == null) return;
+
+            // *** IMPORTANTE: Ignora la riga "nuova riga" (placeholder) ***
+            // Se l'evento si scatena per la riga vuota in fondo (dgv.NewRowIndex),
+            // significa che l'utente sta digitando in essa, ma la DataRow corrispondente
+            // non è ancora stata aggiunta alla DataTable. Ignoriamo per ora.
+            // La gestione dell'aggiunta del record completo avverrà in RowValidated.
+            if (e.RowIndex == dgv.NewRowIndex)
+            {
+                return;
+            }
+
+            // A questo punto, la riga non è il placeholder, quindi dovrebbe esistere nel DataTable.
+            // Dobbiamo assicurarci che esista anche nel nostro _currentActiveTableInUI.DataRecords.
+            // Se e.RowIndex è maggiore o uguale al numero di record, significa che c'è un disallineamento
+            // (teoricamente non dovrebbe accadere se RowValidated funziona correttamente).
+            if (e.RowIndex >= _currentActiveTableInUI.DataRecords.Count)
+            {
+                AppendToMonitor($"Errore: Tentativo di modificare un record non ancora presente nella lista interna all'indice {e.RowIndex} in CellValueChanged. Questo non dovrebbe accadere dopo RowValidated.");
+                return;
+            }
+
+            // Ottieni il SerializableDictionary corrispondente al record che stiamo modificando
+            SerializableDictionary<string, object> recordToUpdate = _currentActiveTableInUI.DataRecords[e.RowIndex];
+
+            // ===================================================================================================
+            // Aggiorna il valore della singola cella modificata nel SerializableDictionary
+            // ===================================================================================================
+            string fieldName = dgv.Columns[e.ColumnIndex].DataPropertyName; // Usa DataPropertyName per il nome del campo
+            object cellValue = dgv.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
+
+            // Converti DBNull.Value in null per il tuo dizionario
+            if (cellValue == DBNull.Value)
+            {
+                recordToUpdate[fieldName] = null;
+            }
+            else
+            {
+                // Tenta di convertire il valore al tipo di campo atteso
+                Field correspondingField = _currentActiveTableInUI.Fields.FirstOrDefault(f => f.FieldName.Equals(fieldName, StringComparison.OrdinalIgnoreCase));
+                if (correspondingField != null)
+                {
+                    try
+                    {
+                        Type targetType = GetTypeForFieldType(correspondingField.DataType);
+                        object convertedValue = Convert.ChangeType(cellValue, targetType);
+                        recordToUpdate[fieldName] = convertedValue;
+                    }
+                    catch (Exception ex)
+                    {
+                        AppendToMonitor($"Errore di conversione per il campo '{fieldName}' in CellValueChanged: {ex.Message}");
+                        recordToUpdate[fieldName] = null; // In caso di errore, imposta a null
+                    }
+                }
+                else
+                {
+                    // Se il campo non è trovato, salva il valore così com'è
+                    recordToUpdate[fieldName] = cellValue;
+                }
+            }
+            UpdateStatus($"Cella '{fieldName}' nella riga {e.RowIndex} aggiornata.");
+
+            // Decidi qui se vuoi salvare il database automaticamente dopo ogni modifica di cella.
+            // ATTENZIONE: Questo può portare a salvataggi molto frequenti (ogni singola battitura).
+            // È spesso preferibile salvare solo quando l'utente esce dalla riga (RowValidated)
+            // o quando preme un pulsante "Salva".
+            // SaveDatabase();
+        }
+
+        private void DgvDataRecords_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
+        {
+            // Verifica che ci sia una tabella attiva nell'UI.
+            if (_currentActiveTableInUI == null)
+            {
+                AppendToMonitor("Errore: Impossibile eliminare record, nessuna tabella attiva in UI.");
+                UpdateStatus("Errore: Nessuna tabella attiva.");
+                e.Cancel = true; // Annulla l'eliminazione
+                return;
+            }
+
+            // Verifica che la tabella attiva abbia una chiave primaria definita.
+            // Questa proprietà dovrebbe essere stata popolata dopo il caricamento del database.
+            if (string.IsNullOrEmpty(_currentActiveTableInUI.PrimaryKeyFieldName))
+            {
+                MessageBox.Show($"La tabella '{_currentActiveTableInUI.TableName}' non ha una chiave primaria definita. Impossibile eliminare il record.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                e.Cancel = true; // Annulla l'eliminazione
+                return;
+            }
+
+            DataGridView dgv = (DataGridView)sender;
+            // L'evento UserDeletingRow si verifica *prima* che la riga venga rimossa dalla DataTable.
+            // Quindi, possiamo ancora accedere ai dati della riga che sta per essere eliminata.
+            // e.Row è la riga che sta per essere eliminata.
+            DataGridViewRow rowToDelete = e.Row;
+
+            // Ottieni il nome del campo chiave primaria dalla tua tabella attiva
+            string primaryKeyFieldName = _currentActiveTableInUI.PrimaryKeyFieldName;
+
+            // Verifica che la colonna della chiave primaria esista nella riga del DataGridView
+            if (!dgv.Columns.Contains(primaryKeyFieldName))
+            {
+                MessageBox.Show($"La colonna della chiave primaria '{primaryKeyFieldName}' non è stata trovata nella riga del DataGridView. Impossibile eliminare il record.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                e.Cancel = true; // Annulla l'eliminazione
+                return;
+            }
+
+            // Recupera il valore della chiave primaria dalla riga che sta per essere eliminata
+            object primaryKeyValue = rowToDelete.Cells[primaryKeyFieldName].Value;
+
+            if (primaryKeyValue == null || primaryKeyValue == DBNull.Value)
+            {
+                MessageBox.Show($"Il valore della chiave primaria '{primaryKeyFieldName}' è nullo nella riga da eliminare. Impossibile identificare il record.", "Errore", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                e.Cancel = true; // Annulla l'eliminazione
+                return;
+            }
+
+            // Chiedi conferma all'utente prima di eliminare
+            DialogResult confirmResult = MessageBox.Show(
+                $"Sei sicuro di voler eliminare il record con {primaryKeyFieldName} = '{primaryKeyValue}' dalla tabella '{_currentActiveTableInUI.TableName}'?",
+                "Conferma Eliminazione",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (confirmResult == DialogResult.No)
+            {
+                e.Cancel = true; // L'utente ha annullato
+                AppendToMonitor("Eliminazione record annullata dall'utente.");
+                UpdateStatus("Eliminazione annullata.");
+                return;
+            }
+
+            // Ora, usa primaryKeyValue per trovare e rimuovere il SerializableDictionary corrispondente
+            // dalla tua lista _currentActiveTableInUI.DataRecords.
+            bool removedFromDataRecords = false;
+
+            // Utilizziamo RemoveAll per rimuovere il record dalla lista DataRecords.
+            // La logica di confronto deve gestire i tipi di chiave primaria (int, string, ecc.).
+            removedFromDataRecords = _currentActiveTableInUI.DataRecords.RemoveAll(recordDict =>
+            {
+                if (recordDict.TryGetValue(primaryKeyFieldName, out object valueInDict))
+                {
+                    // Confronta il valore della chiave primaria della riga con quello nel dizionario.
+                    // Gestisce i valori nulli e DBNull.Value per un confronto robusto.
+                    if (primaryKeyValue == DBNull.Value || primaryKeyValue == null)
+                    {
+                        return valueInDict == null || valueInDict == DBNull.Value;
+                    }
+                    else
+                    {
+                        // Confronta i valori convertendoli a stringa per una generalizzazione.
+                        // Questo funziona bene per int, string, Guid.
+                        return primaryKeyValue.ToString().Equals(valueInDict?.ToString(), StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+                return false; // Il campo chiave primaria non è presente nel dizionario del record
+            }) > 0; // RemoveAll restituisce il numero di elementi rimossi
+
+            if (removedFromDataRecords)
+            {
+                AppendToMonitor($"Record con chiave '{primaryKeyFieldName}' = '{primaryKeyValue}' eliminato con successo dalla lista DataRecords in memoria.");
+                UpdateStatus("Record eliminato.");
+                e.Cancel = false; // Permetti al DGV di completare la sua eliminazione visiva
+            }
+            else
+            {
+                MessageBox.Show($"Errore: Record con chiave '{primaryKeyFieldName}' = '{primaryKeyValue}' non trovato o non rimosso dalla lista DataRecords in memoria.", "Errore di Eliminazione", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                e.Cancel = true; // Annulla l'eliminazione della riga nel DGV se non è stata rimossa dalla lista
+                AppendToMonitor("Errore: Record non rimosso dalla lista DataRecords in memoria.");
+                UpdateStatus("Errore eliminazione.");
+            }
+
+            // IMPORTANTE: Dopo aver modificato i dati in memoria (_currentActiveTableInUI.DataRecords),
+            // dovresti salvare il database su disco per rendere persistenti le modifiche.
+            // Questo non è gestito da questo metodo. Potresti chiamare un metodo SaveDatabase() qui
+            // o in un evento successivo come UserDeletedRow (se lo riattivi per questo scopo).
+            // Esempio: SaveDatabase();
+        }
+        private void DgvDataRecords_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            e.ThrowException = false;
+            string errorMessage = $"Errore di Data Binding nella riga {e.RowIndex}, colonna '{e.ColumnIndex}': {e.Exception.Message}";
+            AppendToMonitor(errorMessage);
+            UpdateStatus($"Errore dati: {e.Exception.Message}");
+        }
+        private void DgvDataRecords_UserAddedRow(object sender, DataGridViewRowEventArgs e)
+        {
+            AppendToMonitor("Nuova riga utente aggiunta (in attesa di validazione).");
+            UpdateStatus("Nuova riga aggiunta.");
+        }
+        private void DgvDataRecords_UserDeletedRow(object sender, DataGridViewRowEventArgs e)
+        {
+            if (_currentActiveTableInUI == null)
+            {
+                AppendToMonitor("Errore: Impossibile eliminare record, nessuna tabella attiva in UI.");
+                UpdateStatus("Errore: Nessuna tabella attiva.");
+                return;
+            }
+
+            DataGridView dgv = (DataGridView)sender;
+            if (dgv.DataSource == null || !(dgv.DataSource is DataTable dt)) return;
+
+            // Ricostruisci DataRecords dalla DataTable aggiornata.
+            // Questo è un approccio semplice per garantire la sincronizzazione.
+            _currentActiveTableInUI.DataRecords.Clear();
+            foreach (DataRow dr in dt.Rows)
+            {
+                if (dr.RowState != DataRowState.Deleted)
+                {
+                    // Crea un nuovo SerializableDictionary per ogni riga della DataTable
+                    SerializableDictionary<string, object> newRecordDict = new SerializableDictionary<string, object>();
+                    foreach (DataColumn dc in dt.Columns)
+                    {
+                        string fieldName = dc.ColumnName;
+                        object cellValue = dr[fieldName];
+                        newRecordDict[fieldName] = (cellValue == DBNull.Value) ? null : cellValue; // Corretto: newRecordDict[fieldName]
+                    }
+                    _currentActiveTableInUI.DataRecords.Add(newRecordDict);
+                }
+            }
+
+            AppendToMonitor($"Record eliminato dalla tabella '{_currentActiveTableInUI.TableName}'. Lista DataRecords sincronizzata.");
+            UpdateStatus("Record eliminato.");
+        }
+        #endregion
+        /// <summary>
+        /// Recupera il DataGridView associato a una specifica tabella.
+        /// Presuppone che il DataGridView sia l'unico controllo di tipo DataGridView
+        /// all'interno della TabPage dedicata a quella tabella.
+        /// </summary>
+        /// <param name="table">La tabella per cui recuperare il DataGridView.</param>
+        /// <returns>Il DataGridView associato alla tabella, o null se non trovato.</returns>
+        private DataGridView GetDataGridViewForTable(Table table)
+        {
+            // Itera attraverso tutte le TabPage nel tabControlDetails
+            foreach (TabPage page in tabControlDetails.TabPages)
+            {
+                // Controlla se il Tag della TabPage corrisponde alla tabella usando TableId
+                if (page.Tag is Table pageTable && pageTable.TableId == table.TableId) // *** CORREZIONE QUI: Usiamo TableId ***
+                {
+                    // Se la TabPage è quella giusta, cerca un DataGridView al suo interno
+                    foreach (Control control in page.Controls)
+                    {
+                        if (control is DataGridView dgv)
+                        {
+                            return dgv; // Trovato il DataGridView
+                        }
+                    }
+                }
+            }
+            return null; // DataGridView non trovato per la tabella specificata
+        }
+        /// <summary>
+        /// Ottiene il GUID di un record dalla tabella attiva in base all'indice della riga selezionata nella griglia.
+        /// Si basa sulla variabile _currentActiveTableInUI che rappresenta la tabella attualmente visualizzata.
+        /// </summary>
+        /// <param name="selectedIndex">L'indice della riga selezionata nella griglia (che corrisponde all'indice in DataRecords).</param>
+        /// <returns>Il GUID del record corrispondente, o Guid.Empty se non trovato o non valido.</returns>
+        public Guid GetGuidFromSelectedIndex(int selectedIndex)
+        {
+            // Usa _currentActiveTableInUI che è già impostata dal dbTreeView_AfterSelect
+            // Questo assicura che stiamo lavorando sulla tabella che è attualmente visualizzata e attiva.
+            if (_currentActiveTableInUI == null || _currentActiveTableInUI.DataRecords == null || selectedIndex < 0 || selectedIndex >= _currentActiveTableInUI.DataRecords.Count)
+            {
+                // Utilizza AppendToMonitor per messaggi di debug/errore nell'UI
+                AppendToMonitor($"Errore: Indice selezionato non valido ({selectedIndex}) o tabella attiva non caricata/non valida.");
+                return Guid.Empty; // Restituisce un GUID vuoto per indicare un errore
+            }
+
+            // 1. Ottieni il SerializableDictionary corrispondente all'indice selezionato
+            SerializableDictionary<string, object> selectedRecord = _currentActiveTableInUI.DataRecords[selectedIndex];
+
+            // 2. Cerca il valore del campo GUID nel dizionario
+            //    Cerca un campo con nome "Guid" (case-insensitive) tra i Fields della tabella.
+            //    Se non trova un campo specifico, usa "Guid" come fallback.
+            string guidKey = _currentActiveTableInUI.Fields.FirstOrDefault(f => f.FieldName.Equals("Guid", StringComparison.OrdinalIgnoreCase))?.FieldName ?? "Guid";
+
+            if (selectedRecord.TryGetValue(guidKey, out object guidValue))
+            {
+                if (guidValue is Guid currentGuid)
+                {
+                    // Il valore è già un Guid
+                    return currentGuid;
+                }
+                else if (guidValue is string guidString)
+                {
+                    // Il valore è una stringa, prova a parsare
+                    if (Guid.TryParse(guidString, out Guid parsedGuid))
+                    {
+                        return parsedGuid;
+                    }
+                }
+            }
+
+            AppendToMonitor($"Avviso: Il campo '{guidKey}' non è stato trovato o non è un GUID valido per il record all'indice {selectedIndex} nella tabella '{_currentActiveTableInUI.TableName}'.");
+            return Guid.Empty; // Se il GUID non è trovato o non è valido, restituisce Guid.Empty
         }
         /// <summary>
         /// Configura le colonne per un DataGridView che mostra i *dati* dei record.
@@ -806,6 +1471,7 @@ namespace EvolutiveSystem_01
                 ToolStripItem addTableMenuItem = treeViewContextMenu.Items.Cast<ToolStripItem>().FirstOrDefault(item => item.Tag?.ToString() == "AddTable");
                 ToolStripItem addFieldMenuItem = treeViewContextMenu.Items.Cast<ToolStripItem>().FirstOrDefault(item => item.Tag?.ToString() == "AddField");
                 ToolStripItem deleteItem = treeViewContextMenu.Items.Cast<ToolStripItem>().FirstOrDefault(item => item.Tag?.ToString() == "Delete");
+                ToolStripItem modifyItem = treeViewContextMenu.Items.Cast<ToolStripItem>().FirstOrDefault(item => item.Tag?.ToString() == "Modify");
 
                 // Imposta la visibilità e l'abilitazione in base al tipo di oggetto selezionato
                 if (selectedObject is Database)
@@ -813,18 +1479,21 @@ namespace EvolutiveSystem_01
                     if (addTableMenuItem != null) addTableMenuItem.Visible = true; // Puoi aggiungere una tabella a un database
                     if (addFieldMenuItem != null) addFieldMenuItem.Visible = false; // Non puoi aggiungere un campo a un database
                     if (deleteItem != null) deleteItem.Visible = true; // Puoi eliminare un database
+                    if (modifyItem != null) modifyItem.Visible = false;
                 }
                 else if (selectedObject is Table)
                 {
                     if (addTableMenuItem != null) addTableMenuItem.Visible = false; // Non puoi aggiungere una tabella a una tabella
                     if (addFieldMenuItem != null) addFieldMenuItem.Visible = true; // Puoi aggiungere un campo a una tabella
                     if (deleteItem != null) deleteItem.Visible = true; // Puoi eliminare una tabella
+                    if (modifyItem != null) modifyItem.Visible = false;
                 }
                 else if (selectedObject is Field)
                 {
                     if (addTableMenuItem != null) addTableMenuItem.Visible = false; // Non puoi aggiungere una tabella a un campo
                     if (addFieldMenuItem != null) addFieldMenuItem.Visible = false; // Non puoi aggiungere un campo a un campo
                     if (deleteItem != null) deleteItem.Visible = true; // Puoi eliminare un campo
+                    if (modifyItem!= null) modifyItem.Visible = true; // Puoi modificare un campo
                 }
                 else
                 {
@@ -832,6 +1501,7 @@ namespace EvolutiveSystem_01
                     if (addTableMenuItem != null) addTableMenuItem.Visible = false;
                     if (addFieldMenuItem != null) addFieldMenuItem.Visible = false;
                     if (deleteItem != null) deleteItem.Visible = false;
+                    if (modifyItem != null) modifyItem.Visible = false;
                 }
             }
         }
@@ -1075,101 +1745,51 @@ namespace EvolutiveSystem_01
             */
         }
         #endregion
-        #region Datagreedview events
-        private void DgvDataRecords_RowValidated(object sender, DataGridViewCellEventArgs e)
+        #region Tab control events
+        private void tabControlDetails_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Recupera il DataGridView che ha scatenato l'evento
-            DataGridView dgv = sender as DataGridView;
-            if (dgv == null) return;
+            // Ottieni la tab attualmente selezionata dal TabControl.
+            TabPage selectedPage = tabControlDetails.SelectedTab;
 
-            // Recupera la tabella associata a questo DataGridView (l'abbiamo salvata nel Tag)
-            Table table = dgv.Tag as Table;
-            if (table == null)
+            // Verifica se la pagina selezionata esiste e se contiene controlli.
+            if (selectedPage != null && selectedPage.Controls.Count > 0)
             {
-                AppendToMonitor("Errore: Impossibile trovare la tabella associata al DataGridView nella validazione riga.");
-                UpdateStatus("Errore: Tabella non trovata (validazione riga).");
-                return;
+                // Cerca il DataGridView all'interno dei controlli della pagina.
+                // Assumiamo che il DataGridView sia il primo controllo aggiunto alla TabPage,
+                // o che sia l'unico controllo di tipo DataGridView.
+                DataGridView dgv = selectedPage.Controls[0] as DataGridView;
+
+                // Se il controllo trovato è effettivamente un DataGridView, assegnarlo alla variabile globale.
+                if (dgv != null)
+                {
+                    _currentActiveDataGridView = dgv; // Aggiorna la variabile globale
+                }
+                else
+                {
+                    // Se la pagina selezionata non contiene un DataGridView, imposta a null.
+                    _currentActiveDataGridView = null;
+                }
             }
-
-            // *** Modificato: Controlla se la riga convalidata NON è la riga per i nuovi record (IsNewRow)
-            // e se il suo indice è valido e non è l'ultima riga del DGV (che è la nuova riga vuota) ***
-            // Quando una nuova riga viene convalidata, diventa una riga di dati regolare,
-            // e una nuova riga IsNewRow viene aggiunta in fondo.
-            // Quindi, la riga convalidata che ci interessa non avrà IsNewRow = true.
-            // Il suo indice sarà l'ultimo indice valido *prima* della riga IsNewRow.
-            if (e.RowIndex >= 0 && e.RowIndex < dgv.Rows.Count && !dgv.Rows[e.RowIndex].IsNewRow)
+            else
             {
-                // Questa condizione si verifica per qualsiasi riga convalidata che non sia la riga "new row"
-                // (sia una riga appena aggiunta che una riga esistente modificata).
-
-                // Per distinguere una riga appena aggiunta da una modificata, potremmo aver bisogno
-                // di un flag o di confrontare con i dati esistenti nella lista DataRecords.
-                // Tuttavia, nel caso più semplice di sola aggiunta, la riga convalidata
-                // che non è IsNewRow e il cui indice è l'ultimo valido nel DataTable
-                // (che corrisponde a dgv.Rows.Count - 2 se AllowUserToAddRows è true)
-                // è la riga appena aggiunta.
-
-                // Recuperiamo il DataTable legato al DataGridView.
-                DataTable dt = dgv.DataSource as DataTable;
-                if (dt == null)
-                {
-                    AppendToMonitor("Errore: Impossibile trovare il DataTable associato al DataGridView nella validazione riga.");
-                    UpdateStatus("Errore: DataTable non trovato (validazione riga).");
-                    return;
-                }
-
-                // Controlla se la riga convalidata corrisponde all'ultima riga di dati nel DataTable.
-                // Se l'utente ha appena aggiunto una riga, l'indice della riga convalidata (e.RowIndex)
-                // nel DGV corrisponderà all'indice dell'ultima riga nel DataTable (dt.Rows.Count - 1).
-                if (e.RowIndex == dt.Rows.Count - 1)
-                {
-                    DataRow validatedDataRow = dt.Rows[e.RowIndex];
-
-                    // Crea un nuovo SerializableDictionary per il nuovo record
-                    SerializableDictionary<string, object> newRecord = new SerializableDictionary<string, object>();
-
-                    // Popola il nuovo record con i valori dalla riga convalidata del DataTable
-                    foreach (DataColumn col in dt.Columns)
-                    {
-                        string fieldName = col.ColumnName;
-                        // Recupera il valore dalla cella corrispondente nel DataRow. Gestisci DBNull.Value.
-                        object cellValue = validatedDataRow[col.ColumnName];
-                        newRecord.Add(fieldName, cellValue == DBNull.Value ? null : cellValue);
-                    }
-
-                    // Aggiungi il nuovo record alla lista DataRecords della tabella
-                    // NOTA: Stiamo aggiungendo il record alla lista originale della tabella.
-                    // Il DataTable è solo una vista per il DataGridView.
-                    table.DataRecords.Add(newRecord);
-
-                    AppendToMonitor($"Aggiunto nuovo record alla tabella '{table.TableName}' tramite validazione riga.");
-                    UpdateStatus($"Record aggiunto alla tabella '{table.TableName}'.");
-
-                    // Potresti voler segnare il database come modificato qui
-                    // isDatabaseModified = true;
-                }
-                // else
-                // {
-                //     // Se la riga convalidata non è l'ultima riga del DataTable,
-                //     // significa che è stata modificata una riga esistente.
-                //     // La logica per gestire la modifica di righe esistenti andrebbe qui.
-                //     // AppendToMonitor($"Riga esistente convalidata all'indice {e.RowIndex}. Logica di aggiornamento record necessaria.");
-                //     // UpdateStatus($"Riga modificata all'indice {e.RowIndex}.");
-                // }
+                // Se non c'è una pagina selezionata o la pagina è vuota, imposta a null.
+                _currentActiveDataGridView = null;
             }
         }
         #endregion
-        #region datagridview events
+        #region dbTreeView events
         private void dbTreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
             // Recupera l'oggetto dati associato al nodo selezionato tramite il Tag
             object selectedObject = e.Node.Tag;
 
-            // Pulisci le TabPages esistenti nel TabControl
-            if (tabControlDetails != null)
-            {
-                tabControlDetails.TabPages.Clear();
-            }
+            // Inizializza a null. Saranno impostati correttamente da AddTableDataRecordsTab o logica specifica.
+            _currentActiveTableInUI = null;
+            _currentActiveDataGridView = null;
+
+            // *** DIFFERENZA CHIAVE: Rimosso tabControlDetails.TabPages.Clear(); ***
+            // Questo permette alle schede di rimanere aperte quando si cambia selezione nella TreeView.
+            // La logica di AddTableDataRecordsTab si occuperà di creare nuove schede o selezionare quelle esistenti.
 
             // Aggiorna i controlli UI in base al tipo di oggetto selezionato
             if (selectedObject is Database db)
@@ -1177,16 +1797,23 @@ namespace EvolutiveSystem_01
                 AppendToMonitor($"Selezionato Database: {db.DatabaseName}");
                 UpdateStatus($"Database selezionato: {db.DatabaseName}");
                 currentDatabase = db; // Imposta il database selezionato come corrente per le operazioni globali
-                // *** Aggiunto: Aggiunge una TabPage per ogni tabella del database selezionato ***
-                foreach (var table in db.Tables)
-                {
-                    AddTableDataRecordsTab(table);
-                }
+
                 lblDbName.Text = currentDatabase.DatabaseName;
                 lblTblName.Text = "";
-                // *** Qui potresti aggiungere una TabPage con i dettagli del Database ***
-                // Esempio placeholder:
-                // AddDatabaseDetailsTab(db);
+
+                // *** DIFFERENZA: Gestione dell'apertura delle schede per un Database ***
+                // Invece di aprire TUTTE le tabelle, suggerisco di aprire una scheda di riepilogo
+                // o la prima tabella, per evitare un eccessivo numero di schede.
+                // Se non ci sono tab aperte e il database ha tabelle, apri la prima.
+                if (tabControlDetails.TabPages.Count == 0 && db.Tables.Any())
+                {
+                    AddTableDataRecordsTab(db.Tables.First().TableName, db);
+                }
+                // Se preferisci ancora aprire tutte le tabelle, il codice sarebbe:
+                // foreach (var table in db.Tables)
+                // {
+                //     AddTableDataRecordsTab(table.TableName, db); // Passa anche il database
+                // }
             }
             else if (selectedObject is Table table)
             {
@@ -1197,14 +1824,17 @@ namespace EvolutiveSystem_01
                 // Popola la ListView con le *proprietà* dei campi di questa tabella
                 PopulateFieldsListView(table.Fields);
 
-                // *** Qui potresti aggiungere una TabPage con i dettagli della Tabella ***
-                // Esempio placeholder:
-                // AddTableDetailsTab(table);
-
-                // Aggiunge una TabPage per mostrare i *dati* (record) della tabella
-                AddTableDataRecordsTab(table);
                 lblDbName.Text = currentDatabase.DatabaseName;
                 lblTblName.Text = table.TableName;
+
+                // *** DIFFERENZA: Chiamata a AddTableDataRecordsTab con nome tabella e database ***
+                // Questo metodo si occuperà di creare/selezionare la tab e di impostare
+                // _currentActiveDataGridView e _currentActiveTableInUI.
+                AddTableDataRecordsTab(table.TableName, currentDatabase);
+
+                // *** DIFFERENZA: Rimosso l'assegnazione diretta qui ***
+                // _currentActiveDataGridView = GetDataGridViewForTable(table);
+                // L'assegnazione avviene all'interno di AddTableDataRecordsTab.
             }
             else if (selectedObject is Field field)
             {
@@ -1214,102 +1844,43 @@ namespace EvolutiveSystem_01
                 Table parentTable = field.ParentTable;
                 Database parentDatabase = parentTable?.ParentDatabase;
 
-                // Popola la ListView con le *proprietà* dei campi della tabella madre
-                if (parentTable != null)
+                if (parentTable != null && parentDatabase != null) // Assicurati che siano validi
                 {
                     currentDatabase = parentDatabase; // Imposta il database padre del campo come corrente
                     PopulateFieldsListView(parentTable.Fields);
-                    // Evidenzia il campo selezionato nella ListView
-                    HighlightFieldInListView(field);
+                    HighlightFieldInListView(field); // Evidenzia il campo selezionato nella ListView
 
-                    // Aggiunge una TabPage per mostrare i *dati* (record) della tabella madre
-                    AddTableDataRecordsTab(parentTable);
                     lblDbName.Text = currentDatabase.DatabaseName;
                     lblTblName.Text = parentTable.TableName;
+
+                    // *** DIFFERENZA: Chiamata a AddTableDataRecordsTab con nome tabella e database ***
+                    // Questo metodo si occuperà di creare/selezionare la tab e di impostare
+                    // _currentActiveDataGridView e _currentActiveTableInUI.
+                    AddTableDataRecordsTab(parentTable.TableName, currentDatabase);
+
+                    // *** DIFFERENZA: Rimosso l'assegnazione diretta qui ***
+                    // _currentActiveDataGridView = GetDataGridViewForTable(parentTable);
+                    // L'assegnazione avviene all'interno di AddTableDataRecordsTab.
                 }
-
-                // *** Qui potresti aggiungere una TabPage con i dettagli del Campo ***
-                // Esempio placeholder:
-                // AddFieldDetailsTab(field);
-            }
-            else
-            {
-                AppendToMonitor("Selezionato nodo sconosciuto.");
-                UpdateStatus("Elemento sconosciuto selezionato.");
-                currentDatabase = null; // Nessun database valido selezionato
-                // Pulisci la ListView delle proprietà
-                if (listViewFields != null) listViewFields.Items.Clear();
-            }
-
-            // Opzionale: Aggiorna un'area di dettaglio separata con tutte le proprietà dell'oggetto selezionato
-            // DisplayObjectDetails(selectedObject);
-            /*
-            // Recupera l'oggetto dati associato al nodo selezionato tramite il Tag
-            object selectedObject = e.Node.Tag;
-
-            // Pulisci le TabPages esistenti nel TabControl
-            if (tabControlDetails != null)
-            {
-                tabControlDetails.TabPages.Clear();
-            }
-
-            // Aggiorna i controlli UI in base al tipo di oggetto selezionato
-            if (selectedObject is Database db)
-            {
-                AppendToMonitor($"Selezionato Database: {db.DatabaseName}");
-                UpdateStatus($"Database selezionato: {db.DatabaseName}");
-
-                // *** Qui potresti aggiungere una TabPage con i dettagli del Database ***
-                // Esempio placeholder:
-                // AddDatabaseDetailsTab(db);
-            }
-            else if (selectedObject is Table table)
-            {
-                AppendToMonitor($"Selezionata Tabella: {table.TableName}");
-                UpdateStatus($"Tabella selezionata: {table.TableName}");
-
-                // Popola la ListView con le *proprietà* dei campi di questa tabella
-                PopulateFieldsListView(table.Fields);
-
-                // *** Qui potresti aggiungere una TabPage con i dettagli della Tabella ***
-                // Esempio placeholder:
-                // AddTableDetailsTab(table);
-
-                // Aggiunge una TabPage per mostrare i *dati* (record) della tabella
-                AddTableDataRecordsTab(table);
-
-            }
-            else if (selectedObject is Field field)
-            {
-                AppendToMonitor($"Selezionato Campo: {field.FieldName}");
-                UpdateStatus($"Campo selezionato: {field.FieldName}");
-
-                // Popola la ListView con le *proprietà* dei campi della tabella madre
-                if (field.ParentTable != null)
+                else
                 {
-                    PopulateFieldsListView(field.ParentTable.Fields);
-                    // Evidenzia il campo selezionato nella ListView
-                    HighlightFieldInListView(field);
-
-                    // Aggiunge una TabPage per mostrare i *dati* (record) della tabella madre
-                    AddTableDataRecordsTab(field.ParentTable);
+                    _currentActiveTableInUI = null;
+                    _currentActiveDataGridView = null;
+                    AppendToMonitor("Errore: Il nodo campo non ha un nodo padre valido di tipo Tabella o Database.");
+                    UpdateStatus("Nessuna tabella valida selezionata.");
+                    tabControlDetails.TabPages.Clear(); // In questo caso, pulisci se c'è un errore grave
+                    listViewFields.Items.Clear(); // Pulisce la ListView dei campi
                 }
-
-                // *** Qui potresti aggiungere una TabPage con i dettagli del Campo ***
-                // Esempio placeholder:
-                // AddFieldDetailsTab(field);
             }
             else
             {
-                AppendToMonitor("Selezionato nodo sconosciuto.");
-                UpdateStatus("Elemento sconosciuto selezionato.");
-                // Pulisci la ListView delle proprietà
-                if (listViewFields != null) listViewFields.Items.Clear();
+                _currentActiveTableInUI = null;
+                _currentActiveDataGridView = null;
+                AppendToMonitor("Nessun oggetto valido selezionato nella TreeView.");
+                UpdateStatus("Nessuna selezione valida.");
+                tabControlDetails.TabPages.Clear(); // Pulisce le schede se non c'è una selezione valida
+                listViewFields.Items.Clear(); // Pulisce la ListView dei campi
             }
-
-            // Opzionale: Aggiorna un'area di dettaglio separata con tutte le proprietà dell'oggetto selezionato
-            // DisplayObjectDetails(selectedObject);
-            */
         }
         /// <summary>
         /// Gestore events per il click del mouse su un nodo della TreeView (incluso il tasto destro).
@@ -1482,38 +2053,6 @@ namespace EvolutiveSystem_01
                     AppendToMonitor("Salvataggio annullato.");
                 }
             }
-            /*
-            if (currentDatabase == null)
-            {
-                MessageBox.Show("Nessun database da salvare.", "Salva Database", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                UpdateStatus("Nessun database da salvare.");
-                return;
-            }
-
-            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
-            {
-                saveFileDialog.Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*";
-                saveFileDialog.Title = "Salva il Database Semantico come file XML";
-                saveFileDialog.FileName = currentDatabase.DatabaseName.Replace(" ", "_") + ".xml"; // Nome file suggerito
-
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    try
-                    {
-                        UpdateStatus($"Salvataggio database in {saveFileDialog.FileName}...");
-                        DatabaseSerializer.SerializeToXmlFile(currentDatabase, saveFileDialog.FileName);
-                        AppendToMonitor($"Database salvato con successo in {saveFileDialog.FileName}");
-                        UpdateStatus("Database salvato.");
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Errore durante il salvataggio del database: {ex.Message}", "Errore di Salvataggio", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        AppendToMonitor($"Errore durante il salvataggio: {ex.Message}");
-                        UpdateStatus($"Errore salvataggio: {ex.Message}");
-                    }
-                }
-            }
-            */
         }
         /// <summary>
         /// Gestore events per il pulsante "Carica Database".
@@ -1523,6 +2062,14 @@ namespace EvolutiveSystem_01
         {
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
+                if (Settings.Default.PathDb.Length > 0 && Settings.Default.DBName.Length > 0) 
+                {
+                    openFileDialog.FileName = Path.Combine(Settings.Default.DBName, Settings.Default.PathDb);
+                }
+                else
+                {
+                    string dbPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                }
                 openFileDialog.Filter = "XML Files (*.xml)|*.xml|All files (*.*)|*.*";
                 openFileDialog.Title = "Seleziona un file XML del Database Semantico";
 
@@ -1530,6 +2077,11 @@ namespace EvolutiveSystem_01
                 {
                     try
                     {
+                        Settings.Default.PathDb = Path.GetFullPath(openFileDialog.FileName);
+                        Settings.Default.DBName = Path.GetFileName(openFileDialog.FileName);
+                        Settings.Default.Save();
+
+                        
                         UpdateStatus($"Caricamento database da {openFileDialog.FileName}...");
                         Database loadedDb = DatabaseSerializer.DeserializeFromXmlFile(openFileDialog.FileName);
 
@@ -1541,6 +2093,15 @@ namespace EvolutiveSystem_01
                             return; // Non aggiungere il duplicato
                         }
 
+                        // ===================================================================================================
+                        // INSERIMENTO CRUCIALE: Popolare PrimaryKeyFieldName per ogni tabella
+                        // ===================================================================================================
+                        foreach (Table table in loadedDb.Tables)
+                        {
+                            table.SetPrimaryKeyFieldName();
+                            // Opzionale per debug: Console.WriteLine($"Tabella '{table.TableName}': Chiave Primaria = '{table.PrimaryKeyFieldName ?? "Non definita"}'");
+                        }
+                        // ===================================================================================================
 
                         // Aggiungi il database caricato alla lista esistente
                         loadedDatabases.Add(loadedDb);
@@ -1579,6 +2140,11 @@ namespace EvolutiveSystem_01
                 }
             }
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BtnCloseAllDatabases_Click(object sender, EventArgs e)
         {
             // *** Chiedi conferma all'utente prima di chiudere tutti i database ***
@@ -1622,6 +2188,96 @@ namespace EvolutiveSystem_01
                 UpdateStatus("Chiusura database annullata.");
                 AppendToMonitor("Chiusura database annullata dall'utente.");
             }
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void BtnRicaricaDB_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // Cancella la lista dei database caricati
+                loadedDatabases.Clear();
+                // Resetta il database corrente
+                currentDatabase = null;
+
+                // Aggiorna l'UI
+                if (dbTreeView != null)
+                {
+                    dbTreeView.Nodes.Clear(); // Pulisci la TreeView
+                }
+                if (tabControlDetails != null)
+                {
+                    tabControlDetails.TabPages.Clear(); // Pulisci le tab dei dettagli/dati
+                }
+                if (listViewFields != null)
+                {
+                    listViewFields.Items.Clear(); // Pulisci la ListView dei campi
+                }
+                if (Settings.Default.PathDb.Length > 0 && Settings.Default.DBName.Length > 0) 
+                {
+                    string PathFileDb = Path.Combine(Settings.Default.PathDb, Settings.Default.DBName);
+                    Database loadedDb = DatabaseSerializer.DeserializeFromXmlFile(PathFileDb);
+                    // *** Aggiunto: Controlla se un database con lo stesso ID o nome esiste già ***
+                    if (loadedDatabases.Any(db => db.DatabaseId == loadedDb.DatabaseId || db.DatabaseName.Equals(loadedDb.DatabaseName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        MessageBox.Show($"Un database con lo stesso ID ({loadedDb.DatabaseId}) o nome ('{loadedDb.DatabaseName}') è già caricato.", "Database Già Caricato", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        UpdateStatus($"Database '{loadedDb.DatabaseName}' già caricato.");
+                        return; // Non aggiungere il duplicato
+                    }
+
+                    // ===================================================================================================
+                    // INSERIMENTO CRUCIALE: Popolare PrimaryKeyFieldName per ogni tabella
+                    // ===================================================================================================
+                    foreach (Table table in loadedDb.Tables)
+                    {
+                        table.SetPrimaryKeyFieldName();
+                        // Opzionale per debug: Console.WriteLine($"Tabella '{table.TableName}': Chiave Primaria = '{table.PrimaryKeyFieldName ?? "Non definita"}'");
+                    }
+                    // ===================================================================================================
+
+                    // Aggiungi il database caricato alla lista esistente
+                    loadedDatabases.Add(loadedDb);
+
+                    // Imposta il database caricato come quello corrente (opzionale, dipende dalla gestione)
+                    currentDatabase = loadedDb;
+
+                    // Aggiorna la TreeView per mostrare TUTTI i database caricati
+                    PopulateDatabaseTreeView();
+
+                    // Abilita i controlli rilevanti (solo pulsanti non gestiti da ContextMenu)
+                    // if (btnSaveDatabase != null) btnSaveDatabase.Enabled = true;
+
+                    // Passa il database caricato al motore semantico (se gestito qui)
+                    // semanticEngine.LoadSemanticDatabase(currentDatabase); // Potrebbe dover gestire database multipli
+
+                    AppendToMonitor($"Database caricato con successo da {PathFileDb}");
+                    UpdateStatus("Database caricato.");
+
+                    // Seleziona automaticamente il nodo del database caricato nella TreeView
+                    if (dbTreeView != null)
+                    {
+                        TreeNode newNode = FindNodeByTag(dbTreeView.Nodes, loadedDb);
+                        if (newNode != null)
+                        {
+                            dbTreeView.SelectedNode = newNode;
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Nessun db attivo", "Attenzione", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                }
+            }
+            catch (Exception ex)
+                {
+                    MessageBox.Show($"Errore durante il caricamento del database: {ex.Message}", "Errore di Caricamento", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    AppendToMonitor($"Errore durante il caricamento: {ex.Message}");
+                    UpdateStatus($"Errore caricamento: {ex.Message}");
+                }
         }
         /// <summary>
         /// Avvio servizio server semantico
@@ -1824,6 +2480,19 @@ namespace EvolutiveSystem_01
             FrmSocketClient fSocket = new FrmSocketClient(_logger, asl);
             fSocket.ShowDialog();
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void BtnAnalysis_Click(object sender, EventArgs e)
+        {
+            Point p = PointToScreen(new Point(gbAnalysis.Left + btnAnalysis.Left + btnAnalysis.Width, btnAnalysis.Top + btnAnalysis.Height));
+            //Point p = PointToScreen(new Point(panelCommands.Left + panelCommands.Left + btnAnalysis.Width, btnAnalysis.Top + btnAnalysis.Height));
+            AnalysisContextMenu.Show(p);
+        }
+
         #endregion
         #region context menu events
         /// <summary>
@@ -1838,7 +2507,7 @@ namespace EvolutiveSystem_01
                 string action = menuItem.Tag?.ToString();
                 // Recupera l'oggetto dati associato al nodo selezionato
                 object selectedObject = dbTreeView.SelectedNode.Tag;
-
+                object parrentSelectedObject = dbTreeView.SelectedNode.Parent.Tag;          
                 switch (action)
                 {
                     case "AddTable":
@@ -1859,10 +2528,59 @@ namespace EvolutiveSystem_01
                         // Logica per eliminare l'elemento selezionato
                         DeleteSelectedItem(selectedObject, dbTreeView.SelectedNode);
                         break;
-                        // Aggiungi altri casi per altre azioni del menu
+                    // Aggiungi altri casi per altre azioni del menu
+                    case "Modify":
+                        {
+
+                            if (parrentSelectedObject is Table parrentSelectedTableForField)
+                            {
+                                if (selectedObject is Field selectedTableForFieldM)
+                                {
+                                    ModifySelectedItem(selectedTableForFieldM, parrentSelectedTableForField);
+                                }
+                            }
+
+
+                            //if (selectedObject is Field selectedTableForFieldM)
+                            //{
+                            //    ModifySelectedItem(selectedTableForFieldM);
+                            //}
+                        }
+                        break;
                 }
             }
         }
+        /// <summary>
+        /// Gestione context menu analisi
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void tsmSpeedAnalysis_Click(object sender, EventArgs e)
+        {
+            StringBuilder sb = new StringBuilder();
+            Table esplorazioneMIUTable = currentDatabase.Tables.FirstOrDefault(t => t.TableName == "EsplorazioneMIU");
+            Dictionary<(string iniziale, string target), TempoAnalisiRisultati> risultatiAnalisi = DataAnalysis.AnalizzaTempi(esplorazioneMIUTable.DataRecords);
+            foreach (var entry in risultatiAnalisi)
+            {
+                var coppiaStringhe = entry.Key;
+                var statistiche = entry.Value;
+                sb.Append(($"Analisi per: Iniziale='{coppiaStringhe.iniziale}', Target='{coppiaStringhe.target}'") + Environment.NewLine);
+                sb.Append($"  Min Tempo: {statistiche.Min?.ToString("F2") ?? "N/A"} ms" + Environment.NewLine);
+                sb.Append($"  Max Tempo: {statistiche.Max?.ToString("F2") ?? "N/A"} ms" + Environment.NewLine);
+                sb.Append($"  Media Tempo: {statistiche.Media?.ToString("F2") ?? "N/A"} ms" + Environment.NewLine);
+                sb.Append($"  Dev. Std: {statistiche.DeviazioneStandard?.ToString("F2") ?? "N/A"} ms" + Environment.NewLine);
+                // Qui puoi aggiungere le righe alla tua griglia nel form di analisi
+                //Console.WriteLine($"Analisi per: Iniziale='{coppiaStringhe.iniziale}', Target='{coppiaStringhe.target}'");
+                //Console.WriteLine($"  Min Tempo: {statistiche.Min?.ToString("F2") ?? "N/A"} ms");
+                //Console.WriteLine($"  Max Tempo: {statistiche.Max?.ToString("F2") ?? "N/A"} ms");
+                //Console.WriteLine($"  Media Tempo: {statistiche.Media?.ToString("F2") ?? "N/A"} ms");
+                //Console.WriteLine($"  Dev. Std: {statistiche.DeviazioneStandard?.ToString("F2") ?? "N/A"} ms");
+            }
+            FrmOutput outputForm = new FrmOutput(sb.ToString());
+            outputForm.Show();
+
+        }
+
         #endregion
         #region Async socket serve events
         private void Asl_ErrorFromSocket(object sender, string e)

@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set di attributi. Modificare i valori di questi attributi per modificare le informazioni
 // associate a un assembly.
 [assembly: AssemblyTitle("MIU.Core")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Metodi di risulouzione delle regole impostate nel db semantico")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("RRU Evolutive System")]
 [assembly: AssemblyProduct("MIU.Core")]
-[assembly: AssemblyCopyright("Copyright ©  2025")]
+[assembly: AssemblyCopyright("Copyright ©  2025 Evolutive System")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -30,6 +30,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>RRU_EvolutiveSystem.pfx</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -41,12 +47,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MIUStruct.cs" />
+    <Compile Include="AnalisiMIU.cs" />
+    <Compile Include="MIUProjectManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegolaMIU.cs" />
     <Compile Include="RegoleMIU.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EvolutiveSystem.Core\EvolutiveSystem.Core.csproj">
+      <Project>{a193e8c9-5afa-4d49-adfa-f25891b1a8eb}</Project>
+      <Name>EvolutiveSystem.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
       <Name>MasterLogMutex</Name>
@@ -55,6 +66,9 @@
       <Project>{c4be31ba-71ec-420f-ad75-58c661011b5a}</Project>
       <Name>MessaggiErrore</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RRU_EvolutiveSystem.pfx" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

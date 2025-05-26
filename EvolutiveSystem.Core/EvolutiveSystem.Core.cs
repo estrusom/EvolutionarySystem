@@ -3,6 +3,8 @@
  * 2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database ***
  * 2025.05.22 Aggiornato: SerializableDictionary per gestire correttamente i tipi 'object' con GetKnownTypes().
  * 2025.05.22 Aggiornato per poter essere integrato in MIU.Core
+ * 2025.05.22 modificata la classe table per identificare il campo chiave primaria
+ * 2025.05.25 aggiunto campo per autoincremento indici
  */
 using System;
 using System.Collections.Generic;
@@ -18,6 +20,7 @@ namespace EvolutiveSystem.Core
     public interface IFieldData
     {
         int Id { get; set; }
+        bool PrimaryKeyAutoIncrement { get; set; }
         string FieldName { get; set; }
         bool Key { get; set; }
         string TableName { get; set; } // Utile per riferimento incrociato
@@ -31,6 +34,7 @@ namespace EvolutiveSystem.Core
     {
         // Proprietà specifiche di un Campo
         public int Id { get; set; }
+        public bool PrimaryKeyAutoIncrement { get; set; }
         public string FieldName { get; set; }
         public bool Key { get; set; }
         public string TableName { get; set; } // Riferimento al nome della tabella
@@ -48,7 +52,7 @@ namespace EvolutiveSystem.Core
         // Costruttore vuoto per la serializzazione
         public Field() { }
 
-        public Field(int id, string fieldName, string dataType, bool key, bool encryptedField, ulong registry, Table parentTable, object value)
+        public Field(int id, bool primaryKeyAutoIncrement, string fieldName, string dataType, bool key, bool encryptedField, ulong registry, Table parentTable, object value)
         {
             Id = id;
             FieldName = fieldName;
@@ -59,11 +63,14 @@ namespace EvolutiveSystem.Core
             ParentTable = parentTable;
             Value = value;
             TableName = parentTable?.TableName; // Imposta il nome della tabella di appartenenza
+            PrimaryKeyAutoIncrement = primaryKeyAutoIncrement;
         }
     }
 
-    // Classe per rappresentare una singola Tabella (Table)
-    // NON eredita da Field.
+    /// <summary>
+    /// Classe per rappresentare una singola Tabella (Table)
+    /// NON eredita da Field.
+    /// </summary>
     public class Table
     {
         // Proprietà specifiche di una Tabella
@@ -81,16 +88,38 @@ namespace EvolutiveSystem.Core
         // *** Composizione: Una Tabella CONTIENE una lista di Record (dati) ***
         // Ogni record è un dizionario che mappa il nome del campo al suo valore.
         // Usiamo SerializableDictionary per permettere la serializzazione XML.
-        public List<SerializableDictionary<string, object>> DataRecords { get; set; } = new List<SerializableDictionary<string, object>>();
+        // Campo privato per contenere i record (dati)
+        private List<SerializableDictionary<string, object>> _dataRecords = new List<SerializableDictionary<string, object>>();  //2025.05.26 Autoincremento indice
 
-        // Costruttore vuoto per la serializzazione
+        /// <summary>
+        /// 2025.05.26 Autoincremento indice
+        /// Proprietà pubblica per accedere ai record.
+        /// Il setter è mantenuto per la deserializzazione XML.
+        /// Per aggiungere nuovi record con autoincremento, usare il metodo AddRecord().
+        /// </summary>
+        public List<SerializableDictionary<string, object>> DataRecords
+        {
+            get { return _dataRecords; }
+            set { _dataRecords = value; } // Necessario per la deserializzazione XML
+        }
+
+        // *** NUOVA PROPRIETÀ: Memorizza il nome del campo chiave primaria ***
+        // Questa proprietà è [XmlIgnore] perché il suo valore è derivato dai Fields
+        // e non deve essere serializzato/deserializzato direttamente.
+        [XmlIgnore]
+        public string PrimaryKeyFieldName { get; private set; }
+
+        // Costruttore vuoto per la serializzazione XML
         public Table() { }
 
+        // Costruttore esistente, aggiornato per chiarezza ma senza impatto sulla nuova proprietà
         public Table(int tableId, string tableName, Database parentDatabase)
         {
             TableId = tableId;
             TableName = tableName;
             ParentDatabase = parentDatabase;
+            // PrimaryKeyFieldName NON viene impostato qui, perché dipende dai Fields
+            // che vengono aggiunti successivamente o deserializzati.
         }
 
         /// <summary>
@@ -106,8 +135,151 @@ namespace EvolutiveSystem.Core
                 field.TableName = this.TableName; // Imposta anche il nome della tabella nel campo
             }
         }
-    }
 
+        /// <summary>
+        /// Imposta il nome del campo che funge da chiave primaria per questa tabella.
+        /// Questo metodo dovrebbe essere chiamato dopo che la lista 'Fields' è stata popolata,
+        /// ad esempio, dopo la deserializzazione della tabella dall'XML.
+        /// </summary>
+        public void SetPrimaryKeyFieldName()
+        {
+            // Trova il primo campo nella lista 'Fields' che ha la proprietà 'Key' impostata a true.
+            var primaryKeyField = Fields.FirstOrDefault(f => f.Key);
+            if (primaryKeyField != null)
+            {
+                // Se un campo chiave primaria viene trovato, memorizza il suo nome.
+                PrimaryKeyFieldName = primaryKeyField.FieldName;
+            }
+            else
+            {
+                // Se nessun campo chiave primaria è stato trovato, imposta la proprietà a null.
+                PrimaryKeyFieldName = null; // O string.Empty, a seconda della preferenza
+            }
+        }
+
+        // *** NUOVO/AGGIORNATO METODO PER LA CANCELLAZIONE DEL RECORD ***
+        /// <summary>
+        /// Rimuove un record dalla tabella in base al suo GUID.
+        /// Questo metodo opera sui record in memoria e non gestisce il salvataggio su disco.
+        /// Cerca il GUID nel dizionario del record, gestendo sia stringhe che oggetti Guid.
+        /// </summary>
+        /// <param name="recordGuid">Il GUID del record da rimuovere.</param>
+        /// <returns>True se il record è stato rimosso, false altrimenti.</returns>
+        public bool RemoveRecordByGuid(Guid recordGuid)
+        {
+            int initialCount = DataRecords.Count;
+
+            // Utilizziamo RemoveAll per rimuovere tutti i record che corrispondono al GUID
+            DataRecords.RemoveAll(recordDict =>
+            {
+                // Cerchiamo il campo GUID. Assumiamo che il campo chiave sia "Guid" o "GUID".
+                // Puoi adattare questa logica se il nome del campo GUID è diverso.
+                string guidKey = Fields.FirstOrDefault(f => f.FieldName.Equals("Guid", StringComparison.OrdinalIgnoreCase))?.FieldName ?? "Guid";
+
+                if (recordDict.TryGetValue(guidKey, out object guidValue))
+                {
+                    if (guidValue is Guid currentGuid)
+                    {
+                        // Il valore è già un Guid
+                        return currentGuid == recordGuid;
+                    }
+                    else if (guidValue is string guidString)
+                    {
+                        // Il valore è una stringa, proviamo a parsare
+                        if (Guid.TryParse(guidString, out Guid parsedGuid))
+                        {
+                            return parsedGuid == recordGuid;
+                        }
+                    }
+                }
+                return false; // Il GUID non è stato trovato o non è valido per questo record
+            });
+
+            return DataRecords.Count < initialCount; // Restituisce true se il conteggio è diminuito (record rimosso)
+        }
+        /// <summary>
+        /// Aggiunge un record alla tabella, gestendo automaticamente l'autoincremento della chiave primaria se necessario.
+        /// Questo metodo dovrebbe essere usato per aggiungere nuovi record in modo che la logica di autoincremento sia applicata.
+        /// </summary>
+        /// <param name="newRecord">Il record da aggiungere. Se contiene già un valore per la chiave primaria autoincrementale,
+        /// quel valore verrà mantenuto. Altrimenti, ne verrà generato uno nuovo.</param>
+        public void AddRecord(SerializableDictionary<string, object> newRecord)
+        {
+            // Trova il campo chiave primaria che è anche autoincrementale
+            Field autoIncrementPrimaryKeyField = Fields.FirstOrDefault(f => f.Key && f.PrimaryKeyAutoIncrement);
+
+            if (autoIncrementPrimaryKeyField != null)
+            {
+                string primaryKeyFieldName = autoIncrementPrimaryKeyField.FieldName;
+                //Type primaryKeyType = Type.GetType(autoIncrementPrimaryKeyField.DataType); // Ottieni il tipo .NET dal nome del tipo di dato
+                Type primaryKeyType = GetTypeForFieldType(autoIncrementPrimaryKeyField.DataType);
+                if (primaryKeyType == null)
+                {
+                    throw new Exception($"Errore: Tipo di dato '{autoIncrementPrimaryKeyField.DataType}' non riconosciuto per il campo chiave primaria '{primaryKeyFieldName}'. Impossibile autoincrementare.");
+                }
+                // Controlla se il nuovo record ha già un valore per la chiave primaria autoincrementale o se è nullo
+                if (!newRecord.ContainsKey(primaryKeyFieldName) || newRecord[primaryKeyFieldName] == null)
+                {
+                    ulong nextId = 1; // Inizializza il prossimo ID a 1 (se la tabella è vuota)
+
+                    // Se ci sono già record, trova il valore massimo corrente della chiave primaria
+                    if (_dataRecords.Any())
+                    {
+                        ulong maxId = 0;
+                        foreach (var record in _dataRecords)
+                        {
+                            // Assicurati che il record contenga la chiave primaria e che il suo valore sia convertibile
+                            if (record.ContainsKey(primaryKeyFieldName) && record[primaryKeyFieldName] != null && record[primaryKeyFieldName] is IConvertible)
+                            {
+                                try
+                                {
+                                    // Converte il valore corrente a ulong per il confronto
+                                    ulong currentId = Convert.ToUInt64(record[primaryKeyFieldName]);
+                                    if (currentId > maxId)
+                                    {
+                                        maxId = currentId;
+                                    }
+                                }
+                                catch (FormatException)
+                                {
+                                    // Ignora i record con ID non validi per il calcolo del massimo
+                                    Console.WriteLine($"Avviso: Trovato un ID non valido per il campo '{primaryKeyFieldName}' nel record. Questo record verrà ignorato per il calcolo dell'ID massimo.");
+                                }
+                            }
+                        }
+                        nextId = maxId + 1; // Il prossimo ID sarà il massimo + 1
+                    }
+                    // Assegna il nuovo ID generato al record
+                    newRecord[primaryKeyFieldName] = Convert.ChangeType(nextId, primaryKeyType);
+                }
+                // Se il nuovo record ha già un valore per la chiave primaria, lo manteniamo (non autoincrementiamo).
+                // Questo permette inserimenti espliciti di ID se necessario.
+            }
+
+            // Aggiungi il record (con o senza ID autogenerato) alla lista interna dei record
+            _dataRecords.Add(newRecord);
+        }
+        // *** Devi assicurarti che la funzione GetTypeForFieldType sia definita e accessibile qui. ***
+        // Se è un metodo privato nella tua classe Form, potresti doverlo rendere pubblico o
+        // spostarlo in una classe helper comune accessibile da EvolutiveSystem.Core.
+        // Esempio (se fosse in questa classe):
+        private Type GetTypeForFieldType(string fieldDataType)
+        {
+            switch (fieldDataType)
+            {
+                case "String": return typeof(string);
+                case "Int32": return typeof(int);
+                case "UInt32": return typeof(uint);
+                case "Int64": return typeof(long);
+                case "UInt64": return typeof(ulong);
+                case "Boolean": return typeof(bool);
+                case "Double": return typeof(double);
+                case "DateTime": return typeof(DateTime);
+                // Aggiungi altri casi per tutti i tipi di dati che usi
+                default: return null; // O lancia un'eccezione se un tipo non è riconosciuto
+            }
+        }
+    }
     // Classe per rappresentare un singolo Database (Database)
     // NON eredita da Table o Field.
     public class Database
@@ -173,6 +345,9 @@ namespace EvolutiveSystem.Core
                 typeof(ulong),   // System.UInt64
                 typeof(DateTime), // DateTime
                 typeof(StringBuilder), // StringBuilder
+                typeof(float), // StringBuilder
+                typeof(double),
+                typeof(decimal),
                 // Aggiungi qui tutti gli altri tipi concreti che la proprietà 'Value'
                 // nella tua classe Field o nei valori di SerializableDictionary
                 // possono assumere.
@@ -212,6 +387,7 @@ namespace EvolutiveSystem.Core
         /// </summary>
         /// <param name="database">L'oggetto Database da serializzare.</param>
         /// <returns>Una stringa contenente la rappresentazione XML del Database.</returns>
+        /// QUA
         public static string SerializeToXmlString(Database database)
         {
             // Usa i tipi noti per il serializzatore principale

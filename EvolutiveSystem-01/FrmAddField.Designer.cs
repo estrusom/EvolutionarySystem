@@ -47,6 +47,7 @@
             this.btnOk = new System.Windows.Forms.Button();
             this.btnCance = new System.Windows.Forms.Button();
             this.cmbPrymaryKey = new System.Windows.Forms.ComboBox();
+            this.chkAutoincremento = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // lblDenRegistry
@@ -173,6 +174,7 @@
             this.cmbDataType.Size = new System.Drawing.Size(237, 26);
             this.cmbDataType.TabIndex = 12;
             this.cmbDataType.Tag = "DataType";
+            this.cmbDataType.SelectedIndexChanged += new System.EventHandler(this.cmbDataType_SelectedIndexChanged);
             // 
             // txtValue
             // 
@@ -240,6 +242,20 @@
             this.cmbPrymaryKey.Size = new System.Drawing.Size(150, 26);
             this.cmbPrymaryKey.TabIndex = 18;
             this.cmbPrymaryKey.Tag = "EncryptedField";
+            this.cmbPrymaryKey.SelectedIndexChanged += new System.EventHandler(this.cmbPrymaryKey_SelectedIndexChanged);
+            // 
+            // chkAutoincremento
+            // 
+            this.chkAutoincremento.AutoSize = true;
+            this.chkAutoincremento.Enabled = false;
+            this.chkAutoincremento.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkAutoincremento.ForeColor = System.Drawing.Color.Blue;
+            this.chkAutoincremento.Location = new System.Drawing.Point(317, 82);
+            this.chkAutoincremento.Name = "chkAutoincremento";
+            this.chkAutoincremento.Size = new System.Drawing.Size(148, 22);
+            this.chkAutoincremento.TabIndex = 19;
+            this.chkAutoincremento.Text = "Autoincremento";
+            this.chkAutoincremento.UseVisualStyleBackColor = true;
             // 
             // FrmAddField
             // 
@@ -248,6 +264,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCance;
             this.ClientSize = new System.Drawing.Size(502, 368);
+            this.Controls.Add(this.chkAutoincremento);
             this.Controls.Add(this.cmbPrymaryKey);
             this.Controls.Add(this.btnCance);
             this.Controls.Add(this.btnOk);
@@ -297,5 +314,6 @@
         private System.Windows.Forms.Button btnOk;
         private System.Windows.Forms.Button btnCance;
         private System.Windows.Forms.ComboBox cmbPrymaryKey;
+        private System.Windows.Forms.CheckBox chkAutoincremento;
     }
 }

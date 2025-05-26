@@ -50,6 +50,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EvolutiveSystem.Core\EvolutiveSystem.Core.csproj">
+      <Project>{a193e8c9-5afa-4d49-adfa-f25891b1a8eb}</Project>
+      <Name>EvolutiveSystem.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
       <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
       <Name>MIU.Core</Name>

@@ -121,14 +121,14 @@
   <data name="business_application_addthedatabase_add_insert_database_db_2313" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\business_application_addthedatabase_add_insert_database_db_2313.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="make_15198" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\make_15198.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="data-analysis_icon-icons.com_52842" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\data-analysis_icon-icons.com_52842.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="connect_23039" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\connect_23039.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="database_data_20916" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\database_data_20916.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="tools_disk_19657" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\tools_disk_19657.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="PausePressed_26932" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\PausePressed_26932.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -139,8 +139,17 @@
   <data name="close_14776" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\close_14776.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="business_application_download_downloaddatabase_thedatabase_23201" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\business_application_download_downloaddatabase_thedatabase_23201.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="screenshot" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\screenshot.PNG;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="icons8-save-close-481" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\icons8-save-close-481.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="start256_24877" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\start256_24877.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="business_application_download_downloaddatabase_thedatabase_2320" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\business_application_download_downloaddatabase_thedatabase_2320.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -154,16 +163,22 @@
   <data name="businessapplication_database_loaddatabase_db_negocios_aplicacion_2318" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\businessapplication_database_loaddatabase_db_negocios_aplicacion_2318.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="business_application_download_downloaddatabase_thedatabase_23201" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\business_application_download_downloaddatabase_thedatabase_23201.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="database_data_20916" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\database_data_20916.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="start256_24877" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\start256_24877.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="filesystems_thefolder_653" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\filesystems_thefolder_653.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="make_15198" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\make_15198.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="button_reload_15002" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\button_reload_15002.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Stop1Hot_26966" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Stop1Hot_26966.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="tools_disk_19657" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\tools_disk_19657.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="trash_empty_recycle_delete_delete_9752" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\trash_empty_recycle_delete_delete_9752.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

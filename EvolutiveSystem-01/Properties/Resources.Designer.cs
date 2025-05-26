@@ -114,6 +114,16 @@ namespace EvolutiveSystem_01.Properties {
         /// <summary>
         ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap button_reload_15002 {
+            get {
+                object obj = ResourceManager.GetObject("button_reload_15002", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap close_14776 {
             get {
                 object obj = ResourceManager.GetObject("close_14776", resourceCulture);
@@ -134,9 +144,29 @@ namespace EvolutiveSystem_01.Properties {
         /// <summary>
         ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap data_analysis_icon_icons_com_52842 {
+            get {
+                object obj = ResourceManager.GetObject("data-analysis_icon-icons.com_52842", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap database_data_20916 {
             get {
                 object obj = ResourceManager.GetObject("database_data_20916", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap filesystems_thefolder_653 {
+            get {
+                object obj = ResourceManager.GetObject("filesystems_thefolder_653", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -157,6 +187,16 @@ namespace EvolutiveSystem_01.Properties {
         internal static System.Drawing.Bitmap icons8_save_close_48 {
             get {
                 object obj = ResourceManager.GetObject("icons8-save-close-48", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap icons8_save_close_481 {
+            get {
+                object obj = ResourceManager.GetObject("icons8-save-close-481", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -217,6 +257,16 @@ namespace EvolutiveSystem_01.Properties {
         internal static System.Drawing.Bitmap tools_disk_19657 {
             get {
                 object obj = ResourceManager.GetObject("tools_disk_19657", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Cerca una risorsa localizzata di tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap trash_empty_recycle_delete_delete_9752 {
+            get {
+                object obj = ResourceManager.GetObject("trash_empty_recycle_delete_delete_9752", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
