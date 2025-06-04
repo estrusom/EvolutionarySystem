@@ -53,5 +53,11 @@
   <ItemGroup>
     <None Include="RRU_EvolutiveSystem.pfx" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj">
+      <Project>{c4be31ba-71ec-420f-ad75-58c661011b5a}</Project>
+      <Name>MessaggiErrore</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

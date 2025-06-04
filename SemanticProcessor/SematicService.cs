@@ -28,6 +28,7 @@ using System.Xml.Linq;
 using System.Collections.Concurrent;
 using SocketManager;
 using EvolutiveSystem.Core;
+using System.Data.SQLite;
 
 namespace SemanticProcessor
 {
@@ -110,21 +111,22 @@ namespace SemanticProcessor
         // Componente EventLog per scrivere nel registro eventi di Windows
         private EventLog eventLog1;
         private Timer SchedularWD;  //Watch dog scheduling time
-        protected Logger _logger;
         private int TimerWatchDog = 0;
         private short StepStartingService = 0; //Steps for starting the service correctly
         private bool SemaforoDC = false; // (semaforo) serve per evitare l'over run durante l'avvio del servizio
         private int logCountSrv = 0; //Timer for the issuance of the service notification is working
+        #region definizioni per logger
+        protected Logger _logger;
         private int swDebug = 0;
         private string _path = "";
+        protected Mutex SyncMtxLogger = new Mutex();
+        #endregion
         private long HandlerError = 0;
 
         private volatile bool _isRunning = false; // volatile per garantire visibilità tra thread
         // Flag per indicare se il processo semantico è in pausa
         private volatile bool _isPaused = false; // volatile per garantire visibilità tra thread
-
         private static string ServicePath = ""; //22.03.2022 Gestione riavvio tablet per timeout, nome della cartella ove risiede ilò servizio
-        protected Mutex SyncMtxLogger = new Mutex();
         private ManualResetEvent _pauseEvent = new ManualResetEvent(true); // Inizializzato su 'true' (segnale) per partire non in pausa
         protected DateTime today = DateTime.MinValue;
         private string ServiceVer = "";
@@ -144,7 +146,7 @@ namespace SemanticProcessor
         #region dichiarazioni per gestire la concorrenza d'accesso a canale socket
         private static ConcurrentDictionary<string, string> concurrentData = new ConcurrentDictionary<string, string>(); //2025.05.20 lista per accessi concorrenti al clien socket asincrono
         private ConcurrentQueue<Tuple<SocketMessageStructure, Socket>> _receivedMessageQueue;
-
+        private static SQLiteConnection dbConnection;
         #endregion
 
 #if DEBUG
@@ -916,7 +918,7 @@ namespace SemanticProcessor
                         cmdCom.CommandSocket, // Nome del metodo
                         BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
                         myCustomBinder, // Usa il tuo binder per la risoluzione
-                        new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener) }, // Tipi dei parametri (verifica che siano corretti!)
+                        new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener),typeof(SQLiteConnection) }, // Tipi dei parametri (verifica che siano corretti!)
                         null // Modificatori
                     );
                     if (myMethod != null)
@@ -927,17 +929,17 @@ namespace SemanticProcessor
                         erCnt = 5;
                         // Invoke the overload.
                         //tyCommandHandlers.InvokeMember(metodo, BindingFlags.InvokeMethod, myCustomBinder, commandHandlers, new Object[] { myO, e.Data, asl });
-                        object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.BufferDati, asl });
-                        // if (myO.CommandCode == myO.CmdSendFormConfiguration) _logger.Log(LogLevel.DEBUG,string.Format( "Sono uscito dal comando {0}", myO.CommandName));
+                        object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.BufferDati, asl, dbConnection });
                     }
                     else
                     {
+                        //comando tipo CmdSync
                         myMethod = tyCommandHandlers.GetMethod(
-                        cmdCom.CommandSocket, // Nome del metodo
-                        BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
-                        myCustomBinder, // Usa il tuo binder per la risoluzione
-                        new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener), typeof(ConcurrentDictionary<string, SemanticClientSocket>) }, // Tipi dei parametri (verifica che siano corretti!)
-                        null
+                            cmdCom.CommandSocket, // Nome del metodo
+                            BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
+                            myCustomBinder, // Usa il tuo binder per la risoluzione
+                            new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener), typeof(ConcurrentDictionary<string, SemanticClientSocket>) }, // Tipi dei parametri (verifica che siano corretti!)
+                            null
                         );// Modificatori
                         if (myMethod != null)
                         {
@@ -948,7 +950,20 @@ namespace SemanticProcessor
                         }
                         else
                         {
-                            throw new Exception("Command not found");
+                            myMethod = tyCommandHandlers.GetMethod("CmdOpenDB");
+                            if (myMethod != null)
+                            {
+                                metodo = myMethod.Name;
+                                _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                                _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
+                                object[] parameters = new object[] { myO, e.BufferDati, asl, null };
+                                myMethod.Invoke(commandHandlers, parameters);
+                                dbConnection = (SQLiteConnection)parameters[3];
+                            }
+                            else
+                            {
+                                throw new Exception("Command not found");
+                            }
                         }
                     }
                     /*

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{75D432B0-6FBF-4FDD-AF18-D9B67CEE3931}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>EvolutiveSystem_02</RootNamespace>
+    <AssemblyName>EvolutiveSystem-02</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>database_data_20916.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ClsCustomBinder.cs" />
+    <Compile Include="CommandConfig.cs" />
+    <Compile Include="FrmEvolutiveSystem.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmEvolutiveSystem.Designer.cs">
+      <DependentUpon>FrmEvolutiveSystem.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmGeneraStringheTest.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmGeneraStringheTest.Designer.cs">
+      <DependentUpon>FrmGeneraStringheTest.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmSocketClient.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmSocketClient.Designer.cs">
+      <DependentUpon>FrmSocketClient.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmTelegram.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmTelegram.Designer.cs">
+      <DependentUpon>FrmTelegram.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FrmEvolutiveSystem.resx">
+      <DependentUpon>FrmEvolutiveSystem.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmGeneraStringheTest.resx">
+      <DependentUpon>FrmGeneraStringheTest.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmSocketClient.resx">
+      <DependentUpon>FrmSocketClient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmTelegram.resx">
+      <DependentUpon>FrmTelegram.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Data.SQLite">
+      <Version>1.0.119</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj">
+      <Project>{c56b8471-e33b-463a-b0a5-90a7d8a20ddb}</Project>
+      <Name>AsyncSocketServer</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
+      <Project>{59F3126F-6FED-40D0-AB71-5439FE3F161F}</Project>
+      <Name>EvolutiveSystem.SQL.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\InputBoxForm\InputBoxForm.csproj">
+      <Project>{B92B009D-E6C4-4581-AF23-7C5A78A9800F}</Project>
+      <Name>InputBoxForm</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
+      <Project>{D990905E-13C5-40E4-95C0-B16737834777}</Project>
+      <Name>MasterLogMutex</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj">
+      <Project>{c4be31ba-71ec-420f-ad75-58c661011b5a}</Project>
+      <Name>MessaggiErrore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
+      <Project>{08BE24DF-CAE2-4056-A14E-80AAE6D10C87}</Project>
+      <Name>MIU.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SocketManagerInfo\SocketManagerInfo.csproj">
+      <Project>{86479DBC-394F-4EE6-B833-4241DC4543F9}</Project>
+      <Name>SocketManagerInfo</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SocketManager\SocketManager.csproj">
+      <Project>{d628c45f-2369-4e52-9cb6-ef7d6e1888dd}</Project>
+      <Name>SocketManager</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="database_data_20916.ico" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

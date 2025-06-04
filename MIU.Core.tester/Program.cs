@@ -1,4 +1,5 @@
 ﻿using EvolutiveSystem.Core;
+using EvolutiveSystem.SQL.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,34 +7,48 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static System.Net.WebRequestMethods;
 
 namespace MIU.Core.tester
 {
     internal class Program
     {
-        private const long passi = 1000000000;
+        private const long passi = 10;
         static void Main(string[] args)
         {
-            //string[,] arrayString =
-            //{
-            //    {"MI", "MI", "MI", "MI", "MI", "MI", "MIIIIII","MII","MUI", "MI"},
-            //    {"MIU","MII","MIIII","MUI","MUIU","MUIIU", "MUU", "MU","MIU","MIIIIIIIII"}
-            //};
             string[,] arrayString =
             {
-                {"M", "MI", "MIU"},
-                {"MMMMMMMMMM","MIIIIIIIIII","MUIUIUIU"}
+                {"MI", "MI", "MI", "MI", "MI", "MI", "MIIIIII","MII","MUI", "MI"},
+                {"MIU","MII","MIIII","MUI","MUIU","MUIIU", "MUU", "MU","MIU","MIIIIIIIII"}
             };
+
+            //string[,] arrayString =
+            //{
+            //    {"MI", "MI", "MI", "MII", "MII", "MUI", "MUI", "MI", "MIIII", "MIIII"},
+            //    {"MIIU", "MIIIIU", "MUIU", "MIIIIIIII", "MUIUI", "MIUIU", "MUU", "MIIIIUU", "MUIIU", "MIIIIIIIIU"}
+            //};
+
+            //string[,] arrayString =
+            //{
+            //    {"M", "MI", "MIU"},
+            //    {"MMMMMMMMMM","MIIIIIIIIII","MUIUIUIU"}
+            //};
+
+            //string[,] arrayString =
+            //{
+            //    {"MI"},
+            //    {"MIIU"}
+            //};
+
             string databaseFilePath = @"C:\Progetti\EvolutiveSystem\xml\MIUProject.xml";
-            int tipotest = 4;
+            //Console.WriteLine($"Process: {Process.GetCurrentProcess().Id}");
+            //Console.WriteLine("Test nr. (1÷5)");
+            int tipotest = 4;// Convert.ToInt32(Console.ReadLine());
+            Process myProc = new Process();
             switch (tipotest)
             {
-                case 1:
-                    {
-                        loadDatabase();
-                    }
-                    break;
                 case 2:
                     {
                         ApplicazioneRegoleMIU();
@@ -41,107 +56,133 @@ namespace MIU.Core.tester
                     break;
                 case 3:
                     {
-                        Database mioDatabase = null;
-                        Console.Write("Caricare il database esistente da disco? (s/n): ");
-                        string loadChoice = Console.ReadLine()?.ToLower();
-                        if (loadChoice == "s")
+                        Random rnd = new Random();
+                        databaseFilePath = @"C:\Progetti\EvolutiveSystem\Database\miu_data.db";
+                        SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath);
+                        List<string> regole = _schemaLoader.SQLiteSelect("SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU;");
+                        RegoleMIUManager.CaricaRegoleDaOggettoSQLite(regole);
+                        RegoleMIUManager.OnRuleApplied += RegoleMIUManager_OnRuleApplied;
+                        RegoleMIUManager.OnSolutionFound += RegoleMIUManager_OnSolutionFound;
+                        List<string> MIUstringList = _schemaLoader.SQLiteSelect("SELECT StateID, CurrentString, StringLength, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount FROM MIU_States;");
+                        /*
+                        int index = 0;
+                        foreach (string s in MIUstringList)
                         {
-                            Console.WriteLine($"Tentativo di caricare il database da: {databaseFilePath}");
-                            mioDatabase = DatabaseSerializer.DeserializeFromXmlFile(databaseFilePath);
-                            if (mioDatabase != null && mioDatabase.Tables.Any(t => t.TableName == "RegoleMIU"))
+                            index++;
+                            string[] sArray = s.Split(';');
+                            string deflateString = MIUStringConverter.DeflateMIUString(sArray[1]);
+                            //string sqlUpdate = $"UPDATE MIU_States SET CurrentString = '{deflateString}', StringLength = '{deflateString.Length}', DeflateString='{sArray[1]}' WHERE StateID = '{index}' ";
+                            //int i = _schemaLoader.SQLiteUpdate(sqlUpdate);
+                            Console.WriteLine($"Source: {sArray[1]} target: {MIUStringConverter.DeflateMIUString(sArray[1])}");
+                        }
+                        */
+                        if (RegoleMIUManager.Regole.Count > 0)
+                        {
+                            foreach (string s in MIUstringList)
                             {
-                                RegoleMIUManager.CaricaRegoleDaOggettoDatabase(mioDatabase);
-                                Console.WriteLine("Regole MIU caricate dal database.");
+                                string[] MIUstringsSource = s.Split(';');
+                                int index = rnd.Next(0, MIUstringsSource.Length - 1);
+                                string[] MIUstringDestination = MIUstringList[index].Split(';');
+                                List<string> miu = RegoleMIUManager.TrovaDerivazioneBFS(MIUstringsSource[1], MIUstringDestination[1], passi);
                             }
-                            else
-                            {
-                                mioDatabase = new Database(1, "MIUDatabase"); // Crea un nuovo database se il caricamento fallisce o non ci sono regole
-                                Console.WriteLine("Nessun database valido trovato. Creato un nuovo database.");
-                            }
-                        }
-                        else
-                        {
-                            // Se non si carica da disco, crea un nuovo database
-                            mioDatabase = new Database(1, "MIUDatabase");
-                            Console.WriteLine("Creato un nuovo database.");
-                        }
-                        bool bUscita = false;
-                        while (!bUscita)
-                        {
-                            Console.WriteLine($"Numero passi: {passi}");
-                            Console.WriteLine("Stringa di inizio");
-                            string sInizio = Console.ReadLine();
-                            Console.WriteLine("Stringa di fine");
-                            string sfine = Console.ReadLine();
-                            //int passi = 0;
-                            //int.TryParse(Console.ReadLine(), out passi);
-                            RicercaDiDerivazioneBFS(sInizio, sfine, passi, mioDatabase);
-                            Console.WriteLine("Vuoi continuare (S/N)");
-                            if (Console.ReadLine().ToUpper() == "N") bUscita=true;
-                        }
-                        Console.Write("\nSalvare il database su disco? (s/n): ");
-                        string saveChoice = Console.ReadLine()?.ToLower();
-
-                        if (saveChoice == "s")
-                        {
-                            Console.WriteLine($"Tentativo di salvare il database in: {mioDatabase}");
-                            DatabaseSerializer.SerializeToXmlFile(mioDatabase, databaseFilePath);
-                            Console.WriteLine("Database salvato su disco.");
-                        }
-                        else
-                        {
-                            Console.WriteLine("Il database non è stato salvato su disco.");
                         }
                     }
                     break;
                 case 4:
                     {
-                        Process myProc = new Process();
-                        Console.WriteLine($"Process: {Process.GetCurrentProcess().Id} Premi un tastro per cominciare");
-                        Console.ReadKey();
-                        Database mioDatabase = mioDatabase = DatabaseSerializer.DeserializeFromXmlFile(databaseFilePath);
+                        databaseFilePath = @"C:\Progetti\EvolutiveSystem\Database\miu_data.db";
+                        SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath);
+                        List<string> regole = _schemaLoader.SQLiteSelect("SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU;");
+                        RegoleMIUManager.CaricaRegoleDaOggettoSQLite(regole);
+                        string StringIn = "M2UM"; // "M2U4MI";
+                        bool response = RegoleMIUManager.Regole[0].TryApply(StringIn, out string regola1);
+                        Console.WriteLine($"String in: {StringIn} Regola 1: {regola1} response: {response}");
+                        StringIn = "3IU"; // "M2U";
+                        response = RegoleMIUManager.Regole[1].TryApply(StringIn, out string regola2);
+                        Console.WriteLine($"String in: {StringIn} Regola 2: {regola2} response: {response}");
+                        StringIn = "M2U4MI"; // "M3IU3I2U";
+                        response = RegoleMIUManager.Regole[2].TryApply(StringIn, out string regola3);
+                        Console.WriteLine($"String in: {StringIn} Regola 3: {regola3} response: {response}");
+                        StringIn = "3MIU3I"; //"M3IU3I2U";
+                        response = RegoleMIUManager.Regole[3].TryApply(StringIn, out string regola4);
+                        Console.WriteLine($"String in: {StringIn} Regola 4: {regola4} response: {response}");
+                    }
+                    break;
+                case 5:
+                    {
+
+                        long maxProfondita = 10; // Imposta una profondità massima ragionevole
                         int cntDwn = 22;
                         while (cntDwn >= 1)
                         {
-                            for (int y = 0; y < 3; y++) 
+                            for (int y = 0; y < arrayString.GetLength(1); y++)
                             {
-                                //for (int x = 0; x < 2; x++)
-                                //{
-                                //    Console.Write("[{0}]",arrayString[x,y]);
-                                //}
-                                //Console.WriteLine();
-                                RicercaDiDerivazioneBFS(arrayString[0, y], arrayString[1, y], passi, mioDatabase);
+                                RicercaDiDerivazioneDFS(arrayString[0, y], arrayString[1, y], maxProfondita);
                             }
                             cntDwn--;
                         }
-                        DatabaseSerializer.SerializeToXmlFile(mioDatabase, databaseFilePath);
-                        Console.WriteLine("premi un tatsto");
-                        Console.ReadKey();
+
+                    }
+                    break;
+                case 6:
+                    {
+                        Random r = new Random();
+                        for (int i= 0; i < 10; i++)
+                        {
+                            Console.Write(r.Next(1, 3));
+                            Console.WriteLine("Hit any key");
+                            Console.ReadKey();
+                        }
+                        
+
                     }
                     break;
             }
+            Console.WriteLine("premi un tasto");
+            Console.ReadKey();
         }
-        private static void RicercaDiDerivazioneBFS(string inizio, string fine, long passi, Database mioDatabase)
+
+        private static void RegoleMIUManager_OnSolutionFound(object sender, SolutionFoundEventArgs e)
         {
-            string miuProjectXmlPath = (Path.Combine(@"C:\Progetti\EvolutiveSystem\xml\", "MIUProject.xml"));
-            MiuRulesLoader loader = new MiuRulesLoader();
+            Console.WriteLine($"ElapsedMilliseconds: {e.ElapsedMilliseconds} ElapsedTicks: {e.ElapsedTicks} InitialString: {e.InitialString} MaxDepthReached: {e.MaxDepthReached} NodesExplored: {e.NodesExplored} Path: {e.Path} {e.StepsTaken} Success: {e.Success} TargetString: {e.TargetString}");
+        }
 
-            // Tenta di caricare le regole
-            bool success = loader.LoadMiuRulesFromFile(miuProjectXmlPath);
+        private static void RegoleMIUManager_OnRuleApplied(object sender, RuleAppliedEventArgs e)
+        {
+            Console.WriteLine($"AppliedRuleID: {e.AppliedRuleID} AppliedRuleName: {e.AppliedRuleName} CurrentDepth: {e.CurrentDepth}  ");
+        }
 
-            if (success)
+        private static void RicercaDiDerivazioneDFS(string startString, string targetString, long maxProfondita)
+        {
+
+            List<string> percorsoDFS = RegoleMIUManager.TrovaDerivazioneDFS(startString, targetString, maxProfondita);
+
+            if (percorsoDFS != null)
             {
-                List<string> miu = RegoleMIUManager.TrovaDerivazioneBFS(inizio, fine, passi, mioDatabase);
-                if (miu != null)
+                Console.WriteLine("Percorso DFS trovato:");
+                foreach (var s in percorsoDFS)
                 {
-                    foreach (string item in miu)
-                    {
-                        Console.WriteLine(item);
-                    }
+                    Console.WriteLine(s);
                 }
-                else
-                    Console.WriteLine("FAIL!");
             }
+            else
+            {
+                Console.WriteLine($"Nessuna derivazione trovata con DFS entro la profondità {maxProfondita}.");
+            }
+        }
+        private static void RicercaDiDerivazioneBFS(string inizio, string fine, long passi)
+        {
+            Console.WriteLine($"inizio: {inizio} fine: {fine} passi: {passi}");
+            List<string> miu = RegoleMIUManager.TrovaDerivazioneBFS(inizio, fine, passi);
+            if (miu != null)
+            {
+                foreach (string item in miu)
+                {
+                    Console.WriteLine(item);
+                }
+            }
+            else
+                Console.WriteLine("FAIL!");
         } 
         private static void ApplicazioneRegoleMIU()
         {
@@ -208,7 +249,7 @@ namespace MIU.Core.tester
 
             // 4. Caricamento delle regole tramite RegoleMIUManager
             Console.WriteLine("--- Caricamento delle regole MIU ---");
-            MIU.Core.RegoleMIUManager.CaricaRegoleDaOggettoDatabase(mockDatabase);
+            //MIU.Core.RegoleMIUManager.CaricaRegoleDaOggettoDatabase(mockDatabase);
             Console.WriteLine("------------------------------------");
 
             // 5. Test di applicazione delle regole
@@ -244,27 +285,27 @@ namespace MIU.Core.tester
             MIU.Core.RegoleMIUManager.ApplicaRegole(test6);
             Console.WriteLine("\n------------------------------------");
         }
-        private static void loadDatabase()
-        {
-            string miuProjectXmlPath = (Path.Combine(@"C:\Progetti\EvolutiveSystem\xml\", "MIUProject.xml"));
-            MiuRulesLoader loader = new MiuRulesLoader();
+        //private static void loadDatabase()
+        //{
+        //    string miuProjectXmlPath = (Path.Combine(@"C:\Progetti\EvolutiveSystem\xml\", "MIUProject.xml"));
+        //    MiuRulesLoader loader = new MiuRulesLoader();
 
-            // Tenta di caricare le regole
-            bool success = loader.LoadMiuRulesFromFile(miuProjectXmlPath);
+        //    // Tenta di caricare le regole
+        //    bool success = loader.LoadMiuRulesFromFile(miuProjectXmlPath);
 
-            if (success)
-            {
-                Console.WriteLine("\n--- Regole MIU Caricate ---");
-                foreach (var rule in RegoleMIUManager.Regole)
-                {
-                    Console.WriteLine($"ID: {rule.Id}, Nome: {rule.Nome}, Pattern: {rule.Pattern}");
-                    // Puoi stampare tutti i dettagli che desideri
-                }
-            }
-            else
-            {
-                Console.WriteLine("\nErrore: Impossibile caricare le regole MIU.");
-            }
-        }
+        //    if (success)
+        //    {
+        //        Console.WriteLine("\n--- Regole MIU Caricate ---");
+        //        foreach (var rule in RegoleMIUManager.Regole)
+        //        {
+        //            Console.WriteLine($"ID: {rule.Id}, Nome: {rule.Nome}, Pattern: {rule.Pattern}");
+        //            // Puoi stampare tutti i dettagli che desideri
+        //        }
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("\nErrore: Impossibile caricare le regole MIU.");
+        //    }
+        //}
     }
 }

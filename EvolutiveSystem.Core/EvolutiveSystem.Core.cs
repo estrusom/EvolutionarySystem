@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
@@ -205,6 +206,7 @@ namespace EvolutiveSystem.Core
         /// quel valore verrà mantenuto. Altrimenti, ne verrà generato uno nuovo.</param>
         public void AddRecord(SerializableDictionary<string, object> newRecord)
         {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
             // Trova il campo chiave primaria che è anche autoincrementale
             Field autoIncrementPrimaryKeyField = Fields.FirstOrDefault(f => f.Key && f.PrimaryKeyAutoIncrement);
 
@@ -240,10 +242,11 @@ namespace EvolutiveSystem.Core
                                         maxId = currentId;
                                     }
                                 }
-                                catch (FormatException)
+                                catch (FormatException fex)
                                 {
                                     // Ignora i record con ID non validi per il calcolo del massimo
-                                    Console.WriteLine($"Avviso: Trovato un ID non valido per il campo '{primaryKeyFieldName}' nel record. Questo record verrà ignorato per il calcolo dell'ID massimo.");
+                                    string errMsg = MessaggiErrore.ClsMessaggiErrore.CustomMsg(fex, thisMethod, string.Format($"Avviso: Trovato un ID non valido per il campo '{primaryKeyFieldName}' nel record. Questo record verrà ignorato per il calcolo dell'ID massimo."));
+                                    throw new Exception(fex.Message, new Exception(errMsg));
                                 }
                             }
                         }

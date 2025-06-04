@@ -3,6 +3,7 @@
   2025.05.14 *** Implementa IXmlSerializable *** 
   2025.05.16 aggiunto il comando per richiedere lo stato del db al server
   2025.05.21 Aggiunto al serializzatore il campo MessageType
+  2025.05.30 aggiunto comando di chiusura del database
  */
 using MessaggiErrore;
 using SocketManagerInfo.Properties;
@@ -392,6 +393,10 @@ namespace SocketManagerInfo
         /// Definisce il tipo d'azione da applicare per il comando specifico
         /// </summary>
         public ActionType SelectAction { get; set; }
+        /// <summary>
+        /// Siccome con la nuova gestione DB alcuni comandi perdono di significato uso la flag IgnoraComand per escluderli dalla gestione dell'applicazione
+        /// </summary>
+        public bool IgnoraComand { get; set; }
     }
     /// <summary>
     /// Classe contenente la lista dei comandi da eseguire
@@ -405,7 +410,7 @@ namespace SocketManagerInfo
         private string cmd05 = stx + "CmdOpenDB" + etx;
         private string cmd06 = stx + "CmdSaveDB" + etx;
         private string cmd07 = stx + "CmdStructDb" + etx; 
-        private string cmd08 = stx + "CmdSigningProcStarted" + etx;
+        private string cmd08 = stx + "CmdCloseDB" + etx;
         private string cmd09 = stx + "CmdSigningProcTermination" + etx;
         private string cmd0A = stx + "CmdHideSignatureForm " + etx;
         private string cmd0B = stx + "CmdSendFormConfiguration[{0}]" + etx;
@@ -440,13 +445,18 @@ namespace SocketManagerInfo
         /// <summary>
         /// Salvataggio del database
         /// </summary>
-        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Comando di salvataggio DB", TockenManaging = 1, SelectAction = ActionType.FilePath|ActionType.DbId|ActionType.DbName)]
+        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Comando di salvataggio DB", TockenManaging = 1, SelectAction = ActionType.FilePath|ActionType.DbId|ActionType.DbName,IgnoraComand = true)]
         public string CmdSaveDB { get { return this.cmd06; } }
         /// <summary>
         /// 2025.05.16 aggiunto il comando per richiedere lo satto del db al server
         /// </summary>
-        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Richiesta dello stato del database al server", TockenManaging = 1, SelectAction = ActionType.DbRequest)]
+        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Richiesta dello stato del database al server", TockenManaging = 1, SelectAction = ActionType.DbRequest, IgnoraComand = true)]
         public string CmdStructDb { get { return this.cmd07; } }
+        /// <summary>
+        /// 2025.05.30 aggiunto comando di chiusura del database
+        /// </summary>
+        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Chiusura del database in uso", TockenManaging = 1, SelectAction = ActionType.DbRequest)]
+        public string CmdCloseDB {  get { return this.cmd08; } }
         /*
         /// <summary>
         /// Single signature frame reception CMD = 06

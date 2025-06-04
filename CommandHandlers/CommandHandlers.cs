@@ -14,6 +14,7 @@ using SocketManagerInfo;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -36,6 +37,7 @@ namespace CommandHandlers
         private SocketCommand GdvCmd = new SocketCommand();//Global variable containing the communication status
         private SocketMessageStructure response = null;
         private readonly List<Database> _loadedDatabases = new List<Database>(); // Esempio: Gestione interna semplice
+        private static SQLiteConnection dbConnection;
         public ClsCommandHandlers()
         {
 
@@ -130,7 +132,6 @@ namespace CommandHandlers
                 {
                     clientSocket.Disconnect();
                 }
-
                 response = new SocketMessageStructure
                 {
                     Command = command.Substring(1, command.Length - 2),
@@ -171,14 +172,14 @@ namespace CommandHandlers
         /// <param name="Param"></param>
         /// <param name="asl"></param>
         /// <exception cref="Exception"></exception>
-        public void CmdOpenDB(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl)
+        public void CmdOpenDB(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl, out SQLiteConnection DbConnection)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
-            string txtSendData = "";
             try
             {
                 string command = checkCommand(DvCmd.CmdOpenDB, DvCmd);
-                
+                string dbFilePath = "";
+                string dbStatus = "CLOSE";
                 if (Param == null)
                 {
                     throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
@@ -188,54 +189,69 @@ namespace CommandHandlers
                 {
                     throw new Exception("File non trovato");
                 }
-                string dbFilePath = filePathElement.Value;
-                Database loadedDb = DatabaseSerializer.DeserializeFromXmlFile(dbFilePath);
-                if (filePathElement == null || string.IsNullOrWhiteSpace(filePathElement.Value))
+                if (dbConnection == null)
                 {
-                    throw new Exception($"Comando OpenDb ricevuto da {asl.CallerIpAddress} ma FilePath mancante o vuoto nel BufferDati.");
-                }
-                if (!File.Exists(dbFilePath))
-                {
-                    throw new Exception($"il file{dbFilePath} ricevuto da  {asl.CallerIpAddress} no è sato trovato.");
-                }
-                loadedDb.FilePath = dbFilePath; //2025.05.16 Aggiunto: Proprietà per memorizzare il percorso del file associato a questo database ***
-
-                Database existingDbById = _loadedDatabases.FirstOrDefault(db => db.DatabaseId == loadedDb.DatabaseId);
-                Database existingDbByName = _loadedDatabases.FirstOrDefault(db => db.DatabaseName.Equals(loadedDb.DatabaseName, StringComparison.OrdinalIgnoreCase));
-                if (existingDbById != null || existingDbByName != null)
-                {
-                    string conflictMessage = $"Database con ID {loadedDb.DatabaseId} ('{loadedDb.DatabaseName}') è già caricato sul server (conflitto per ID o Nome).";
-                    throw new Exception(conflictMessage);
+                    dbFilePath = $"Data Source={filePathElement.Value};Version=3;";
+                    dbConnection = new SQLiteConnection(dbFilePath);
+                    dbConnection.Open();
+                    dbStatus = "DB Open";
                 }
                 else
                 {
-                    _loadedDatabases.Add(loadedDb);
-
-                    response = new SocketMessageStructure
+                    if (dbConnection.State != System.Data.ConnectionState.Open)
                     {
-                        Command = command.Substring(1, command.Length - 2),
-                        SendingTime = DateTime.Now,
-                        BufferDati = new XElement("BufferDati",
-                                                new XElement("DatabaseInfo",
-                                                new XElement("DatabaseId", loadedDb.DatabaseId), // Orario del server in formato ISO 8601
-                                                new XElement("DatabaseName", loadedDb.DatabaseName),
-                                                new XElement("FilePath", dbFilePath))), // Esempio di stato
-                                                                                        // Aggiungi qui altre informazioni di sincronizzazione se necessario
-                                                                                        // Aggiungi qui altre informazioni di sincronizzazione se necessario
-                        Token = asl.TokenSocket.ToString(),
-                        CRC = 0
-                    };
-                    string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
-                    _loger.Log(LogLevel.DEBUG, telegramGenerate);
-                    ASCIIEncoding encoding = new ASCIIEncoding();
-                    byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
-                    //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
-                    txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                        dbFilePath = $"Data Source={filePathElement.Value};Version=3;";
+                        dbConnection = new SQLiteConnection(dbFilePath);
+                        dbConnection.Open();
+                        dbStatus = "DB Open";
+                    }
+                    else
+                    {
+                        dbStatus = "DB Already open";
+                    }
                 }
-
-                    
+                StringBuilder stringBuilder = new StringBuilder();
+                string sqlCmd = "SELECT ID,NomeParametro,ValoreParametro,Descrizione FROM MIUParameterConfigurator";
+                using (var sqlCommand = new SQLiteCommand(sqlCmd, dbConnection))
+                {
+                    using (SQLiteDataReader reader = sqlCommand.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var col = reader.GetValues();
+                            for (int i=0; i<col.Count; i++)
+                            {
+                                string s = string.Format($"[{col.AllKeys[i]}, {reader.GetValue(i)}]");
+                                stringBuilder.Append(s);
+                            }
+                            stringBuilder.Append(Environment.NewLine);
+                            //for (int i = 0; i < reader.FieldCount; i++)
+                            //{
+                            //    Console.WriteLine(reader[i]);
+                            //    //stringBuilder.Append(string.Format($"Key: {row.Keys[i]} Value: {v},"));
+                            //}
+                        }
+                    }
+                }
+                DbConnection = dbConnection;
+                response = new SocketMessageStructure
+                {
+                    Command = command.Substring(1, command.Length - 2),
+                    SendingTime = DateTime.Now,
+                    BufferDati = new XElement("BufferDati",
+                    new XElement("DATABASE",
+                    new XElement("ConnectionString", dbFilePath),
+                    new XElement("STATUS", dbStatus),
+                    new XElement("MIUParameterConfigurator",stringBuilder.ToString()))),
+                    Token = asl.TokenSocket.ToString(),
+                    CRC = 0
+                };
+                string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                ASCIIEncoding encoding = new ASCIIEncoding();
+                byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
                 asl.Send(asl.Handler, txtSendData);
-
             }
             catch (FileNotFoundException ex)
             {
@@ -248,6 +264,88 @@ namespace CommandHandlers
                 {
                     throw new Exception(msg);
                 }
+            }
+            catch (Exception ex)
+            {
+                string msg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                if (ex.InnerException != null)
+                {
+                    throw new Exception(msg, ex.InnerException);
+                }
+                else
+                {
+                    throw new Exception(msg);
+                }
+            }
+        }
+        /// <summary>
+        /// funzione che chiude il database in uso e iun futuro sospenda la procedura di derivazione delle stringhe MIU
+        /// </summary>
+        /// <param name="DvCmd"></param>
+        /// <param name="Param"></param>
+        /// <param name="asl"></param>
+        public void CmdCloseDB(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl, SQLiteConnection dbConnection)
+        {
+            string sendMessage = "";
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
+            {
+                string command = checkCommand(DvCmd.CmdOpenDB, DvCmd);
+                if (Param == null)
+                {
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
+                }
+                if (dbConnection == null)
+                {
+                    response = new SocketMessageStructure
+                    {
+                        SendingTime = DateTime.Now,
+                        BufferDati = new XElement("BufferDati",
+                            new XElement("DATABASE",
+                            new XElement("ConnectionString"),
+                            new XElement("STATUS", "Non aperto"))),
+                        Token = asl.TokenSocket.ToString(),
+                        CRC = 0
+                    };
+                }
+                else
+                {
+                    if (dbConnection.State == System.Data.ConnectionState.Closed)
+                    {
+                        string s = dbConnection.ConnectionString;
+                        response = new SocketMessageStructure
+                        {
+                            SendingTime = DateTime.Now,
+                            BufferDati = new XElement("BufferDati",
+                            new XElement("DATABASE",
+                            new XElement("ConnectionString", dbConnection.ConnectionString),
+                            new XElement("STATUS", "DB già chiuso"))),
+                            Token = asl.TokenSocket.ToString(),
+                            CRC = 0
+                        };
+                    }
+                    else
+                    {
+                        dbConnection.Close();
+                        string s = dbConnection.ConnectionString;
+                        response = new SocketMessageStructure
+                        {
+                            SendingTime = DateTime.Now,
+                            BufferDati = new XElement("BufferDati",
+                            new XElement("DATABASE",
+                            new XElement("ConnectionString", dbConnection.ConnectionString),
+                            new XElement("STATUS", "chiuso"))),
+                            Token = asl.TokenSocket.ToString(),
+                            CRC = 0
+                        };
+                    }
+                }
+                string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                ASCIIEncoding encoding = new ASCIIEncoding();
+                byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                asl.Send(asl.Handler, txtSendData);
             }
             catch (Exception ex)
             {

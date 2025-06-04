@@ -2588,7 +2588,6 @@ namespace EvolutiveSystem_01
             evolutionMonitor.AppendText(e);
             _logger.Log(LogLevel.ERROR, e);
         }
-
         private void Asl_DataFromSocket(object sender, SocketManagerInfo.SocketMessageStructure e)
         {
             MethodBase thisMethod = MethodBase.GetCurrentMethod();

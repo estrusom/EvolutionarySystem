@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MIU.Core", "MIU.Core\MIU.Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MIU.Core.tester", "MIU.Core.tester\MIU.Core.tester.csproj", "{D7E9A321-39E6-488A-A539-F2030F7B0B1E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.SQL.Core", "EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj", "{59F3126F-6FED-40D0-AB71-5439FE3F161F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -181,6 +183,14 @@ Global
 		{D7E9A321-39E6-488A-A539-F2030F7B0B1E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D7E9A321-39E6-488A-A539-F2030F7B0B1E}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{D7E9A321-39E6-488A-A539-F2030F7B0B1E}.Release|ARM64.Build.0 = Release|Any CPU
+		{59F3126F-6FED-40D0-AB71-5439FE3F161F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{59F3126F-6FED-40D0-AB71-5439FE3F161F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{59F3126F-6FED-40D0-AB71-5439FE3F161F}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{59F3126F-6FED-40D0-AB71-5439FE3F161F}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{59F3126F-6FED-40D0-AB71-5439FE3F161F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{59F3126F-6FED-40D0-AB71-5439FE3F161F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{59F3126F-6FED-40D0-AB71-5439FE3F161F}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{59F3126F-6FED-40D0-AB71-5439FE3F161F}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,1 @@
+copy C:\Progetti\EvolutiveSystem\xml\MIUProject-empty.xml C:\Progetti\EvolutiveSystem\xml\MIUProject.xml

@@ -1,0 +1,346 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Database xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <DatabaseId>1</DatabaseId>
+  <DatabaseName>MIUProject</DatabaseName>
+  <Tables>
+    <Table>
+      <TableId>1</TableId>
+      <TableName>RegoleMIU</TableName>
+      <Fields>
+        <Field>
+          <Id>1</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>ID</FieldName>
+          <Key>true</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>Int32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>2</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>Nome</FieldName>
+          <Key>false</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>3</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>Descrizione</FieldName>
+          <Key>false</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>4</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>Pattern</FieldName>
+          <Key>false</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>5</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>Sostituzione</FieldName>
+          <Key>false</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+      </Fields>
+      <DataRecords>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Nome</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Regola 1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Descrizione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Se termina con 'I', aggiunge 'U'.</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Pattern</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">I$</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Sostituzione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">$0U</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Nome</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Regola 2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Descrizione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Raddoppia la stringa dopo 'M'.	</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Pattern</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">^M(.*)$</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Sostituzione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">M$1$1</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">3</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Nome</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Regola 3</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Descrizione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Sostituisce 'III' con 'U'.</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Pattern</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">III</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Sostituzione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">U</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">4</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Nome</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Regola 4</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Descrizione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Omette 'UU'.</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Pattern</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">UU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Sostituzione</string>
+            </key>
+            <value>
+              <anyType xsi:nil="true" />
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+      </DataRecords>
+    </Table>
+    <Table>
+      <TableId>2</TableId>
+      <TableName>EsplorazioneMIU</TableName>
+      <Fields>
+        <Field>
+          <Id>1</Id>
+          <PrimaryKeyAutoIncrement>true</PrimaryKeyAutoIncrement>
+          <FieldName>ID</FieldName>
+          <Key>true</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>UInt64</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>2</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>StringaIniziale</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>3</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>StringaTarget</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>4</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>NumeroPassi</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>UInt32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>5</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>LimitePassi</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>UInt32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>6</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>TicOrologio</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>UInt64</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>7</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>SoluzioneTrovata</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>Boolean</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>8</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>TempoMs</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>Double</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+      </Fields>
+      <DataRecords />
+    </Table>
+  </Tables>
+</Database>

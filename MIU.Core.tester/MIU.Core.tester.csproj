@@ -54,10 +54,19 @@
       <Project>{a193e8c9-5afa-4d49-adfa-f25891b1a8eb}</Project>
       <Name>EvolutiveSystem.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
+      <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
+      <Name>EvolutiveSystem.SQL.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
       <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
       <Name>MIU.Core</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Data.SQLite">
+      <Version>1.0.119</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

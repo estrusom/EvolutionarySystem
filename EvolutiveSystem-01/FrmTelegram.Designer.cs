@@ -67,6 +67,10 @@
             this.txtDbSave = new System.Windows.Forms.TextBox();
             this.lblDenSelDb = new System.Windows.Forms.Label();
             this.gbSelRequest = new System.Windows.Forms.GroupBox();
+            this.lblRqId = new System.Windows.Forms.Label();
+            this.lblRqDbSel = new System.Windows.Forms.Label();
+            this.lblDenRqDbSel = new System.Windows.Forms.Label();
+            this.chbRqPerId = new System.Windows.Forms.CheckBox();
             this.btnSelRqDb = new System.Windows.Forms.Button();
             this.txtDbRq = new System.Windows.Forms.TextBox();
             this.dbStructReqAnnulla = new System.Windows.Forms.Button();
@@ -74,10 +78,6 @@
             this.rbFull = new System.Windows.Forms.RadioButton();
             this.rbStructureOnly = new System.Windows.Forms.RadioButton();
             this.rbListOnly = new System.Windows.Forms.RadioButton();
-            this.chbRqPerId = new System.Windows.Forms.CheckBox();
-            this.lblRqDbSel = new System.Windows.Forms.Label();
-            this.lblDenRqDbSel = new System.Windows.Forms.Label();
-            this.lblRqId = new System.Windows.Forms.Label();
             this.gbSelCmd.SuspendLayout();
             this.pnlbtn.SuspendLayout();
             this.gbCompilaBufferTx.SuspendLayout();
@@ -328,7 +328,7 @@
             this.gbActionTypeLoadDb.Controls.Add(this.txtFileDb);
             this.gbActionTypeLoadDb.Controls.Add(this.lblDenDbName);
             this.gbActionTypeLoadDb.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbActionTypeLoadDb.Location = new System.Drawing.Point(117, 209);
+            this.gbActionTypeLoadDb.Location = new System.Drawing.Point(232, 225);
             this.gbActionTypeLoadDb.Name = "gbActionTypeLoadDb";
             this.gbActionTypeLoadDb.Size = new System.Drawing.Size(659, 135);
             this.gbActionTypeLoadDb.TabIndex = 39;
@@ -386,6 +386,7 @@
             // 
             // gbActionSaveDatabase
             // 
+            this.gbActionSaveDatabase.Controls.Add(this.gbSelRequest);
             this.gbActionSaveDatabase.Controls.Add(this.lblId);
             this.gbActionSaveDatabase.Controls.Add(this.lblDbSelect);
             this.gbActionSaveDatabase.Controls.Add(this.lblDenIdSel);
@@ -396,7 +397,7 @@
             this.gbActionSaveDatabase.Controls.Add(this.txtDbSave);
             this.gbActionSaveDatabase.Controls.Add(this.lblDenSelDb);
             this.gbActionSaveDatabase.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbActionSaveDatabase.Location = new System.Drawing.Point(12, 260);
+            this.gbActionSaveDatabase.Location = new System.Drawing.Point(65, 260);
             this.gbActionSaveDatabase.Name = "gbActionSaveDatabase";
             this.gbActionSaveDatabase.Size = new System.Drawing.Size(659, 134);
             this.gbActionSaveDatabase.TabIndex = 40;
@@ -509,13 +510,56 @@
             this.gbSelRequest.Controls.Add(this.rbStructureOnly);
             this.gbSelRequest.Controls.Add(this.rbListOnly);
             this.gbSelRequest.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbSelRequest.Location = new System.Drawing.Point(39, 216);
+            this.gbSelRequest.Location = new System.Drawing.Point(167, 25);
             this.gbSelRequest.Name = "gbSelRequest";
             this.gbSelRequest.Size = new System.Drawing.Size(718, 144);
             this.gbSelRequest.TabIndex = 41;
             this.gbSelRequest.TabStop = false;
             this.gbSelRequest.Text = "Definizione richieste info al DB";
             this.gbSelRequest.Visible = false;
+            // 
+            // lblRqId
+            // 
+            this.lblRqId.AutoSize = true;
+            this.lblRqId.Location = new System.Drawing.Point(192, 107);
+            this.lblRqId.Name = "lblRqId";
+            this.lblRqId.Size = new System.Drawing.Size(19, 16);
+            this.lblRqId.TabIndex = 54;
+            this.lblRqId.Text = "...";
+            this.lblRqId.Visible = false;
+            // 
+            // lblRqDbSel
+            // 
+            this.lblRqDbSel.AutoSize = true;
+            this.lblRqDbSel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblRqDbSel.Location = new System.Drawing.Point(191, 85);
+            this.lblRqDbSel.Name = "lblRqDbSel";
+            this.lblRqDbSel.Size = new System.Drawing.Size(41, 18);
+            this.lblRqDbSel.TabIndex = 53;
+            this.lblRqDbSel.Text = "none";
+            // 
+            // lblDenRqDbSel
+            // 
+            this.lblDenRqDbSel.AutoSize = true;
+            this.lblDenRqDbSel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDenRqDbSel.Location = new System.Drawing.Point(17, 85);
+            this.lblDenRqDbSel.Name = "lblDenRqDbSel";
+            this.lblDenRqDbSel.Size = new System.Drawing.Size(175, 18);
+            this.lblDenRqDbSel.TabIndex = 52;
+            this.lblDenRqDbSel.Text = "Database selezionate:";
+            // 
+            // chbRqPerId
+            // 
+            this.chbRqPerId.AutoSize = true;
+            this.chbRqPerId.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.chbRqPerId.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chbRqPerId.Location = new System.Drawing.Point(18, 107);
+            this.chbRqPerId.Name = "chbRqPerId";
+            this.chbRqPerId.Size = new System.Drawing.Size(150, 22);
+            this.chbRqPerId.TabIndex = 51;
+            this.chbRqPerId.Text = "Richiesta per ID";
+            this.chbRqPerId.UseVisualStyleBackColor = true;
+            this.chbRqPerId.CheckedChanged += new System.EventHandler(this.chbRqPerId_CheckedChanged);
             // 
             // btnSelRqDb
             // 
@@ -591,49 +635,6 @@
             this.rbListOnly.Text = "Solo lista";
             this.rbListOnly.UseVisualStyleBackColor = true;
             // 
-            // chbRqPerId
-            // 
-            this.chbRqPerId.AutoSize = true;
-            this.chbRqPerId.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.chbRqPerId.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chbRqPerId.Location = new System.Drawing.Point(18, 107);
-            this.chbRqPerId.Name = "chbRqPerId";
-            this.chbRqPerId.Size = new System.Drawing.Size(150, 22);
-            this.chbRqPerId.TabIndex = 51;
-            this.chbRqPerId.Text = "Richiesta per ID";
-            this.chbRqPerId.UseVisualStyleBackColor = true;
-            this.chbRqPerId.CheckedChanged += new System.EventHandler(this.chbRqPerId_CheckedChanged);
-            // 
-            // lblRqDbSel
-            // 
-            this.lblRqDbSel.AutoSize = true;
-            this.lblRqDbSel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblRqDbSel.Location = new System.Drawing.Point(191, 85);
-            this.lblRqDbSel.Name = "lblRqDbSel";
-            this.lblRqDbSel.Size = new System.Drawing.Size(41, 18);
-            this.lblRqDbSel.TabIndex = 53;
-            this.lblRqDbSel.Text = "none";
-            // 
-            // lblDenRqDbSel
-            // 
-            this.lblDenRqDbSel.AutoSize = true;
-            this.lblDenRqDbSel.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblDenRqDbSel.Location = new System.Drawing.Point(17, 85);
-            this.lblDenRqDbSel.Name = "lblDenRqDbSel";
-            this.lblDenRqDbSel.Size = new System.Drawing.Size(175, 18);
-            this.lblDenRqDbSel.TabIndex = 52;
-            this.lblDenRqDbSel.Text = "Database selezionate:";
-            // 
-            // lblRqId
-            // 
-            this.lblRqId.AutoSize = true;
-            this.lblRqId.Location = new System.Drawing.Point(192, 107);
-            this.lblRqId.Name = "lblRqId";
-            this.lblRqId.Size = new System.Drawing.Size(19, 16);
-            this.lblRqId.TabIndex = 54;
-            this.lblRqId.Text = "...";
-            this.lblRqId.Visible = false;
-            // 
             // FrmTelegram
             // 
             this.AcceptButton = this.btnOkDb;
@@ -641,12 +642,11 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnAnnullaSend;
             this.ClientSize = new System.Drawing.Size(818, 646);
-            this.Controls.Add(this.gbSelRequest);
             this.Controls.Add(this.gbActionSaveDatabase);
-            this.Controls.Add(this.gbActionTypeLoadDb);
             this.Controls.Add(this.gbCompilaBufferTx);
             this.Controls.Add(this.pnlbtn);
             this.Controls.Add(this.gbSelCmd);
+            this.Controls.Add(this.gbActionTypeLoadDb);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;

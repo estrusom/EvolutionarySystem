@@ -41,8 +41,8 @@ namespace EvolutiveSystem_01
             this.cmdCnf = new CommandConfig();
             cmdCnf.ExecuteCmdSync += CmdCnf_ExecuteCmdSync;
             cmdCnf.ExecuteOpenDB += CmdCnf_ExecuteOpenDB;
-            cmdCnf.ExecuteSaveDB += CmdCnf_ExecuteSaveDB;
-            cmdCnf.ExecuteDBStruct += CmdCnf_ExecuteDBStruct;
+            //cmdCnf.ExecuteSaveDB += CmdCnf_ExecuteSaveDB;
+            //cmdCnf.ExecuteDBStruct += CmdCnf_ExecuteDBStruct;
             txtDateSend.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
             lblDb.Text = "";
         }

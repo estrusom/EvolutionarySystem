@@ -31,9 +31,12 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmEvolutiveSystem));
             this.panelCommands = new System.Windows.Forms.Panel();
-            this.gbSocketServer = new System.Windows.Forms.GroupBox();
-            this.gbServiceManager = new System.Windows.Forms.GroupBox();
             this.gbFileManager = new System.Windows.Forms.GroupBox();
+            this.btnRicaricaDB = new System.Windows.Forms.Button();
+            this.btnCloseAllDatabases = new System.Windows.Forms.Button();
+            this.btnLoadDatabase = new System.Windows.Forms.Button();
+            this.btnSaveDatabase = new System.Windows.Forms.Button();
+            this.btnAddDatabase = new System.Windows.Forms.Button();
             this.statusStrip = new System.Windows.Forms.ToolStrip();
             this.toolStripStatusLabelDen = new System.Windows.Forms.ToolStripLabel();
             this.toolStripStatusLabel = new System.Windows.Forms.ToolStripLabel();
@@ -51,24 +54,19 @@
             this.CmdStructDb = new System.Windows.Forms.TabPage();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.treeViewContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
-            this.gbAnalysis = new System.Windows.Forms.GroupBox();
-            this.btnAnalysis = new System.Windows.Forms.Button();
-            this.btnSocket = new System.Windows.Forms.Button();
-            this.btnServiceStop = new System.Windows.Forms.Button();
-            this.btnServicePause = new System.Windows.Forms.Button();
-            this.btnServiceStart = new System.Windows.Forms.Button();
-            this.btnRicaricaDB = new System.Windows.Forms.Button();
-            this.btnCloseAllDatabases = new System.Windows.Forms.Button();
-            this.btnLoadDatabase = new System.Windows.Forms.Button();
-            this.btnSaveDatabase = new System.Windows.Forms.Button();
-            this.btnAddDatabase = new System.Windows.Forms.Button();
             this.AnalysisContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.tsmSpeedAnalysis = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.tsmAnalysisClose = new System.Windows.Forms.ToolStripMenuItem();
+            this.gbAnalysis = new System.Windows.Forms.GroupBox();
+            this.btnAnalysis = new System.Windows.Forms.Button();
+            this.gbSocketServer = new System.Windows.Forms.GroupBox();
+            this.btnSocket = new System.Windows.Forms.Button();
+            this.gbServiceManager = new System.Windows.Forms.GroupBox();
+            this.btnServiceStop = new System.Windows.Forms.Button();
+            this.btnServicePause = new System.Windows.Forms.Button();
+            this.btnServiceStart = new System.Windows.Forms.Button();
             this.panelCommands.SuspendLayout();
-            this.gbSocketServer.SuspendLayout();
-            this.gbServiceManager.SuspendLayout();
             this.gbFileManager.SuspendLayout();
             this.statusStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainerMain)).BeginInit();
@@ -81,8 +79,10 @@
             this.splitContainerLeft.SuspendLayout();
             this.pnlDetail.SuspendLayout();
             this.tabControlDetails.SuspendLayout();
-            this.gbAnalysis.SuspendLayout();
             this.AnalysisContextMenu.SuspendLayout();
+            this.gbAnalysis.SuspendLayout();
+            this.gbSocketServer.SuspendLayout();
+            this.gbServiceManager.SuspendLayout();
             this.SuspendLayout();
             // 
             // panelCommands
@@ -97,32 +97,6 @@
             this.panelCommands.Size = new System.Drawing.Size(1646, 94);
             this.panelCommands.TabIndex = 0;
             // 
-            // gbSocketServer
-            // 
-            this.gbSocketServer.Controls.Add(this.btnSocket);
-            this.gbSocketServer.Dock = System.Windows.Forms.DockStyle.Left;
-            this.gbSocketServer.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbSocketServer.Location = new System.Drawing.Point(637, 0);
-            this.gbSocketServer.Name = "gbSocketServer";
-            this.gbSocketServer.Size = new System.Drawing.Size(136, 94);
-            this.gbSocketServer.TabIndex = 6;
-            this.gbSocketServer.TabStop = false;
-            this.gbSocketServer.Text = "Socket client";
-            // 
-            // gbServiceManager
-            // 
-            this.gbServiceManager.Controls.Add(this.btnServiceStop);
-            this.gbServiceManager.Controls.Add(this.btnServicePause);
-            this.gbServiceManager.Controls.Add(this.btnServiceStart);
-            this.gbServiceManager.Dock = System.Windows.Forms.DockStyle.Left;
-            this.gbServiceManager.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbServiceManager.Location = new System.Drawing.Point(406, 0);
-            this.gbServiceManager.Name = "gbServiceManager";
-            this.gbServiceManager.Size = new System.Drawing.Size(231, 94);
-            this.gbServiceManager.TabIndex = 5;
-            this.gbServiceManager.TabStop = false;
-            this.gbServiceManager.Text = "Service manager";
-            // 
             // gbFileManager
             // 
             this.gbFileManager.Controls.Add(this.btnRicaricaDB);
@@ -134,10 +108,65 @@
             this.gbFileManager.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gbFileManager.Location = new System.Drawing.Point(0, 0);
             this.gbFileManager.Name = "gbFileManager";
-            this.gbFileManager.Size = new System.Drawing.Size(406, 94);
+            this.gbFileManager.Size = new System.Drawing.Size(400, 94);
             this.gbFileManager.TabIndex = 4;
             this.gbFileManager.TabStop = false;
             this.gbFileManager.Text = "File";
+            // 
+            // btnRicaricaDB
+            // 
+            this.btnRicaricaDB.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.button_reload_15002;
+            this.btnRicaricaDB.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnRicaricaDB.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnRicaricaDB.Location = new System.Drawing.Point(299, 18);
+            this.btnRicaricaDB.Name = "btnRicaricaDB";
+            this.btnRicaricaDB.Size = new System.Drawing.Size(74, 73);
+            this.btnRicaricaDB.TabIndex = 8;
+            this.btnRicaricaDB.UseVisualStyleBackColor = true;
+            // 
+            // btnCloseAllDatabases
+            // 
+            this.btnCloseAllDatabases.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.businessapplication_database_database_accepteitheracceptthedatabase_connect_connectdatabase_negocios_aplicacion_basededato_2310__1_;
+            this.btnCloseAllDatabases.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnCloseAllDatabases.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnCloseAllDatabases.Location = new System.Drawing.Point(225, 18);
+            this.btnCloseAllDatabases.Name = "btnCloseAllDatabases";
+            this.btnCloseAllDatabases.Size = new System.Drawing.Size(74, 73);
+            this.btnCloseAllDatabases.TabIndex = 7;
+            this.btnCloseAllDatabases.UseVisualStyleBackColor = true;
+            // 
+            // btnLoadDatabase
+            // 
+            this.btnLoadDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.business_application_download_downloaddatabase_thedatabase_23201;
+            this.btnLoadDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnLoadDatabase.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnLoadDatabase.Location = new System.Drawing.Point(151, 18);
+            this.btnLoadDatabase.Name = "btnLoadDatabase";
+            this.btnLoadDatabase.Size = new System.Drawing.Size(74, 73);
+            this.btnLoadDatabase.TabIndex = 6;
+            this.btnLoadDatabase.UseVisualStyleBackColor = true;
+            // 
+            // btnSaveDatabase
+            // 
+            this.btnSaveDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.businessapplication_database_loaddatabase_db_negocios_aplicacion_2318;
+            this.btnSaveDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnSaveDatabase.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnSaveDatabase.Location = new System.Drawing.Point(77, 18);
+            this.btnSaveDatabase.Name = "btnSaveDatabase";
+            this.btnSaveDatabase.Size = new System.Drawing.Size(74, 73);
+            this.btnSaveDatabase.TabIndex = 5;
+            this.btnSaveDatabase.UseVisualStyleBackColor = true;
+            // 
+            // btnAddDatabase
+            // 
+            this.btnAddDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.business_application_addthedatabase_add_insert_database_db_2313;
+            this.btnAddDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
+            this.btnAddDatabase.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnAddDatabase.Location = new System.Drawing.Point(3, 18);
+            this.btnAddDatabase.Name = "btnAddDatabase";
+            this.btnAddDatabase.Size = new System.Drawing.Size(74, 73);
+            this.btnAddDatabase.TabIndex = 4;
+            this.btnAddDatabase.UseVisualStyleBackColor = true;
             // 
             // statusStrip
             // 
@@ -205,7 +234,7 @@
             this.splitContainerLeft.Panel2.Controls.Add(this.evolutionMonitor);
             this.splitContainerLeft.Panel2.Controls.Add(this.pnlDetail);
             this.splitContainerLeft.Size = new System.Drawing.Size(548, 778);
-            this.splitContainerLeft.SplitterDistance = 382;
+            this.splitContainerLeft.SplitterDistance = 387;
             this.splitContainerLeft.TabIndex = 0;
             // 
             // dbTreeView
@@ -213,7 +242,7 @@
             this.dbTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dbTreeView.Location = new System.Drawing.Point(0, 0);
             this.dbTreeView.Name = "dbTreeView";
-            this.dbTreeView.Size = new System.Drawing.Size(548, 382);
+            this.dbTreeView.Size = new System.Drawing.Size(548, 387);
             this.dbTreeView.TabIndex = 0;
             this.dbTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.dbTreeView_AfterSelect);
             this.dbTreeView.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.dbTreeView_NodeMouseClick);
@@ -228,7 +257,7 @@
             this.listViewFields.LabelEdit = true;
             this.listViewFields.Location = new System.Drawing.Point(0, 64);
             this.listViewFields.Name = "listViewFields";
-            this.listViewFields.Size = new System.Drawing.Size(548, 202);
+            this.listViewFields.Size = new System.Drawing.Size(548, 197);
             this.listViewFields.TabIndex = 4;
             this.listViewFields.UseCompatibleStateImageBehavior = false;
             this.listViewFields.View = System.Windows.Forms.View.Details;
@@ -236,7 +265,7 @@
             // evolutionMonitor
             // 
             this.evolutionMonitor.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.evolutionMonitor.Location = new System.Drawing.Point(0, 266);
+            this.evolutionMonitor.Location = new System.Drawing.Point(0, 261);
             this.evolutionMonitor.Name = "evolutionMonitor";
             this.evolutionMonitor.Size = new System.Drawing.Size(548, 126);
             this.evolutionMonitor.TabIndex = 3;
@@ -325,7 +354,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(1086, 749);
+            this.tabPage2.Size = new System.Drawing.Size(1086, 744);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -336,15 +365,43 @@
             this.treeViewContextMenu.Name = "treeViewContextMenu";
             this.treeViewContextMenu.Size = new System.Drawing.Size(61, 4);
             // 
+            // AnalysisContextMenu
+            // 
+            this.AnalysisContextMenu.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.AnalysisContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsmSpeedAnalysis,
+            this.toolStripSeparator1,
+            this.tsmAnalysisClose});
+            this.AnalysisContextMenu.Name = "contextMenuStrip1";
+            this.AnalysisContextMenu.Size = new System.Drawing.Size(257, 58);
+            // 
+            // tsmSpeedAnalysis
+            // 
+            this.tsmSpeedAnalysis.Name = "tsmSpeedAnalysis";
+            this.tsmSpeedAnalysis.Size = new System.Drawing.Size(256, 24);
+            this.tsmSpeedAnalysis.Text = "Analisi flutuazione velocità";
+            this.tsmSpeedAnalysis.Click += new System.EventHandler(this.tsmSpeedAnalysis_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(253, 6);
+            // 
+            // tsmAnalysisClose
+            // 
+            this.tsmAnalysisClose.Name = "tsmAnalysisClose";
+            this.tsmAnalysisClose.Size = new System.Drawing.Size(256, 24);
+            this.tsmAnalysisClose.Text = "Close";
+            // 
             // gbAnalysis
             // 
             this.gbAnalysis.Controls.Add(this.btnAnalysis);
             this.gbAnalysis.Dock = System.Windows.Forms.DockStyle.Left;
             this.gbAnalysis.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbAnalysis.Location = new System.Drawing.Point(773, 0);
+            this.gbAnalysis.Location = new System.Drawing.Point(767, 0);
             this.gbAnalysis.Name = "gbAnalysis";
             this.gbAnalysis.Size = new System.Drawing.Size(136, 94);
-            this.gbAnalysis.TabIndex = 7;
+            this.gbAnalysis.TabIndex = 13;
             this.gbAnalysis.TabStop = false;
             this.gbAnalysis.Text = "Analisi dati";
             // 
@@ -359,6 +416,18 @@
             this.btnAnalysis.TabIndex = 5;
             this.btnAnalysis.UseVisualStyleBackColor = true;
             // 
+            // gbSocketServer
+            // 
+            this.gbSocketServer.Controls.Add(this.btnSocket);
+            this.gbSocketServer.Dock = System.Windows.Forms.DockStyle.Left;
+            this.gbSocketServer.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbSocketServer.Location = new System.Drawing.Point(631, 0);
+            this.gbSocketServer.Name = "gbSocketServer";
+            this.gbSocketServer.Size = new System.Drawing.Size(136, 94);
+            this.gbSocketServer.TabIndex = 12;
+            this.gbSocketServer.TabStop = false;
+            this.gbSocketServer.Text = "Socket client";
+            // 
             // btnSocket
             // 
             this.btnSocket.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.connect_23039;
@@ -369,6 +438,20 @@
             this.btnSocket.Size = new System.Drawing.Size(74, 73);
             this.btnSocket.TabIndex = 5;
             this.btnSocket.UseVisualStyleBackColor = true;
+            // 
+            // gbServiceManager
+            // 
+            this.gbServiceManager.Controls.Add(this.btnServiceStop);
+            this.gbServiceManager.Controls.Add(this.btnServicePause);
+            this.gbServiceManager.Controls.Add(this.btnServiceStart);
+            this.gbServiceManager.Dock = System.Windows.Forms.DockStyle.Left;
+            this.gbServiceManager.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbServiceManager.Location = new System.Drawing.Point(400, 0);
+            this.gbServiceManager.Name = "gbServiceManager";
+            this.gbServiceManager.Size = new System.Drawing.Size(231, 94);
+            this.gbServiceManager.TabIndex = 11;
+            this.gbServiceManager.TabStop = false;
+            this.gbServiceManager.Text = "Service manager";
             // 
             // btnServiceStop
             // 
@@ -403,89 +486,6 @@
             this.btnServiceStart.TabIndex = 5;
             this.btnServiceStart.UseVisualStyleBackColor = true;
             // 
-            // btnRicaricaDB
-            // 
-            this.btnRicaricaDB.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.button_reload_15002;
-            this.btnRicaricaDB.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnRicaricaDB.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnRicaricaDB.Location = new System.Drawing.Point(299, 18);
-            this.btnRicaricaDB.Name = "btnRicaricaDB";
-            this.btnRicaricaDB.Size = new System.Drawing.Size(74, 73);
-            this.btnRicaricaDB.TabIndex = 8;
-            this.btnRicaricaDB.UseVisualStyleBackColor = true;
-            // 
-            // btnCloseAllDatabases
-            // 
-            this.btnCloseAllDatabases.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.businessapplication_database_database_accepteitheracceptthedatabase_connect_connectdatabase_negocios_aplicacion_basededato_2310__1_;
-            this.btnCloseAllDatabases.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnCloseAllDatabases.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnCloseAllDatabases.Location = new System.Drawing.Point(225, 18);
-            this.btnCloseAllDatabases.Name = "btnCloseAllDatabases";
-            this.btnCloseAllDatabases.Size = new System.Drawing.Size(74, 73);
-            this.btnCloseAllDatabases.TabIndex = 7;
-            this.btnCloseAllDatabases.UseVisualStyleBackColor = true;
-            // 
-            // btnLoadDatabase
-            // 
-            this.btnLoadDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.business_application_download_downloaddatabase_thedatabase_23201;
-            this.btnLoadDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnLoadDatabase.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnLoadDatabase.Location = new System.Drawing.Point(151, 18);
-            this.btnLoadDatabase.Name = "btnLoadDatabase";
-            this.btnLoadDatabase.Size = new System.Drawing.Size(74, 73);
-            this.btnLoadDatabase.TabIndex = 6;
-            this.btnLoadDatabase.UseVisualStyleBackColor = true;
-            // 
-            // btnSaveDatabase
-            // 
-            this.btnSaveDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.businessapplication_database_loaddatabase_db_negocios_aplicacion_2318;
-            this.btnSaveDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnSaveDatabase.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnSaveDatabase.Location = new System.Drawing.Point(77, 18);
-            this.btnSaveDatabase.Name = "btnSaveDatabase";
-            this.btnSaveDatabase.Size = new System.Drawing.Size(74, 73);
-            this.btnSaveDatabase.TabIndex = 5;
-            this.btnSaveDatabase.UseVisualStyleBackColor = true;
-            // 
-            // btnAddDatabase
-            // 
-            this.btnAddDatabase.BackgroundImage = global::EvolutiveSystem_01.Properties.Resources.business_application_addthedatabase_add_insert_database_db_2313;
-            this.btnAddDatabase.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Stretch;
-            this.btnAddDatabase.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnAddDatabase.Location = new System.Drawing.Point(3, 18);
-            this.btnAddDatabase.Name = "btnAddDatabase";
-            this.btnAddDatabase.Size = new System.Drawing.Size(74, 73);
-            this.btnAddDatabase.TabIndex = 4;
-            this.btnAddDatabase.UseVisualStyleBackColor = true;
-            // 
-            // AnalysisContextMenu
-            // 
-            this.AnalysisContextMenu.ImageScalingSize = new System.Drawing.Size(20, 20);
-            this.AnalysisContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsmSpeedAnalysis,
-            this.toolStripSeparator1,
-            this.tsmAnalysisClose});
-            this.AnalysisContextMenu.Name = "contextMenuStrip1";
-            this.AnalysisContextMenu.Size = new System.Drawing.Size(257, 86);
-            // 
-            // tsmSpeedAnalysis
-            // 
-            this.tsmSpeedAnalysis.Name = "tsmSpeedAnalysis";
-            this.tsmSpeedAnalysis.Size = new System.Drawing.Size(256, 24);
-            this.tsmSpeedAnalysis.Text = "Analisi flutuazione velocità";
-            this.tsmSpeedAnalysis.Click += new System.EventHandler(this.tsmSpeedAnalysis_Click);
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(253, 6);
-            // 
-            // tsmAnalysisClose
-            // 
-            this.tsmAnalysisClose.Name = "tsmAnalysisClose";
-            this.tsmAnalysisClose.Size = new System.Drawing.Size(256, 24);
-            this.tsmAnalysisClose.Text = "Close";
-            // 
             // FrmEvolutiveSystem
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -500,8 +500,6 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FrmEvolutiveSystem_FormClosing);
             this.Load += new System.EventHandler(this.FrmEvolutiveSystem_Load);
             this.panelCommands.ResumeLayout(false);
-            this.gbSocketServer.ResumeLayout(false);
-            this.gbServiceManager.ResumeLayout(false);
             this.gbFileManager.ResumeLayout(false);
             this.statusStrip.ResumeLayout(false);
             this.statusStrip.PerformLayout();
@@ -516,8 +514,10 @@
             this.pnlDetail.ResumeLayout(false);
             this.pnlDetail.PerformLayout();
             this.tabControlDetails.ResumeLayout(false);
-            this.gbAnalysis.ResumeLayout(false);
             this.AnalysisContextMenu.ResumeLayout(false);
+            this.gbAnalysis.ResumeLayout(false);
+            this.gbSocketServer.ResumeLayout(false);
+            this.gbServiceManager.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -543,24 +543,24 @@
         private System.Windows.Forms.ToolStripLabel toolStripStatusLabel;
         private System.Windows.Forms.RichTextBox evolutionMonitor;
         private System.Windows.Forms.ListView listViewFields;
-        private System.Windows.Forms.GroupBox gbServiceManager;
         private System.Windows.Forms.GroupBox gbFileManager;
         private System.Windows.Forms.Button btnCloseAllDatabases;
         private System.Windows.Forms.Button btnLoadDatabase;
         private System.Windows.Forms.Button btnSaveDatabase;
         private System.Windows.Forms.Button btnAddDatabase;
-        private System.Windows.Forms.Button btnServiceStart;
-        private System.Windows.Forms.Button btnServicePause;
-        private System.Windows.Forms.Button btnServiceStop;
-        private System.Windows.Forms.GroupBox gbSocketServer;
-        private System.Windows.Forms.Button btnSocket;
         private System.Windows.Forms.Button btnRicaricaDB;
-        private System.Windows.Forms.GroupBox gbAnalysis;
-        private System.Windows.Forms.Button btnAnalysis;
         private System.Windows.Forms.ContextMenuStrip AnalysisContextMenu;
         private System.Windows.Forms.ToolStripMenuItem tsmSpeedAnalysis;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem tsmAnalysisClose;
+        private System.Windows.Forms.GroupBox gbAnalysis;
+        private System.Windows.Forms.Button btnAnalysis;
+        private System.Windows.Forms.GroupBox gbSocketServer;
+        private System.Windows.Forms.Button btnSocket;
+        private System.Windows.Forms.GroupBox gbServiceManager;
+        private System.Windows.Forms.Button btnServiceStop;
+        private System.Windows.Forms.Button btnServicePause;
+        private System.Windows.Forms.Button btnServiceStart;
     }
 }
 

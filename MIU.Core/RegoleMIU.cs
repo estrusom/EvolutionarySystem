@@ -12,128 +12,105 @@ using System.Xml.Serialization;
 // 2025.05.26 Modificato inserimento record con l'aggiornamento dell'indice
 namespace MIU.Core
 {
-
-    public static partial class RegoleMIUManager // Usiamo partial per poter estendere la classe in più file se necessario
+    /// <summary>
+    /// Fornisce dati per l'evento OnSolutionFound.
+    /// Contiene i dettagli completi del risultato di una ricerca di derivazione.
+    /// </summary>
+    public class SolutionFoundEventArgs : EventArgs
     {
-        //private static int _esplorazioneIdCounter = 1; // Contatore statico per l'ID di esplorazione
-        // Questa è la lista privata dove vengono memorizzate le regole caricate.
-        private static List<RegolaMIU> _regole = new List<RegolaMIU>();
+        public string InitialString { get; }
+        public string TargetString { get; }
+        public bool Success { get; }
+        public List<string> Path { get; } // Il percorso trovato, null se non trovata
+        public long ElapsedTicks { get; }
+        public double ElapsedMilliseconds { get; }
+        public int StepsTaken { get; } // Numero di passi nella soluzione (profondità del target)
+        public int NodesExplored { get; } // Numero totale di nodi visitati
+        public int MaxDepthReached { get; } // Profondità massima raggiunta nella ricerca
 
-        // Espone le regole caricate come una lista di sola lettura
+        public SolutionFoundEventArgs(string initialString, string targetString, bool success, List<string> path, long elapsedTicks, int stepsTaken, int nodesExplored, int maxDepthReached)
+        {
+            InitialString = initialString;
+            TargetString = targetString;
+            Success = success;
+            Path = path;
+            ElapsedTicks = elapsedTicks;
+            ElapsedMilliseconds = (elapsedTicks / (double)Stopwatch.Frequency) * 1000;
+            StepsTaken = stepsTaken;
+            NodesExplored = nodesExplored;
+            MaxDepthReached = maxDepthReached;
+        }
+    }
+    /// <summary>
+    /// Fornisce dati per l'evento OnRuleApplied.
+    /// Contiene informazioni su ogni nuova stringa generata tramite l'applicazione di una regola.
+    /// </summary>
+    public class RuleAppliedEventArgs : EventArgs
+    {
+        public string ParentString { get; } // La stringa da cui è stata derivata nextString
+        public string NewString { get; } // La nuova stringa generata
+        public string AppliedRuleID { get; } // L'ID della regola applicata
+        public string AppliedRuleName { get; } // Il nome della regola applicata
+        public int CurrentDepth { get; } // Profondità della nuova stringa nel percorso di ricerca
+
+        public RuleAppliedEventArgs(string parentString, string newString, string appliedRuleID, string appliedRuleName, int currentDepth)
+        {
+            ParentString = parentString;
+            NewString = newString;
+            AppliedRuleID = appliedRuleID;
+            AppliedRuleName = appliedRuleName;
+            CurrentDepth = currentDepth;
+        }
+    }
+
+    public static partial class RegoleMIUManager
+    {
+        private static List<RegolaMIU> _regole = new List<RegolaMIU>();
         public static IReadOnlyList<RegolaMIU> Regole => _regole.AsReadOnly();
 
-        /// <summary>
-        /// Carica le regole MIU da un oggetto Database già popolato (di tipo EvolutiveSystem.Core.Database).
-        /// Questo metodo si aspetta che l'oggetto Database sia già stato caricato
-        /// dal file XML (es. MIUProject.xml) utilizzando il DatabaseSerializer di EvolutiveSystem.Core.
-        /// </summary>
-        /// <param name="database">L'istanza dell'oggetto Database contenente i dati.</param>
-        public static void CaricaRegoleDaOggettoDatabase(EvolutiveSystem.Core.Database database) // Modificato il tipo del parametro
+        // -------------------------------------------------------------------
+        // 2. Definizione degli eventi (rimangono invariati)
+        // -------------------------------------------------------------------
+
+        public static event EventHandler<SolutionFoundEventArgs> OnSolutionFound;
+        public static event EventHandler<RuleAppliedEventArgs> OnRuleApplied;
+
+        public static void CaricaRegoleDaOggettoSQLite(List<string> regoleData)
         {
-            if (database == null)
+            _regole.Clear();
+
+            if (regoleData == null || !regoleData.Any())
             {
-                Console.WriteLine("L'oggetto Database fornito è nullo. Impossibile caricare le regole MIU.");
-                _regole.Clear();
+                Console.WriteLine("La lista di regole fornita è nulla o vuota. Nessuna regola MIU caricata.");
                 return;
             }
 
-            _regole.Clear(); // Pulisci le regole esistenti prima di caricare le nuove
-
-            // Trova la tabella "RegoleMIU" all'interno dell'oggetto Database
-            EvolutiveSystem.Core.Table regoleMIUTable = database.Tables.FirstOrDefault(t => t.TableName == "RegoleMIU");
-
-            if (regoleMIUTable == null)
+            foreach (var record in regoleData)
             {
-                Console.WriteLine("Tabella 'RegoleMIU' non trovata nell'oggetto Database fornito.");
-                return;
-            }
-
-            if (regoleMIUTable.DataRecords == null || !regoleMIUTable.DataRecords.Any())
-            {
-                Console.WriteLine("Nessun record di dati trovato nella tabella 'RegoleMIU'.");
-                return;
-            }
-
-            // Itera su ogni record di dati (EvolutiveSystem.Core.SerializableDictionary<string, object>)
-            foreach (var record in regoleMIUTable.DataRecords)
-            {
-                // Estrai i valori accedendo direttamente al dizionario.
-                // È importante gestire il casting da 'object' a 'string' e i valori null.
-                string id = record.ContainsKey("ID") ? record["ID"]?.ToString() : null;
-                string nome = record.ContainsKey("Nome") ? record["Nome"]?.ToString() : null;
-                string descrizione = record.ContainsKey("Descrizione") ? record["Descrizione"]?.ToString() : null;
-                string pattern = record.ContainsKey("Pattern") ? record["Pattern"]?.ToString() : null;
-                string sostituzione = record.ContainsKey("Sostituzione") ? record["Sostituzione"]?.ToString() : null;
-
-                // Aggiungi la regola solo se i campi essenziali sono presenti
-                if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(nome))
+                string[] regolaParts = record.Split(';');
+                if (regolaParts.Length >= 5)
                 {
+                    string id = regolaParts[0];
+                    string nome = regolaParts[1];
+                    string pattern = regolaParts[2];
+                    string sostituzione = regolaParts[3];
+                    string descrizione = regolaParts[4];
                     _regole.Add(new RegolaMIU(id, nome, descrizione, pattern, sostituzione));
                 }
                 else
                 {
-                    Console.WriteLine($"Avviso: Record incompleto trovato nella tabella 'RegoleMIU'. ID: {id ?? "N/A"}, Nome: {nome ?? "N/A"}. Questo record è stato saltato.");
+                    Console.WriteLine($"Avviso: Record di regola incompleto trovato: '{record}'. Questo record è stato saltato.");
                 }
             }
-
-            Console.WriteLine($"Caricate {_regole.Count} regole MIU dall'oggetto Database.");
-
-            // Inizializza _esplorazioneIdCounter leggendo l'ultimo ID dalla tabella EsplorazioneMIU
-            //InizializzaEsplorazioneIdCounter(database);
+            Console.WriteLine($"Caricate {_regole.Count} regole MIU dalla lista SQLite.");
         }
-        ///// <summary>
-        ///// Inizializza il contatore degli ID per le esplorazioni leggendo l'ID massimo dalla tabella 'EsplorazioneMIU'
-        ///// e impostando il contatore al valore massimo + 1.
-        ///// </summary>
-        ///// <param name="database">L'oggetto Database contenente la tabella 'EsplorazioneMIU'.</param>
-        //private static void InizializzaEsplorazioneIdCounter(Database database)
-        //{
-        //    if (database != null && database.Tables.Any(t => t.TableName == "EsplorazioneMIU"))
-        //    {
-        //        var tabellaEsplorazione = database.Tables.First(t => t.TableName == "EsplorazioneMIU");
-        //        if (tabellaEsplorazione.DataRecords != null && tabellaEsplorazione.DataRecords.Any())
-        //        {
-        //            ulong maxId = 0;
-        //            foreach (var record in tabellaEsplorazione.DataRecords)
-        //            {
-        //                if (record.ContainsKey("ID") && record["ID"] is IConvertible)
-        //                {
-        //                    ulong currentId;
-        //                    try
-        //                    {
-        //                        currentId = Convert.ToUInt64(record["ID"]);
-        //                        if (currentId > maxId)
-        //                        {
-        //                            maxId = currentId;
-        //                        }
-        //                    }
-        //                    catch (FormatException)
-        //                    {
-        //                        Console.WriteLine("Avviso: Trovato un ID non valido nella tabella EsplorazioneMIU. Questo record verrà ignorato per il calcolo dell'ID massimo.");
-        //                    }
-        //                }
-        //            }
-        //            _esplorazioneIdCounter = (int)(maxId + 1);
-        //            Console.WriteLine($"Contatore ID esplorazione inizializzato a: {_esplorazioneIdCounter}");
-        //        }
-        //        else
-        //        {
-        //            Console.WriteLine("Tabella 'EsplorazioneMIU' vuota. Il contatore ID esplorazione rimane a 1.");
-        //        }
-        //    }
-        //    else
-        //    {
-        //        Console.WriteLine("Tabella 'EsplorazioneMIU' non trovata. Il contatore ID esplorazione rimane a 1.");
-        //    }
-        //}
-        /// <summary>
-        /// Applica tutte le regole MIU caricate a una stringa di input, iterando su di esse.
-        /// </summary>
-        /// <param name="input">La stringa a cui applicare le regole.</param>
-        /// <returns>La stringa risultante dopo l'applicazione delle regole.</returns>
+
         public static string ApplicaRegole(string input)
         {
-            string currentString = input; // Inizializza currentString qui
+            // Questo metodo ApplicaRegole è progettato per operare su stringhe MIU in formato standard (non compresso).
+            // Comprime l'input, applica le regole (che internamente lavorano con stringhe compresse),
+            // e poi decomprime il risultato per la visualizzazione.
+            string currentString = input;
             Console.WriteLine($"\nApplicazione regole a: '{input}'");
 
             if (!_regole.Any())
@@ -142,54 +119,69 @@ namespace MIU.Core
                 return input;
             }
 
-            // Iteriamo su ogni regola e tentiamo di applicarla.
-            // Puoi decidere se applicare ogni regola una sola volta o iterare finché non ci sono più cambiamenti.
-            // Per ora, applichiamo ogni regola una volta in sequenza.
             foreach (var rule in _regole)
             {
                 string oldString = currentString;
-                string newString; // Dichiarata qui per l'out parameter
+                string newString;
 
-                if (rule.TryApply(currentString, out newString))
+                // Comprimi la stringa corrente prima di passarla a TryApply
+                string compressedCurrent = MIUStringConverter.InflateMIUString(currentString);
+                string compressedNew;
+
+                // TryApply ora accetta una stringa compressa e restituisce una stringa compressa.
+                if (rule.TryApply(compressedCurrent, out compressedNew))
                 {
-                    currentString = newString; // Aggiorna la stringa corrente se la regola è stata applicata
+                    currentString = MIUStringConverter.DeflateMIUString(compressedNew); // Decomprimi per la visualizzazione
                     Console.WriteLine($"  Regola '{rule.Nome}' (Pattern: '{rule.Pattern}', Sostituzione: '{rule.Sostituzione ?? "NULL"}') applicata.");
-                    Console.WriteLine($"    Risultato parziale: '{currentString}'");
+                    Console.WriteLine($"    Risultato parziale: '{currentString}' (decompresso)");
                 }
                 else
                 {
-                    // La regola non è stata applicata o il pattern non ha trovato corrispondenze
                     Console.WriteLine($"  Regola '{rule.Nome}' non applicata a '{oldString}'.");
                 }
             }
 
-            Console.WriteLine($"Risultato finale dopo l'applicazione delle regole: '{currentString}'");
+            Console.WriteLine($"Risultato finale dopo l'applicazione delle regole: '{currentString}' (decompresso)");
             return currentString;
         }
 
         /// <summary>
         /// Esegue una ricerca in ampiezza (BFS) per trovare una derivazione
         /// dalla stringa iniziale alla stringa target usando le regole MIU.
+        /// Opera interamente con stringhe compresse per efficienza.
         /// </summary>
-        /// <param name="start">La stringa iniziale.</param>
-        /// <param name="target">La stringa target.</param>
-        /// <param name="maxDepth">La profondità massima della ricerca per evitare cicli infiniti.</param>
-        /// <returns>Una lista di stringhe che rappresentano il percorso di derivazione,
+        /// <param name="start">La stringa iniziale (formato compresso).</param>
+        /// <param name="target">La stringa target (formato compresso).</param>
+        /// <param name="maxSteps">La profondità massima della ricerca per evitare cicli infiniti.</param>
+        /// <returns>Una lista di stringhe che rappresentano il percorso di derivazione (formato compresso),
         /// o null se la stringa target non viene raggiunta entro la profondità massima.</returns>
-        public static List<string> TrovaDerivazioneBFS(string start, string target, long maxSteps = 100, Database database = null)
+        public static List<string> TrovaDerivazioneBFS(string start, string target, long maxSteps = 100)
         {
-            double frequency = Stopwatch.Frequency; // Ottieni la frequenza una volta per calcolo tempo ms
+            // Le stringhe start e target sono già attese in formato compresso.
+            // Se la stringa iniziale compressa è già la target compressa, il percorso è solo la stringa stessa.
             if (start == target)
             {
-                return new List<string> { start };
+                var path = new List<string> { start };
+                OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
+                    initialString: start,
+                    targetString: target,
+                    success: true,
+                    path: path,
+                    elapsedTicks: 0,
+                    stepsTaken: 0,
+                    nodesExplored: 1,
+                    maxDepthReached: 0
+                ));
+                return path;
             }
+
             Stopwatch stopwatch = Stopwatch.StartNew();
             Queue<List<string>> queue = new Queue<List<string>>();
-            queue.Enqueue(new List<string> { start });
-            HashSet<string> visited = new HashSet<string> { start };
+            queue.Enqueue(new List<string> { start }); // Inserisci la stringa compressa
+            HashSet<string> visited = new HashSet<string> { start }; // Visited set con stringhe compresse
             List<string> solutionPath = null;
             int depth = 0;
-            long elapsedTicks = 0; // Dichiarazione qui
+            int nodesExplored = 1;
 
             while (queue.Count > 0 && depth < maxSteps)
             {
@@ -199,124 +191,317 @@ namespace MIU.Core
                 for (int i = 0; i < levelSize; i++)
                 {
                     List<string> currentPath = queue.Dequeue();
-                    string currentString = currentPath.Last();
+                    string currentCompressedString = currentPath.Last(); // La stringa corrente è compressa
+
                     foreach (var rule in Regole)
                     {
-                        string nextString;
-                        if (rule.TryApply(currentString, out nextString) && !visited.Contains(nextString))
+                        string nextCompressedString;
+                        // TryApply ora accetta e restituisce stringhe compresse
+                        if (rule.TryApply(currentCompressedString, out nextCompressedString) && !visited.Contains(nextCompressedString))
                         {
-                            if (nextString == target)
+                            nodesExplored++;
+
+                            if (nextCompressedString == target)
                             {
                                 solutionPath = new List<string>(currentPath);
-                                solutionPath.Add(nextString);
+                                solutionPath.Add(nextCompressedString);
                                 stopwatch.Stop();
-                                elapsedTicks = stopwatch.ElapsedTicks;
-                                double tempoMs = (elapsedTicks / frequency) * 1000; // Calcola il tempo in ms
-                                int numeroPassi = solutionPath.Count - 1;
-                                bool soluzioneTrovata = true;
-                                Console.WriteLine($"\nSoluzione trovata a profondità {depth} in {tempoMs:F2} ms:");
-                                foreach (var s in solutionPath)
-                                {
-                                    Console.WriteLine($"  {s}");
-                                }
-                                // Memorizza il risultato nel database se fornito (senza controllo duplicati)
-                                if (database != null && database.Tables.Any(t => t.TableName == "EsplorazioneMIU"))
-                                {
-                                    var tabellaEsplorazione = database.Tables.First(t => t.TableName == "EsplorazioneMIU");
-                                    var record = new SerializableDictionary<string, object>
-                                {
-                                    //{ "ID", _esplorazioneIdCounter++ }, // Autoincremento ID
-                                    { "StringaIniziale", start },
-                                    { "StringaTarget", target },
-                                    { "NumeroPassi", numeroPassi },
-                                    { "LimitePassi", maxSteps },
-                                    { "TicOrologio",(ulong) elapsedTicks },
-                                    { "TempoMs", tempoMs }, // Salva il tempo in ms
-                                    { "SoluzioneTrovata", soluzioneTrovata }
-                                };
-                                    //tabellaEsplorazione.DataRecords.Add(record);  //<- è questo che devo modificare?
-                                    // *** MODIFICA QUI: Usa AddRecord per l'autoincremento ***
-                                    tabellaEsplorazione.AddRecord(record); //2025.05.26 così inserisco un record e incremento l'indice
 
-                                    //Console.WriteLine($"Risultato BFS da '{start}' a '{target}' memorizzato (ID: {_esplorazioneIdCounter - 1}).");
-                                }
+                                OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
+                                    initialString: start,
+                                    targetString: target,
+                                    success: true,
+                                    path: solutionPath, // Il percorso è in formato compresso
+                                    elapsedTicks: stopwatch.ElapsedTicks,
+                                    stepsTaken: solutionPath.Count - 1,
+                                    nodesExplored: nodesExplored,
+                                    maxDepthReached: depth
+                                ));
                                 return solutionPath;
                             }
 
-                            visited.Add(nextString);
+                            visited.Add(nextCompressedString);
                             List<string> newPath = new List<string>(currentPath);
-                            newPath.Add(nextString);
+                            newPath.Add(nextCompressedString);
                             queue.Enqueue(newPath);
+
+                            OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs(
+                                parentString: currentCompressedString,
+                                newString: nextCompressedString,
+                                appliedRuleID: rule.ID,
+                                appliedRuleName: rule.Nome,
+                                currentDepth: depth
+                            ));
                         }
                     }
                 }
             }
 
             stopwatch.Stop();
-            elapsedTicks = stopwatch.ElapsedTicks;
-            double tempoMsFallimento = (elapsedTicks / frequency) * 1000; // Calcola il tempo in ms per il fallimento
-            int numeroPassiFinale = (int)maxSteps;
-            bool soluzioneTrovataFinale = solutionPath != null;
+            OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
+                initialString: start,
+                targetString: target,
+                success: false,
+                path: null,
+                elapsedTicks: stopwatch.ElapsedTicks,
+                stepsTaken: (int)maxSteps,
+                nodesExplored: nodesExplored,
+                maxDepthReached: depth
+            ));
 
-            Console.WriteLine($"\nStringa target '{target}' non raggiunta entro la profondità massima di {maxSteps} in {tempoMsFallimento:F2} ms.");
-            if (database != null && database.Tables.Any(t => t.TableName == "EsplorazioneMIU"))
-            {
-                var tabellaEsplorazione = database.Tables.First(t => t.TableName == "EsplorazioneMIU");
-                // Memorizza il risultato (fallito) nel database se fornito (senza controllo duplicati)
-                var recordFallimento = new SerializableDictionary<string, object>
-            {
-                //{ "ID", _esplorazioneIdCounter++ }, // Autoincremento ID
-                { "StringaIniziale", start },
-                { "StringaTarget", target },
-                { "NumeroPassi", numeroPassiFinale },
-                { "LimitePassi", maxSteps },
-                { "TicOrologio", (ulong)elapsedTicks },
-                { "TempoMs", tempoMsFallimento }, // Salva il tempo in ms per il fallimento
-                { "SoluzioneTrovata", soluzioneTrovataFinale }
-            };
-                tabellaEsplorazione.AddRecord(recordFallimento); //2025.05.26 così inserisco un record e incremento l'indice
-                //Console.WriteLine($"Risultato BFS (fallito) da '{start}' a '{target}' memorizzato (ID: {_esplorazioneIdCounter - 1}).");
-            }
             return null;
         }
-    }
-    public class MiuRulesLoader
-    {
+
         /// <summary>
-        /// Carica le regole MIU dal file XML specificato.
+        /// Esegue una ricerca in profondità (DFS) per trovare una derivazione
+        /// dalla stringa iniziale alla stringa target usando le regole MIU.
+        /// Opera interamente con stringhe compresse per efficienza.
         /// </summary>
-        /// <param name="xmlFilePath">Il percorso completo del file XML contenente il database.</param>
-        /// <returns>True se il caricamento è avvenuto con successo, altrimenti False.</returns>
-        public bool LoadMiuRulesFromFile(string xmlFilePath)
+        /// <param name="start">La stringa iniziale (formato compresso).</param>
+        /// <param name="target">La stringa target (formato compresso).</param>
+        /// <param name="maxDepth">La profondità massima della ricerca per evitare cicli infiniti.</param>
+        /// <param name="path">La lista corrente del percorso (usata per la ricorsione, con stringhe compresse).</param>
+        /// <param name="visited">Un set di stringhe già visitate per evitare cicli (con stringhe compresse).</param>
+        /// <returns>Una lista di stringhe che rappresentano il percorso di derivazione (formato compresso),
+        /// o null se la stringa target non viene raggiunta entro la profondità massima.</returns>
+        public static List<string> TrovaDerivazioneDFS(string start, string target, long maxDepth, List<string> path = null, HashSet<string> visited = null)
         {
-            Console.WriteLine($"Tentativo di caricare le regole MIU da: {xmlFilePath}");
+            // Le stringhe start e target sono già attese in formato compresso.
+            string currentStart = start; // Usa direttamente start, che è già compresso
+            string currentTarget = target; // Usa direttamente target, che è già compresso
 
-            // PASSO 1: Carica il database dall'XML usando il tuo DatabaseSerializer
-            Database loadedDb = DatabaseSerializer.DeserializeFromXmlFile(xmlFilePath);
+            double frequency = Stopwatch.Frequency;
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            List<string> solutionPath = null;
+            long elapsedTicks = 0;
+            bool soluzioneTrovata = false;
+            int numeroPassi = 0;
+            int nodesExplored = 0;
 
-            if (loadedDb == null)
+            if (path == null)
             {
-                Console.WriteLine("Caricamento del database fallito. Le regole MIU non sono state caricate.");
-                return false;
-            }
-
-            Console.WriteLine($"Database '{loadedDb.DatabaseName}' caricato con successo da XML.");
-
-            // PASSO 2: Passa l'oggetto Database caricato al RegoleMIUManager per estrarre le regole
-            RegoleMIUManager.CaricaRegoleDaOggettoDatabase(loadedDb);
-
-            // Verifica se delle regole sono state effettivamente caricate
-            if (RegoleMIUManager.Regole.Any())
-            {
-                Console.WriteLine($"Caricamento delle regole MIU completato. Numero di regole: {RegoleMIUManager.Regole.Count}");
-                return true;
+                path = new List<string> { currentStart };
+                visited = new HashSet<string> { currentStart };
+                nodesExplored = 1;
             }
             else
             {
-                Console.WriteLine("Nessuna regola MIU è stata trovata o caricata dal database.");
-                return false;
+                // Se non è la chiamata iniziale, visited.Count riflette i nodi già esplorati nel ramo
+                nodesExplored = visited.Count;
             }
+
+            string currentCompressedString = path.Last(); // La stringa corrente è compressa
+
+            if (currentCompressedString == currentTarget)
+            {
+                stopwatch.Stop();
+                elapsedTicks = stopwatch.ElapsedTicks;
+                double tempoMs = (elapsedTicks / frequency) * 1000;
+                numeroPassi = path.Count - 1;
+                soluzioneTrovata = true;
+                Console.WriteLine($"\nSoluzione DFS trovata (profondità {path.Count - 1}) in {tempoMs:F2} ms (stringa compressa):");
+                foreach (var s in path)
+                {
+                    Console.WriteLine($"  {s}");
+                }
+                OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
+                    initialString: currentStart,
+                    targetString: currentTarget,
+                    success: true,
+                    path: path, // Il percorso è in formato compresso
+                    elapsedTicks: elapsedTicks,
+                    stepsTaken: numeroPassi,
+                    nodesExplored: nodesExplored,
+                    maxDepthReached: path.Count - 1
+                ));
+                return path;
+            }
+
+            if (path.Count - 1 >= maxDepth)
+            {
+                return null;
+            }
+
+            foreach (var rule in Regole)
+            {
+                string nextCompressedString;
+                // TryApply ora accetta e restituisce stringhe compresse
+                if (rule.TryApply(currentCompressedString, out nextCompressedString) && !visited.Contains(nextCompressedString))
+                {
+                    visited.Add(nextCompressedString);
+                    path.Add(nextCompressedString);
+
+                    OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs(
+                        parentString: currentCompressedString,
+                        newString: nextCompressedString,
+                        appliedRuleID: rule.ID,
+                        appliedRuleName: rule.Nome,
+                        currentDepth: path.Count - 1
+                    ));
+
+                    List<string> result = TrovaDerivazioneDFS(currentStart, currentTarget, maxDepth, path, visited); // Passa start/target compressi
+                    if (result != null)
+                    {
+                        stopwatch.Stop();
+                        if (!soluzioneTrovata)
+                        {
+                            elapsedTicks = stopwatch.ElapsedTicks;
+                            double tempoMs = (elapsedTicks / frequency) * 1000;
+                            numeroPassi = result.Count - 1;
+                            soluzioneTrovata = true;
+                            Console.WriteLine($"\nSoluzione DFS trovata (profondità {numeroPassi}) in {tempoMs:F2} ms (al ritorno dalla ricorsione, stringa compressa):");
+                            foreach (var s in result)
+                            {
+                                Console.WriteLine($"  {s}");
+                            }
+                            OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
+                                initialString: currentStart,
+                                targetString: currentTarget,
+                                success: true,
+                                path: result, // Il percorso è in formato compresso
+                                elapsedTicks: elapsedTicks,
+                                stepsTaken: numeroPassi,
+                                nodesExplored: nodesExplored,
+                                maxDepthReached: result.Count - 1
+                            ));
+                        }
+                        return result;
+                    }
+                    path.RemoveAt(path.Count - 1);
+                    visited.Remove(nextCompressedString); // Rimuovi per permettere esplorazione in altri rami DFS
+                }
+            }
+
+            if (path.Count == 1)
+            {
+                stopwatch.Stop();
+                elapsedTicks = stopwatch.ElapsedTicks;
+                double tempoMsFallimento = (elapsedTicks / frequency) * 1000;
+                int numeroPassiFallimento = (int)maxDepth;
+
+                Console.WriteLine($"\nRicerca DFS da '{start}' a '{target}' fallita entro la profondità massima di {maxDepth} in {tempoMsFallimento:F2} ms.");
+
+                OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
+                    initialString: currentStart,
+                    targetString: currentTarget,
+                    success: false,
+                    path: null,
+                    elapsedTicks: elapsedTicks,
+                    stepsTaken: numeroPassiFallimento,
+                    nodesExplored: nodesExplored,
+                    maxDepthReached: (int)maxDepth
+                ));
+            }
+
+            return null;
         }
     }
 
+    /*
+    public static List<string> TrovaDerivazioneDFS(string start, string target, long maxDepth, List<string> path = null, HashSet<string> visited = null, Database database = null)
+    {
+        double frequency = Stopwatch.Frequency;
+        Stopwatch stopwatch = Stopwatch.StartNew();
+        List<string> solutionPath = null;
+        long elapsedTicks = 0;
+        bool soluzioneTrovata = false;
+        int numeroPassi = 0;
+
+        if (path == null)
+        {
+            path = new List<string> { start };
+        }
+        if (visited == null)
+        {
+            visited = new HashSet<string> { start };
+        }
+
+        string currentString = path.Last();
+
+        if (currentString == target)
+        {
+            stopwatch.Stop();
+            elapsedTicks = stopwatch.ElapsedTicks;
+            double tempoMs = (elapsedTicks / frequency) * 1000;
+            numeroPassi = path.Count - 1;
+            soluzioneTrovata = true;
+            Console.WriteLine($"\nSoluzione DFS trovata (profondità {path.Count - 1}) in {tempoMs:F2} ms:");
+            foreach (var s in path)
+            {
+                Console.WriteLine($"  {s}");
+            }
+            // Memorizza il risultato nel database se fornito
+            if (database != null && database.Tables.Any(t => t.TableName == "EsplorazioneMIU"))
+            {
+                var tabellaEsplorazione = database.Tables.First(t => t.TableName == "EsplorazioneMIU");
+                var record = new SerializableDictionary<string, object>
+            {
+                { "StringaIniziale", start },
+                { "StringaTarget", target },
+                { "NumeroPassi", numeroPassi },
+                { "LimitePassi", maxDepth },
+                { "TicOrologio",(ulong) elapsedTicks },
+                { "TempoMs", tempoMs },
+                { "SoluzioneTrovata", soluzioneTrovata }
+            };
+                tabellaEsplorazione.AddRecord(record);
+                //Console.WriteLine($"Risultato DFS da '{start}' a '{target}' memorizzato.");
+            }
+            return path;
+        }
+
+        if (path.Count - 1 >= maxDepth)
+        {
+            return null;
+        }
+
+        foreach (var rule in Regole)
+        {
+            string nextString;
+            if (rule.TryApply(currentString, out nextString) && !visited.Contains(nextString))
+            {
+                visited.Add(nextString);
+                path.Add(nextString);
+                List<string> result = TrovaDerivazioneDFS(start, target, maxDepth, path, visited, database);
+                if (result != null)
+                {
+                    stopwatch.Stop();
+                    if (!soluzioneTrovata) // Registra il tempo solo alla prima soluzione trovata
+                    {
+                        elapsedTicks = stopwatch.ElapsedTicks;
+                        double tempoMs = (elapsedTicks / frequency) * 1000;
+                        numeroPassi = result.Count - 1;
+                        soluzioneTrovata = true;
+                        Console.WriteLine($"\nSoluzione DFS trovata (profondità {numeroPassi}) in {tempoMs:F2} ms (al ritorno dalla ricorsione):");
+                        foreach (var s in result)
+                        {
+                            Console.WriteLine($"  {s}");
+                        }
+                        if (database != null && database.Tables.Any(t => t.TableName == "EsplorazioneMIU"))
+                        {
+                            var tabellaEsplorazione = database.Tables.First(t => t.TableName == "EsplorazioneMIU");
+                            var record = new SerializableDictionary<string, object>
+                        {
+                            { "StringaIniziale", start },
+                            { "StringaTarget", target },
+                            { "NumeroPassi", numeroPassi },
+                            { "LimitePassi", maxDepth },
+                            { "TicOrologio",(ulong) elapsedTicks },
+                            { "TempoMs", tempoMs },
+                            { "SoluzioneTrovata", soluzioneTrovata }
+                        };
+                            tabellaEsplorazione.AddRecord(record);
+                            //Console.WriteLine($"Risultato DFS da '{start}' a '{target}' memorizzato (al ritorno).");
+                        }
+                    }
+                    return result;
+                }
+                path.RemoveAt(path.Count - 1); // Backtrack
+                visited.Remove(nextString); // Permetti di visitare di nuovo in altri rami
+            }
+        }
+
+        return null; // Nessuna soluzione trovata in questo ramo
+    }
+    */
 }

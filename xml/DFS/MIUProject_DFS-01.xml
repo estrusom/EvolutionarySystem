@@ -1,0 +1,4703 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Database xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <DatabaseId>1</DatabaseId>
+  <DatabaseName>MIUProject</DatabaseName>
+  <Tables>
+    <Table>
+      <TableId>1</TableId>
+      <TableName>RegoleMIU</TableName>
+      <Fields>
+        <Field>
+          <Id>1</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>ID</FieldName>
+          <Key>true</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>Int32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>2</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>Nome</FieldName>
+          <Key>false</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>3</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>Descrizione</FieldName>
+          <Key>false</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>4</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>Pattern</FieldName>
+          <Key>false</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>5</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>Sostituzione</FieldName>
+          <Key>false</Key>
+          <TableName>RegoleMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+      </Fields>
+      <DataRecords>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Nome</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Regola 1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Descrizione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Se termina con 'I', aggiunge 'U'.</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Pattern</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">I$</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Sostituzione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">$0U</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Nome</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Regola 2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Descrizione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Raddoppia la stringa dopo 'M'.	</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Pattern</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">^M(.*)$</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Sostituzione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">M$1$1</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">3</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Nome</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Regola 3</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Descrizione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Sostituisce 'III' con 'U'.</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Pattern</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">III</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Sostituzione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">U</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">4</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Nome</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Regola 4</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Descrizione</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">Omette 'UU'.</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Pattern</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">UU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>Sostituzione</string>
+            </key>
+            <value>
+              <anyType xsi:nil="true" />
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+      </DataRecords>
+    </Table>
+    <Table>
+      <TableId>2</TableId>
+      <TableName>EsplorazioneMIU</TableName>
+      <Fields>
+        <Field>
+          <Id>1</Id>
+          <PrimaryKeyAutoIncrement>true</PrimaryKeyAutoIncrement>
+          <FieldName>ID</FieldName>
+          <Key>true</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>UInt64</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>2</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>StringaIniziale</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>3</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>StringaTarget</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>String</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>4</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>NumeroPassi</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>UInt32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>5</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>LimitePassi</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>UInt32</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>6</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>TicOrologio</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>UInt64</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>7</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>SoluzioneTrovata</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>Boolean</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+        <Field>
+          <Id>8</Id>
+          <PrimaryKeyAutoIncrement>false</PrimaryKeyAutoIncrement>
+          <FieldName>TempoMs</FieldName>
+          <Key>false</Key>
+          <TableName>EsplorazioneMIU</TableName>
+          <DataType>Double</DataType>
+          <Value xsi:type="xsd:string"></Value>
+          <EncryptedField>false</EncryptedField>
+          <Registry>0</Registry>
+          <ElementType>Database</ElementType>
+        </Field>
+      </Fields>
+      <DataRecords>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">17066</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.7066</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">2</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">27723</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.7723</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">3</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">4</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">9732</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.97320000000000006</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">5</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">51087</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">5.1087</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">6</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">7</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">14177</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.4177</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">8</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">28497</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.8497000000000003</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">9</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">10</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">9852</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.98520000000000008</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">11</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">24390</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.439</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">12</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">3</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.0003</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">13</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">70253</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">7.0253</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">14</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">104390</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">10.439</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">15</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">3</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.0003</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">16</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">44116</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">4.4116</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">17</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">72286</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">7.2286</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">18</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.00019999999999999998</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">19</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">16120</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.6119999999999999</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">20</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">34918</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">3.4918</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">21</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.00019999999999999998</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">22</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">23865</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.3865000000000003</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">23</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">42394</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">4.2394</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">24</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">25</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">13332</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.3332000000000002</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">26</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">25977</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.5977</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">27</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">28</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">12408</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.2408000000000001</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">29</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">26313</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.6313</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">30</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">31</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">12765</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.2765</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">32</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">26231</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.6231</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">33</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.00019999999999999998</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">34</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">12741</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.2741</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">35</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">45102</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">4.5102</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">36</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.00019999999999999998</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">37</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">12547</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.2547000000000002</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">38</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">33191</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">3.3191</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">39</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">40</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">16084</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.6084</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">41</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">65345</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">6.5345</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">42</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.00019999999999999998</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">43</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">33370</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">3.337</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">44</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">62002</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">6.2002000000000006</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">45</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">46</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">11229</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.1229</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">47</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">24972</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.4972000000000003</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">48</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.00019999999999999998</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">49</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">13177</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.3177</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">50</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">27744</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.7744000000000004</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">51</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">52</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">12068</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.2068</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">53</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">25682</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.5682</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">54</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">55</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">13119</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.3119</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">56</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">28522</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.8522</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">57</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">1</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">9.9999999999999991E-05</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">58</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">17138</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.7138</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">59</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">33501</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">3.3501</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">60</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.00019999999999999998</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">61</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">12103</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">1.2103000000000002</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">62</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">24662</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">2.4662</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">63</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">0.00019999999999999998</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">64</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">63540</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">6.354</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">65</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+        <SerializableDictionaryOfStringObject>
+          <item>
+            <key>
+              <string>StringaIniziale</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MI</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>StringaTarget</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:string">MIIU</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>NumeroPassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:int">2</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>LimitePassi</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:long">10</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TicOrologio</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">81038</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>TempoMs</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:double">8.1038</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>SoluzioneTrovata</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:boolean">true</anyType>
+            </value>
+          </item>
+          <item>
+            <key>
+              <string>ID</string>
+            </key>
+            <value>
+              <anyType xsi:type="xsd:unsignedLong">66</anyType>
+            </value>
+          </item>
+        </SerializableDictionaryOfStringObject>
+      </DataRecords>
+    </Table>
+  </Tables>
+</Database>
