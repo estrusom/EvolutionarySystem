@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="AnalisiMIU.cs" />
     <Compile Include="InflaeDeflateMIUstring.cs" />
+    <Compile Include="MIURepository.cs" />
     <Compile Include="MIUStringGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegolaMIU.cs" />

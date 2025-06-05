@@ -83,7 +83,7 @@ namespace MIU.Core.tester
                                 string[] MIUstringsSource = s.Split(';');
                                 int index = rnd.Next(0, MIUstringsSource.Length - 1);
                                 string[] MIUstringDestination = MIUstringList[index].Split(';');
-                                List<string> miu = RegoleMIUManager.TrovaDerivazioneBFS(MIUstringsSource[1], MIUstringDestination[1], passi);
+                                List<(string CompressedString, int? AppliedRuleID)> miu = RegoleMIUManager.TrovaDerivazioneBFS(MIUstringsSource[1], MIUstringDestination[1], passi);
                             }
                         }
                     }
@@ -94,16 +94,16 @@ namespace MIU.Core.tester
                         SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath);
                         List<string> regole = _schemaLoader.SQLiteSelect("SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU;");
                         RegoleMIUManager.CaricaRegoleDaOggettoSQLite(regole);
-                        string StringIn = "M2UM"; // "M2U4MI";
+                        string StringIn = "M2U4MI";//"M2UM"; 
                         bool response = RegoleMIUManager.Regole[0].TryApply(StringIn, out string regola1);
                         Console.WriteLine($"String in: {StringIn} Regola 1: {regola1} response: {response}");
-                        StringIn = "3IU"; // "M2U";
+                        StringIn = "M2U";//"3IU"; 
                         response = RegoleMIUManager.Regole[1].TryApply(StringIn, out string regola2);
                         Console.WriteLine($"String in: {StringIn} Regola 2: {regola2} response: {response}");
-                        StringIn = "M2U4MI"; // "M3IU3I2U";
+                        StringIn = "M3IU3I2U";//"M2U4MI"; 
                         response = RegoleMIUManager.Regole[2].TryApply(StringIn, out string regola3);
                         Console.WriteLine($"String in: {StringIn} Regola 3: {regola3} response: {response}");
-                        StringIn = "3MIU3I"; //"M3IU3I2U";
+                        StringIn = "M3IU3I2U";//"3MIU3I"; 
                         response = RegoleMIUManager.Regole[3].TryApply(StringIn, out string regola4);
                         Console.WriteLine($"String in: {StringIn} Regola 4: {regola4} response: {response}");
                     }
@@ -155,7 +155,7 @@ namespace MIU.Core.tester
         private static void RicercaDiDerivazioneDFS(string startString, string targetString, long maxProfondita)
         {
 
-            List<string> percorsoDFS = RegoleMIUManager.TrovaDerivazioneDFS(startString, targetString, maxProfondita);
+            List<(string CompressedString, int? AppliedRuleID)> percorsoDFS = RegoleMIUManager.TrovaDerivazioneDFS(startString, targetString, maxProfondita);
 
             if (percorsoDFS != null)
             {
@@ -172,17 +172,17 @@ namespace MIU.Core.tester
         }
         private static void RicercaDiDerivazioneBFS(string inizio, string fine, long passi)
         {
-            Console.WriteLine($"inizio: {inizio} fine: {fine} passi: {passi}");
-            List<string> miu = RegoleMIUManager.TrovaDerivazioneBFS(inizio, fine, passi);
-            if (miu != null)
-            {
-                foreach (string item in miu)
-                {
-                    Console.WriteLine(item);
-                }
-            }
-            else
-                Console.WriteLine("FAIL!");
+            //Console.WriteLine($"inizio: {inizio} fine: {fine} passi: {passi}");
+            //List<(string CompressedString, int? AppliedRuleID)> miu = RegoleMIUManager.TrovaDerivazioneBFS(inizio, fine, passi);
+            //if (miu != null)
+            //{
+            //    foreach (string item in miu)
+            //    {
+            //        Console.WriteLine(item);
+            //    }
+            //}
+            //else
+            //    Console.WriteLine("FAIL!");
         } 
         private static void ApplicazioneRegoleMIU()
         {

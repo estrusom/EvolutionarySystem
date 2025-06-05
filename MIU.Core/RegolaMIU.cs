@@ -13,13 +13,13 @@ namespace MIU.Core
     // -------------------------------------------------------------------
     public class RegolaMIU
     {
-        public string ID { get; }
+        public int ID { get; }
         public string Nome { get; }
         public string Descrizione { get; }
         public string Pattern { get; }
         public string Sostituzione { get; }
 
-        public RegolaMIU(string id, string nome, string descrizione, string pattern, string sostituzione)
+        public RegolaMIU(int id, string nome, string descrizione, string pattern, string sostituzione)
         {
             ID = id;
             Nome = nome;
