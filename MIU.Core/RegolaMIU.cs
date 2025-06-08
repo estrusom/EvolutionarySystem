@@ -40,7 +40,8 @@ namespace MIU.Core
             compressedOutput = compressedInput; // Inizializza con l'input in caso di fallimento
 
             // 1. Decomprimi la stringa compressa per applicare la regola
-            string standardInput = MIUStringConverter.DeflateMIUString(compressedInput);
+            //string standardInput = MIUStringConverter.DeflateMIUString(compressedInput);
+            string standardInput = MIUStringConverter.InflateMIUString(compressedInput);
 
             // Applica la logica specifica della regola (pattern matching e sostituzione)
             // Questo è un esempio generico, la tua implementazione reale di TryApply
@@ -61,7 +62,8 @@ namespace MIU.Core
                     if (regex.IsMatch(standardInput))
                     {
                         string standardOutput = regex.Replace(standardInput, Sostituzione ?? ""); // Se Sostituzione è null, rimpiazza con vuoto
-                        compressedOutput = MIUStringConverter.InflateMIUString(standardOutput);
+                        //compressedOutput = MIUStringConverter.InflateMIUString(standardOutput);
+                        compressedOutput = MIUStringConverter.DeflateMIUString(standardOutput);
                         return true;
                     }
                 }

@@ -37,7 +37,7 @@ namespace EvolutiveSystem.SQL.Core
             {
                 _connection = new SQLiteConnection(_connectionString);
                 _connection.Open();
-                Console.WriteLine("DatabaseManager: Connessione al database aperta.");
+                Console.WriteLine($"DatabaseManager: Connessione al database aperta in {_connection.ConnectionString}");
                 // Qui potresti chiamare un metodo per assicurarti che le tabelle esistano,
                 // ma per ora lo lascio alla logica di inizializzazione esterna o al repository.
             }

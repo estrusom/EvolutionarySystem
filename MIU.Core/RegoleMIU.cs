@@ -5,11 +5,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
+using System.Text.RegularExpressions; // Necessario per RegolaMIU.TryApply
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 // 2025.05.24 aggiunto tempo ms 
 // 2025.05.26 Modificato inserimento record con l'aggiornamento dell'indice
+// 2025.06.06 Rimosso poichè fa casino cion le transazioni
 namespace MIU.Core
 {
     /// <summary>
@@ -208,6 +209,18 @@ namespace MIU.Core
             // - Loggare con una certa probabilità basata sull'efficacia della regola o la novità dello stato.
             return true;
         }
+        /// <summary>
+        /// Espone il conteggio totale dei nodi esplorati dall'ultima ricerca.
+        /// </summary>
+        /// <returns>Il conteggio totale dei nodi esplorati.</returns>
+        public int GetTotalNodesExplored()
+        {
+            // Questa variabile è statica in RegoleMIUManager, quindi la leggiamo direttamente da lì.
+            // Assicurati che _globalNodesExplored in RegoleMIUManager sia accessibile (es. internal o public).
+            // Se non lo è, dovremo fare una piccola modifica in RegoleMIUManager.
+            // Per ora, assumiamo che sia leggibile.
+            return RegoleMIUManager._globalNodesExplored; // Accesso diretto (richiede RegoleMIUManager._globalNodesExplored sia almeno internal)
+        }
     }
 
     /// <summary>
@@ -219,14 +232,14 @@ namespace MIU.Core
         public string InitialString { get; }
         public string TargetString { get; }
         public bool Success { get; }
-        //public List<string> Path { get; } // Il percorso trovato, null se non trovata
-        public List<(string CompressedString, int? AppliedRuleID)> Path { get; }
+        public List<(string CompressedString, int? AppliedRuleID)> Path { get; } // MODIFICA QUI
         public long ElapsedTicks { get; }
         public double ElapsedMilliseconds { get; }
         public int StepsTaken { get; } // Numero di passi nella soluzione (profondità del target)
         public int NodesExplored { get; } // Numero totale di nodi visitati
         public int MaxDepthReached { get; } // Profondità massima raggiunta nella ricerca
         public string SearchAlgorithm { get; } //2025.06.04  Aggiunto per MIU_Searches
+
         public SolutionFoundEventArgs(string initialString, string targetString, bool success, List<(string CompressedString, int? AppliedRuleID)> path, long elapsedTicks, int stepsTaken, int nodesExplored, int maxDepthReached, string searchAlgorithm)
         {
             InitialString = initialString;
@@ -271,7 +284,8 @@ namespace MIU.Core
         // Istanza di EmergingProcesses che influenza l'ordine delle regole
         private static EmergingProcesses _learningAdvisor = new EmergingProcesses();
         // Contatore globale per i nodi esplorati, resettato all'inizio di ogni ricerca
-        private static int _globalNodesExplored;
+        // private static int _globalNodesExplored; 2025.06.06 Modi
+        public static int _globalNodesExplored;
 
         // -------------------------------------------------------------------
         // 2. Definizione degli eventi (rimangono invariati)
@@ -280,6 +294,15 @@ namespace MIU.Core
         public static event EventHandler<SolutionFoundEventArgs> OnSolutionFound;
         public static event EventHandler<RuleAppliedEventArgs> OnRuleApplied;
 
+
+        /// <summary>
+        /// Scatena l'evento OnSolutionFound con i dati della soluzione.
+        /// Questo metodo è un helper per Program.cs per notificare le soluzioni.
+        /// </summary>
+        public static void NotificaSoluzioneTrovata(SolutionFoundEventArgs args)
+        {
+            OnSolutionFound?.Invoke(null, args);
+        }
 
         /// <summary>
         /// Espone l'istanza di EmergingProcesses per l'accesso esterno (es. da Program.cs).
@@ -340,13 +363,15 @@ namespace MIU.Core
                 string newString;
 
                 // Comprimi la stringa corrente prima di passarla a TryApply
-                string compressedCurrent = MIUStringConverter.InflateMIUString(currentString);
+                //string compressedCurrent = MIUStringConverter.InflateMIUString(currentString);
+                string compressedCurrent = MIUStringConverter.DeflateMIUString(currentString);
                 string compressedNew;
 
-                // TryApply ora accetta una stringa compressa e restituisce una stringa compressa.
+                // TryApply ora accetta e restituisce stringhe compresse.
                 if (rule.TryApply(compressedCurrent, out compressedNew))
                 {
-                    currentString = MIUStringConverter.DeflateMIUString(compressedNew); // Decomprimi per la visualizzazione
+                    //currentString = MIUStringConverter.DeflateMIUString(compressedNew); // Decomprimi per la visualizzazioneù
+                    currentString = MIUStringConverter.InflateMIUString(compressedNew); // Decomprimi per la visualizzazione
                     Console.WriteLine($"  Regola '{rule.Nome}' (Pattern: '{rule.Pattern}', Sostituzione: '{rule.Sostituzione ?? "NULL"}') applicata.");
                     Console.WriteLine($"    Risultato parziale: '{currentString}' (decompresso)");
                 }
@@ -364,6 +389,7 @@ namespace MIU.Core
         /// Esegue una ricerca in ampiezza (BFS) per trovare una derivazione
         /// dalla stringa iniziale alla stringa target usando le regole MIU.
         /// Opera interamente con stringhe compresse per efficienza.
+        /// L'ordine di applicazione delle regole è influenzato da EmergingProcesses.
         /// </summary>
         /// <param name="start">La stringa iniziale (formato compresso).</param>
         /// <param name="target">La stringa target (formato compresso).</param>
@@ -373,121 +399,93 @@ namespace MIU.Core
         public static List<(string CompressedString, int? AppliedRuleID)> TrovaDerivazioneBFS(string start, string target, long maxSteps = 100)
         {
             // Le stringhe start e target sono già attese in formato compresso.
-            // Se la stringa iniziale compressa è già la target compressa, il percorso è solo la stringa stessa.
             string searchAlgorithmName = "BFS"; // Nome dell'algoritmo per il DB
+            _globalNodesExplored = 0; // Reset del contatore globale per ogni nuova ricerca
+
             if (start == target)
             {
-                var path = new List<(string CompressedString, int? AppliedRuleID)> { (start, null) }; // <-- MODIFICATA: usa la tupla
-                _globalNodesExplored = 1; // <-- MODIFICATA: usa il contatore globale
-                OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
-                    initialString: start,
-                    targetString: target,
-                    success: true,
-                    path: path, // <-- MODIFICATA: 'path' è ora una lista di tuple
-                    elapsedTicks: 0,
-                    stepsTaken: 0,
-                    nodesExplored: _globalNodesExplored, // <-- MODIFICATA: usa il contatore globale
-                    maxDepthReached: 0,
-                    searchAlgorithm: searchAlgorithmName // <-- Assicurati che sia presente
-                ));
+                // Il percorso iniziale ha la stringa di partenza e un RuleID null (nessuna regola applicata per raggiungerla)
+                var path = new List<(string CompressedString, int? AppliedRuleID)> { (start, null) };
+                _globalNodesExplored = 1; // Un nodo esplorato
+                // RIMOSSA: OnSolutionFound?.Invoke(...)
                 return path;
             }
 
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            Queue<List<(string CompressedString, int? AppliedRuleID)>> queue = new Queue<List<(string CompressedString, int? AppliedRuleID)>>(); // <-- MODIFICATA: usa la tupla
-            queue.Enqueue(new List<(string CompressedString, int? AppliedRuleID)> { (start, null) }); // <-- MODIFICATA: usa la tupla
-            HashSet<string> visited = new HashSet<string> { start }; // Lascia questa riga così com'è
-            List<(string CompressedString, int? AppliedRuleID)> solutionPath = null; // <-- MODIFICATA: usa la tupla
-            int depth = 0;
-            _globalNodesExplored = 1; // <-- MODIFICATA: usa il contatore globale
+            // RIMOSSA: Stopwatch stopwatch = Stopwatch.StartNew(); // Avvia il cronometro per misurare il tempo di esecuzione
+            // Coda per la BFS, memorizza i percorsi come liste di tuple (stringa compressa, RuleID)
+            Queue<List<(string CompressedString, int? AppliedRuleID)>> queue = new Queue<List<(string CompressedString, int? AppliedRuleID)>>();
+            queue.Enqueue(new List<(string CompressedString, int? AppliedRuleID)> { (start, null) }); // Aggiungi il percorso iniziale alla coda
+            HashSet<string> visited = new HashSet<string> { start }; // Set per tenere traccia delle stringhe già visitate (solo stringhe compresse)
+            List<(string CompressedString, int? AppliedRuleID)> solutionPath = null; // Il percorso della soluzione, se trovato
+            int depth = 0; // Profondità corrente della ricerca
+            _globalNodesExplored = 1; // Contatore globale per i nodi esplorati (inizia con la stringa di partenza)
 
-
+            // Loop principale della BFS
             while (queue.Count > 0 && depth < maxSteps)
             {
-                int levelSize = queue.Count;
-                depth++;
+                int levelSize = queue.Count; // Numero di nodi a questo livello
+                depth++; // Incrementa la profondità per il prossimo livello
 
+                // Esplora tutti i nodi a questo livello
                 for (int i = 0; i < levelSize; i++)
                 {
-                    List<(string CompressedString, int? AppliedRuleID)> currentPath = queue.Dequeue(); // <-- MODIFICATA: usa la tupla
-                    string currentCompressedString = currentPath.Last().CompressedString; // <-- MODIFICATA: accede alla stringa dalla tupla
+                    List<(string CompressedString, int? AppliedRuleID)> currentPath = queue.Dequeue(); // Preleva il percorso corrente dalla coda
+                    string currentCompressedString = currentPath.Last().CompressedString; // L'ultima stringa nel percorso è lo stato corrente
 
                     // Chiedi a EmergingProcesses l'ordine preferenziale delle regole
-                    // Assicurati che _learningAdvisor sia accessibile (es. tramite GetLearningAdvisor() o rendendolo public static temporaneamente)
                     List<RegolaMIU> orderedRules = _learningAdvisor.GetPreferredRuleOrder(currentCompressedString, depth);
 
                     foreach (var rule in orderedRules) // Usa l'ordine suggerito dall'advisor
                     {
                         string nextCompressedString;
                         // TryApply ora accetta e restituisce stringhe compresse
-                        // Rimosso il controllo !visited.Contains(nextCompressedString) da qui, lo facciamo dopo l'evento OnRuleApplied
                         if (rule.TryApply(currentCompressedString, out nextCompressedString))
                         {
-                            // Scatena l'evento di regola applicata PRIMA del controllo visited
-                            // per registrare ogni tentativo valido per l'apprendimento.
+                            // Scatena l'evento di regola applicata PRIMA del controllo visited per registrare ogni tentativo valido
                             OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs(
                                 parentString: currentCompressedString,
                                 newString: nextCompressedString,
-                                appliedRuleID: rule.ID, // Assicurati che rule.ID sia int
+                                appliedRuleID: rule.ID,
                                 appliedRuleName: rule.Nome,
                                 currentDepth: depth
                             ));
 
-                            if (!visited.Contains(nextCompressedString)) // <-- Il controllo visited è qui
+                            if (!visited.Contains(nextCompressedString)) // Controlla visited qui per la logica BFS
                             {
-                                _globalNodesExplored++; // <-- MODIFICATA: usa il contatore globale
+                                _globalNodesExplored++; // Incrementa il contatore globale
 
                                 if (nextCompressedString == target)
                                 {
-                                    solutionPath = new List<(string CompressedString, int? AppliedRuleID)>(currentPath); // <-- MODIFICATA: usa la tupla
-                                    solutionPath.Add((CompressedString: nextCompressedString, AppliedRuleID: rule.ID)); // <-- MODIFICATA: aggiunge la tupla
-                                    stopwatch.Stop();
+                                    solutionPath = new List<(string CompressedString, int? AppliedRuleID)>(currentPath); // Copia il percorso corrente
+                                    solutionPath.Add((CompressedString: nextCompressedString, AppliedRuleID: rule.ID)); // Aggiungi la stringa target e la regola al percorso
+                                    // RIMOSSA: stopwatch.Stop(); // Ferma il cronometro
 
-                                    OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
-                                        initialString: start,
-                                        targetString: target,
-                                        success: true,
-                                        path: solutionPath, // <-- MODIFICATA: passa il nuovo tipo di path
-                                        elapsedTicks: stopwatch.ElapsedTicks,
-                                        stepsTaken: solutionPath.Count - 1,
-                                        nodesExplored: _globalNodesExplored, // <-- MODIFICATA: usa il contatore globale
-                                        maxDepthReached: depth,
-                                        searchAlgorithm: searchAlgorithmName // Assicurati che sia presente
-                                    ));
-                                    return solutionPath;
+                                    // RIMOSSA: OnSolutionFound?.Invoke(...)
+                                    return solutionPath; // Restituisci il percorso trovato
                                 }
 
                                 visited.Add(nextCompressedString);
-                                List<(string CompressedString, int? AppliedRuleID)> newPath = new List<(string CompressedString, int? AppliedRuleID)>(currentPath); // <-- MODIFICATA: usa la tupla
-                                newPath.Add((CompressedString: nextCompressedString, AppliedRuleID: rule.ID)); // <-- MODIFICATA: aggiunge la tupla
-                                queue.Enqueue(newPath);
+                                List<(string CompressedString, int? AppliedRuleID)> newPath = new List<(string CompressedString, int? AppliedRuleID)>(currentPath); // Crea un nuovo percorso
+                                newPath.Add((CompressedString: nextCompressedString, AppliedRuleID: rule.ID)); // Aggiungi la nuova stringa e la regola al nuovo percorso
+                                queue.Enqueue(newPath); // Aggiungi il nuovo percorso alla coda per l'esplorazione futura
                             }
                         }
                     }
                 }
             }
 
-            stopwatch.Stop(); // Ferma il cronometro
-            // Scatena l'evento di soluzione non trovata
-            OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
-                initialString: start,
-                targetString: target,
-                success: false,
-                path: null, // Nessun percorso trovato
-                elapsedTicks: stopwatch.ElapsedTicks,
-                stepsTaken: (int)maxSteps, // Indica il limite di passi raggiunto
-                nodesExplored: _globalNodesExplored, // <-- MODIFICATA: usa il contatore globale
-                maxDepthReached: depth,
-                searchAlgorithm: searchAlgorithmName // <-- AGGIUNTA: include il parametro searchAlgorithmName
-            ));
+            // Se la ricerca termina senza trovare la stringa target
+            // RIMOSSA: stopwatch.Stop(); // Ferma il cronometro
+            // RIMOSSA: OnSolutionFound?.Invoke(...)
 
-            return null;
+            return null; // Nessuna soluzione trovata
         }
 
         /// <summary>
         /// Esegue una ricerca in profondità (DFS) per trovare una derivazione
         /// dalla stringa iniziale alla stringa target usando le regole MIU.
         /// Opera interamente con stringhe compresse per efficienza.
+        /// L'ordine di applicazione delle regole è influenzato da EmergingProcesses.
         /// </summary>
         /// <param name="start">La stringa iniziale (formato compresso).</param>
         /// <param name="target">La stringa target (formato compresso).</param>
@@ -499,57 +497,35 @@ namespace MIU.Core
         public static List<(string CompressedString, int? AppliedRuleID)> TrovaDerivazioneDFS(string start, string target, long maxDepth, List<(string CompressedString, int? AppliedRuleID)> path = null, HashSet<string> visited = null)
         {
             // Le stringhe start e target sono già attese in formato compresso.
-            string searchAlgorithmName = "DFS"; // Lasciala se già presente, altrimenti aggiungila qui
+            string searchAlgorithmName = "DFS"; // Nome dell'algoritmo per il DB
+
             string currentStart = start; // Usa direttamente start, che è già compresso
             string currentTarget = target; // Usa direttamente target, che è già compresso
 
-            double frequency = Stopwatch.Frequency;
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            List<string> solutionPath = null;
-            long elapsedTicks = 0;
-            bool soluzioneTrovata = false;
-            int numeroPassi = 0;
-            int nodesExplored = 0;
+            // RIMOSSA: double frequency = Stopwatch.Frequency;
+            // RIMOSSA: Stopwatch stopwatch = Stopwatch.StartNew();
+            // RIMOSSA: List<(string CompressedString, int? AppliedRuleID)> solutionPath = null;
+            // RIMOSSA: long elapsedTicks = 0;
+            // RIMOSSA: bool soluzioneTrovata = false;
+            // int numeroPassi = 0;
 
             if (path == null)
             {
-                _globalNodesExplored = 0; // <-- AGGIUNTA: Reset del contatore globale per la chiamata iniziale
-                path = new List<(string CompressedString, int? AppliedRuleID)> { (currentStart, null) }; // <-- MODIFICATA: usa la tupla
+                _globalNodesExplored = 0; // Reset del contatore globale per la chiamata iniziale
+                path = new List<(string CompressedString, int? AppliedRuleID)> { (currentStart, null) }; // Inizializza con RuleID null
                 visited = new HashSet<string> { currentStart };
-                _globalNodesExplored = 1; // <-- MODIFICATA: il nodo iniziale è esplorato
+                _globalNodesExplored = 1; // Il nodo iniziale è esplorato
             }
-            //else
-            //{
-            //    // Se non è la chiamata iniziale, visited.Count riflette i nodi già esplorati nel ramo
-            //    nodesExplored = visited.Count;
-            //}
+            // else {
+            //     _globalNodesExplored = visited.Count; // Questo non è accurato per DFS ricorsiva, _globalNodesExplored è già globale
+            // }
 
-            string currentCompressedString = path.Last().CompressedString; // <-- MODIFICATA: accede alla stringa dalla tupla
+
+            string currentCompressedString = path.Last().CompressedString; // Preleva la stringa compressa
 
             if (currentCompressedString == currentTarget)
             {
-                stopwatch.Stop();
-                elapsedTicks = stopwatch.ElapsedTicks;
-                double tempoMs = (elapsedTicks / frequency) * 1000;
-                numeroPassi = path.Count - 1;
-                soluzioneTrovata = true;
-                Console.WriteLine($"\nSoluzione DFS trovata (profondità {path.Count - 1}) in {tempoMs:F2} ms (stringa compressa):");
-                foreach (var s in path)
-                {
-                    Console.WriteLine($"  {s}");
-                }
-
-                OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
-                    initialString: currentStart,
-                    targetString: currentTarget,
-                    success: true,
-                    path: path, // Il percorso è in formato compresso
-                    elapsedTicks: elapsedTicks,
-                    stepsTaken: numeroPassi,
-                    nodesExplored: _globalNodesExplored, // <-- MODIFICATA: usa il contatore globale
-                    maxDepthReached: path.Count - 1,
-                    searchAlgorithm: searchAlgorithmName // <-- AGGIUNTA: include il parametro searchAlgorithmName
-                ));
+                
                 return path;
             }
 
@@ -558,57 +534,33 @@ namespace MIU.Core
                 return null;
             }
 
-            foreach (var rule in Regole) // Usa l'ordine suggerito dall'advisor
+            // Chiedi a EmergingProcesses l'ordine preferenziale delle regole
+            List<RegolaMIU> orderedRules = _learningAdvisor.GetPreferredRuleOrder(currentCompressedString, path.Count - 1);
+
+            foreach (var rule in orderedRules) // Usa l'ordine suggerito dall'advisor
             {
                 string nextCompressedString;
-                // TryApply ora accetta e restituisce stringhe compresse
-                // Rimosso il controllo !visited.Contains(nextCompressedString) da qui, lo facciamo dopo l'evento OnRuleApplied
                 if (rule.TryApply(currentCompressedString, out nextCompressedString))
                 {
                     // Scatena l'evento di regola applicata
                     OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs(
                         parentString: currentCompressedString,
                         newString: nextCompressedString,
-                        appliedRuleID: rule.ID, // Assicurati che rule.ID sia int
+                        appliedRuleID: rule.ID,
                         appliedRuleName: rule.Nome,
                         currentDepth: path.Count - 1
                     ));
 
-                    if (!visited.Contains(nextCompressedString)) // <-- Il controllo visited è qui
+                    if (!visited.Contains(nextCompressedString)) // Controlla visited qui per la logica DFS
                     {
                         visited.Add(nextCompressedString);
-                        _globalNodesExplored++; // <-- MODIFICATA: Incrementa il contatore globale
-                        path.Add((CompressedString: nextCompressedString, AppliedRuleID: rule.ID)); // <-- MODIFICATA: aggiunge la tupla
+                        _globalNodesExplored++; // Incrementa il contatore globale
+                        path.Add((CompressedString: nextCompressedString, AppliedRuleID: rule.ID)); // Aggiungi la stringa e la regola al percorso
 
-                        // La chiamata ricorsiva deve usare il nuovo tipo di path
                         List<(string CompressedString, int? AppliedRuleID)> result = TrovaDerivazioneDFS(currentStart, currentTarget, maxDepth, path, visited);
                         if (result != null)
                         {
-                            stopwatch.Stop();
-                            if (!soluzioneTrovata) // Registra il tempo solo alla prima soluzione trovata
-                            {
-                                elapsedTicks = stopwatch.ElapsedTicks;
-                                double tempoMs = (elapsedTicks / frequency) * 1000;
-                                numeroPassi = result.Count - 1;
-                                soluzioneTrovata = true;
-                                Console.WriteLine($"\nSoluzione DFS trovata (profondità {numeroPassi}) in {tempoMs:F2} ms (al ritorno dalla ricorsione, stringa compressa):");
-                                foreach (var s in result)
-                                {
-                                    Console.WriteLine($"  {s.CompressedString}"); // Stampa solo la stringa compressa
-                                }
-                                // Scatena l'evento di soluzione trovata (al ritorno dalla ricorsione)
-                                OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
-                                    initialString: currentStart,
-                                    targetString: currentTarget,
-                                    success: true,
-                                    path: result, // <-- MODIFICATA: Il percorso è in formato compresso (tupla)
-                                    elapsedTicks: elapsedTicks,
-                                    stepsTaken: numeroPassi,
-                                    nodesExplored: _globalNodesExplored, // <-- MODIFICATA: usa il contatore globale
-                                    maxDepthReached: result.Count - 1,
-                                    searchAlgorithm: searchAlgorithmName // Assicurati che sia presente
-                                ));
-                            }
+                            
                             return result;
                         }
                         path.RemoveAt(path.Count - 1); // Backtrack
@@ -616,30 +568,7 @@ namespace MIU.Core
                     }
                 }
             }
-
-            if (path.Count == 1)
-            {
-                stopwatch.Stop();
-                elapsedTicks = stopwatch.ElapsedTicks;
-                double tempoMsFallimento = (elapsedTicks / frequency) * 1000;
-                int numeroPassiFallimento = (int)maxDepth;
-
-                Console.WriteLine($"\nRicerca DFS da '{start}' a '{target}' fallita entro la profondità massima di {maxDepth} in {tempoMsFallimento:F2} ms.");
-
-                OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs(
-                    initialString: currentStart,
-                    targetString: currentTarget,
-                    success: false,
-                    path: null,
-                    elapsedTicks: elapsedTicks,
-                    stepsTaken: numeroPassiFallimento,
-                    nodesExplored: _globalNodesExplored, // <-- MODIFICATA: usa il contatore globale
-                    maxDepthReached: (int)maxDepth,
-                    searchAlgorithm: searchAlgorithmName // <-- AGGIUNTA: include il parametro searchAlgorithmName
-                ));
-            }
-
-            return null;
+            return null; // Nessuna soluzione trovata in questo ramo
         }
     }
 }
