@@ -8,7 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MIU.Core // <--- MODIFICATA: La namespace dovrebbe essere MIU.Core
+namespace EvolutiveSystem.SQL.Core // <--- MODIFICATA: La namespace dovrebbe essere MIU.Core
 {
     /// <summary>
     /// Manager per la gestione della persistenza dei dati specifici del gioco MIU
@@ -176,7 +176,39 @@ namespace MIU.Core // <--- MODIFICATA: La namespace dovrebbe essere MIU.Core
             );
             // Console.WriteLine($"MIUDatabaseManager: Passo percorso soluzione per ricerca {searchId} registrato.");
         }
+        /// <summary>
+        /// Carica le regole MIU dal database.
+        /// </summary>
+        /// <returns>Una lista di oggetti RegolaMIU.</returns>
+        public List<RegolaMIU> LoadRegoleMIU()
+        {
+            List<RegolaMIU> regole = new List<RegolaMIU>();
+            string selectSql = "SELECT ID, Nome, Descrizione, Pattern, Sostituzione FROM RegoleMIU ORDER BY ID;";
 
+            try
+            {
+                using (var reader = _dbManager.ExecuteReader(selectSql))
+                {
+                    while (reader.Read())
+                    {
+                        regole.Add(new RegolaMIU(
+                            reader.GetInt32(0), // ID
+                            reader.GetString(1), // Nome
+                            reader.IsDBNull(2) ? null : reader.GetString(2), // Descrizione
+                            reader.IsDBNull(3) ? null : reader.GetString(3), // Pattern
+                            reader.IsDBNull(4) ? null : reader.GetString(4) // Sostituzione
+                        ));
+                    }
+                }
+                Console.WriteLine($"MIUDatabaseManager: Caricate {regole.Count} regole MIU dal database.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"MIUDatabaseManager: Errore nel caricamento delle regole MIU: {ex.Message}");
+                // Potresti voler ricreare la tabella o gestire l'errore in modo più robusto
+            }
+            return regole;
+        }
         /// <summary>
         /// Inserisce o aggiorna i dettagli delle regole nella tabella RegoleMIU.
         /// Questo dovrebbe essere chiamato una volta all'avvio dell'applicazione.
@@ -198,6 +230,123 @@ namespace MIU.Core // <--- MODIFICATA: La namespace dovrebbe essere MIU.Core
                 );
             }
             Console.WriteLine($"MIUDatabaseManager: {regole.Count} regole MIU inserite/aggiornate.");
+        }
+        /// <summary>
+        /// Carica le statistiche aggregate delle regole dal database.
+        /// </summary>
+        /// <returns>Una lista di RuleStatistics.</returns>
+        public List<RuleStatistics> LoadRuleStatistics()
+        {
+            List<RuleStatistics> stats = new List<RuleStatistics>();
+            string selectSql = "SELECT RuleID, ApplicationCount, EffectivenessScore, LastUpdated FROM Learning_RuleStatistics;";
+
+            try
+            {
+                using (var reader = _dbManager.ExecuteReader(selectSql))
+                {
+                    while (reader.Read())
+                    {
+                        stats.Add(new RuleStatistics
+                        {
+                            RuleID = reader.GetInt32(0),
+                            ApplicationCount = reader.GetInt32(1),
+                            EffectivenessScore = reader.GetDouble(2),
+                            LastUpdated = reader.GetString(3)
+                        });
+                    }
+                }
+                Console.WriteLine($"MIUDatabaseManager: Caricate {stats.Count} statistiche regole.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"MIUDatabaseManager: Errore nel caricamento delle statistiche regole: {ex.Message}");
+                // Potresti voler ricreare la tabella o gestire l'errore in modo più robusto
+            }
+            return stats;
+        }
+        /// <summary>
+        /// Salva (upsert) le statistiche aggregate delle regole nel database.
+        /// </summary>
+        /// <param name="ruleStats">La lista di RuleStatistics da salvare.</param>
+        public void SaveRuleStatistics(List<RuleStatistics> ruleStats)
+        {
+            foreach (var stat in ruleStats)
+            {
+                string sql = @"
+                    INSERT INTO Learning_RuleStatistics (RuleID, ApplicationCount, EffectivenessScore, LastUpdated)
+                    VALUES (@RuleID, @ApplicationCount, @EffectivenessScore, @LastUpdated)
+                    ON CONFLICT(RuleID) DO UPDATE SET
+                        ApplicationCount = excluded.ApplicationCount,
+                        EffectivenessScore = excluded.EffectivenessScore,
+                        LastUpdated = excluded.LastUpdated;";
+
+                _dbManager.ExecuteNonQuery(sql,
+                    new SQLiteParameter("@RuleID", stat.RuleID),
+                    new SQLiteParameter("@ApplicationCount", stat.ApplicationCount),
+                    new SQLiteParameter("@EffectivenessScore", stat.EffectivenessScore),
+                    new SQLiteParameter("@LastUpdated", DateTime.UtcNow.ToString("o"))
+                );
+            }
+            Console.WriteLine($"MIUDatabaseManager: Salvate/aggiornate {ruleStats.Count} statistiche regole.");
+        }
+        /// <summary>
+        /// Carica le statistiche aggregate delle transizioni (parent-child-rule) dal database.
+        /// </summary>
+        /// <returns>Una lista di TransitionStatistics.</returns>
+        public List<TransitionStatistics> LoadTransitionStatistics()
+        {
+            List<TransitionStatistics> stats = new List<TransitionStatistics>();
+            string selectSql = "SELECT ParentStringCompressed, AppliedRuleID, ApplicationCount, SuccessfulCount, LastUpdated FROM Learning_TransitionStatistics;";
+
+            try
+            {
+                using (var reader = _dbManager.ExecuteReader(selectSql))
+                {
+                    while (reader.Read())
+                    {
+                        stats.Add(new TransitionStatistics
+                        {
+                            ParentStringCompressed = reader.GetString(0),
+                            AppliedRuleID = reader.GetInt32(1),
+                            ApplicationCount = reader.GetInt32(2),
+                            SuccessfulCount = reader.GetInt32(3),
+                            LastUpdated = reader.GetString(4)
+                        });
+                    }
+                }
+                Console.WriteLine($"MIUDatabaseManager: Caricate {stats.Count} statistiche transizioni.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"MIUDatabaseManager: Errore nel caricamento delle statistiche transizioni: {ex.Message}");
+            }
+            return stats;
+        }
+        /// <summary>
+        /// Salva (upsert) le statistiche aggregate delle transizioni nel database.
+        /// </summary>
+        /// <param name="transitionStats">La lista di TransitionStatistics da salvare.</param>
+        public void SaveTransitionStatistics(List<TransitionStatistics> transitionStats)
+        {
+            foreach (var stat in transitionStats)
+            {
+                string sql = @"
+                    INSERT INTO Learning_TransitionStatistics (ParentStringCompressed, AppliedRuleID, ApplicationCount, SuccessfulCount, LastUpdated)
+                    VALUES (@ParentStringCompressed, @AppliedRuleID, @ApplicationCount, @SuccessfulCount, @LastUpdated)
+                    ON CONFLICT(ParentStringCompressed, AppliedRuleID) DO UPDATE SET
+                        ApplicationCount = excluded.ApplicationCount,
+                        SuccessfulCount = excluded.SuccessfulCount,
+                        LastUpdated = excluded.LastUpdated;";
+
+                _dbManager.ExecuteNonQuery(sql,
+                    new SQLiteParameter("@ParentStringCompressed", stat.ParentStringCompressed),
+                    new SQLiteParameter("@AppliedRuleID", stat.AppliedRuleID),
+                    new SQLiteParameter("@ApplicationCount", stat.ApplicationCount),
+                    new SQLiteParameter("@SuccessfulCount", stat.SuccessfulCount),
+                    new SQLiteParameter("@LastUpdated", DateTime.UtcNow.ToString("o"))
+                );
+            }
+            Console.WriteLine($"MIUDatabaseManager: Salvate/aggiornate {transitionStats.Count} statistiche transizioni.");
         }
     }
 }

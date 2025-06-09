@@ -1,4 +1,5 @@
-﻿using System;
+﻿using EvolutiveSystem.SQL.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,10 +10,11 @@ namespace MIU.Core
     /// <summary>
     /// Repository per la gestione della persistenza dei dati relativi alle ricerche MIU
     /// e agli stati intermedi nel database. Utilizza MIUDatabaseManager per le operazioni SQLite.
+    /// Implementa le interfacce IMIURepository e ILearningStatePersistence definite nel progetto MIU.Core.
     /// </summary>
-    public class MIURepository
+    public class MIURepository : IMIURepository, ILearningStatePersistence // <<< AGGIUNTO: Implementa entrambe le interfacce
     {
-        private readonly MIUDatabaseManager _dbManager; // <--- Ora si riferisce alla classe MIUDatabaseManager che abbiamo appena rinominato
+        private readonly MIUDatabaseManager _dbManager;
 
         /// <summary>
         /// Inizializza una nuova istanza del MIURepository.
@@ -23,11 +25,13 @@ namespace MIU.Core
             _dbManager = dbManager ?? throw new ArgumentNullException(nameof(dbManager));
         }
 
+        // <<< Implementazione dei metodi di IMIURepository >>>
+
         /// <summary>
         /// Inserisce una nuova ricerca nel database.
         /// </summary>
-        /// <param name="initialString">La stringa iniziale (formato compresso).</param>
-        /// <param name="targetString">La stringa target (formato compresso).</param>
+        /// <param name="initialString">La stringa iniziale della ricerca (compressa).</param>
+        /// <param name="targetString">La stringa target della ricerca (compressa).</param>
         /// <param name="searchAlgorithm">L'algoritmo di ricerca utilizzato (es. "BFS", "DFS").</param>
         /// <returns>L'ID della ricerca appena inserita.</returns>
         public long InsertSearch(string initialString, string targetString, string searchAlgorithm)
@@ -95,11 +99,7 @@ namespace MIU.Core
         /// <returns>Una lista di oggetti RegolaMIU.</returns>
         public List<RegolaMIU> LoadRegoleMIU()
         {
-            // Questo metodo sarà implementato nel MIURepository quando avremo bisogno di leggere le regole dal DB.
-            // Per ora, le regole vengono caricate da file o da una lista predefinita.
-            // Se hai un metodo nel DBManager per leggere le regole, chiamalo qui.
-            // Esempio: return _dbManager.GetRegoleMIU();
-            return new List<RegolaMIU>(); // Implementazione placeholder
+            return _dbManager.LoadRegoleMIU(); // Delega a MIUDatabaseManager
         }
 
         /// <summary>
@@ -109,6 +109,44 @@ namespace MIU.Core
         public void UpsertRegoleMIU(List<RegolaMIU> regole)
         {
             _dbManager.UpsertRegoleMIU(regole);
+        }
+
+        // <<< Implementazione dei metodi di ILearningStatePersistence >>>
+
+        /// <summary>
+        /// Carica le statistiche aggregate delle regole dal database.
+        /// </summary>
+        /// <returns>Una lista di RuleStatistics.</returns>
+        public List<RuleStatistics> LoadRuleStatistics()
+        {
+            return _dbManager.LoadRuleStatistics();
+        }
+
+        /// <summary>
+        /// Salva (upsert) le statistiche aggregate delle regole nel database.
+        /// </summary>
+        /// <param name="ruleStats">La lista di RuleStatistics da salvare.</param>
+        public void SaveRuleStatistics(List<RuleStatistics> ruleStats)
+        {
+            _dbManager.SaveRuleStatistics(ruleStats);
+        }
+
+        /// <summary>
+        /// Carica le statistiche aggregate delle transizioni (parent-child-rule) dal database.
+        /// </summary>
+        /// <returns>Una lista di TransitionStatistics.</returns>
+        public List<TransitionStatistics> LoadTransitionStatistics()
+        {
+            return _dbManager.LoadTransitionStatistics();
+        }
+
+        /// <summary>
+        /// Salva (upsert) le statistiche aggregate delle transizioni nel database.
+        /// </summary>
+        /// <param name="transitionStats">La lista di TransitionStatistics da salvare.</param>
+        public void SaveTransitionStatistics(List<TransitionStatistics> transitionStats)
+        {
+            _dbManager.SaveTransitionStatistics(transitionStats);
         }
     }
 }

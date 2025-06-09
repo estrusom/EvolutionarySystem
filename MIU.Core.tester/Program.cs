@@ -5,6 +5,7 @@ using MIU.Core;
 using EvolutiveSystem.SQL.Core;
 using System.Diagnostics;
 using System.IO;
+using MIU.Core.Learning.Interfaces;
 
 namespace MIU.TestApp
 {
@@ -20,12 +21,29 @@ namespace MIU.TestApp
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.WriteLine("Avvio applicazione MIU System Test...");
-
             try
             {
                 Console.WriteLine("Program: Inizio Inizializzazione Database e Repository.");
                 InitializeDatabaseAndRepository();
                 Console.WriteLine("Program: Fine Inizializzazione Database e Repository.");
+
+                // --- INIZIO BLOCCO DA AGGIUNGERE ---
+                Console.WriteLine("Program: Inizio Inizializzazione Learning Advisor.");
+                // 1. Crea l'istanza di EmergingProcesses, passando il tuo _miuRepository
+                // Assicurati che il costruttore di EmergingProcesses sia così:
+                // public EmergingProcesses(ILearningStatePersistence learningStatePersistence) { ... }
+                EmergingProcesses learningAdvisorInstance = new EmergingProcesses(_miuRepository);
+
+                // 2. Imposta questa istanza come advisor nella classe statica RegoleMIUManager
+                // RegoleMIUManager deve avere il metodo statico:
+                // public static void SetLearningAdvisor(ILearningAdvisor advisor) { ... }
+                RegoleMIUManager.SetLearningAdvisor(learningAdvisorInstance);
+
+                // 3. Inizializza l'advisor (questo caricherà lo stato di apprendimento dal tuo database)
+                // Assicurati che EmergingProcesses implementi un metodo Initialize()
+                learningAdvisorInstance.Initialize();
+                Console.WriteLine("Program: Fine Inizializzazione Learning Advisor.");
+                // --- FINE BLOCCO DA AGGIUNGERE ---
 
                 List<RegolaMIU> regoleIniziali = new List<RegolaMIU>
                 {
@@ -34,8 +52,6 @@ namespace MIU.TestApp
                     new RegolaMIU(3, "Regola III", "Se 'III' appare, può essere sostituito con 'U'", "III", "U"),
                     new RegolaMIU(4, "Regola IV", "Rimuove due 'U' consecutive", "UU", ""),
                 };
-
-                RegoleMIUManager.GetLearningAdvisor().Initialize();
 
                 RegoleMIUManager.CaricaRegoleDaOggettoSQLite(regoleIniziali.Select(r => $"{r.ID};{r.Nome};{r.Pattern};{r.Sostituzione};{r.Descrizione}").ToList());
                 _miuRepository.UpsertRegoleMIU(regoleIniziali);
@@ -137,6 +153,7 @@ namespace MIU.TestApp
             finally // FINALLY PER LA CHIUSURA DEL DATABASE E DEGLI EVENTI DOPO TUTTE LE RICERCHE
             {
                 Console.WriteLine("Program: Inizio de-inizializzazione e chiusura finale.");
+                RegoleMIUManager.GetLearningAdvisor()?.Deinitialize(); // Aggiunto Safe Navigation Operator
                 DeinitializeDatabaseAndEvents();
                 Console.WriteLine("Applicazione terminata. Premi un tasto per uscire.");
                 Console.ReadKey();
@@ -152,7 +169,7 @@ namespace MIU.TestApp
             _genericDbManager.OpenConnection();
             Console.WriteLine("Program: Connessione al database generico aperta con successo.");
 
-            _miuDbManager = new MIU.Core.MIUDatabaseManager(_genericDbManager);
+            _miuDbManager = new MIUDatabaseManager(_genericDbManager);
             // La chiamata a _miuDbManager.CreateTables() è stata rimossa come richiesto.
 
             _miuRepository = new MIURepository(_miuDbManager);
@@ -251,7 +268,7 @@ namespace MIU.TestApp
             try
             {
                 // Console.WriteLine($"Program: Rule Applied - Parent: {e.ParentString}, New: {e.NewString}, RuleID: {e.AppliedRuleID}, Depth: {e.CurrentDepth}"); // ABILITA SOLO PER DEBUG INTENSO
-                EmergingProcesses learningAdvisor = RegoleMIUManager.GetLearningAdvisor();
+                ILearningAdvisor learningAdvisor = RegoleMIUManager.GetLearningAdvisor();
 
                 string parentStandardString = MIUStringConverter.InflateMIUString(e.ParentString);
                 string newStandardString = MIUStringConverter.InflateMIUString(e.NewString);
