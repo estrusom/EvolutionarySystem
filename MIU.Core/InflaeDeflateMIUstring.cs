@@ -20,7 +20,7 @@ namespace MIU.Core
         /// </summary>
         /// <param name="input">La stringa MIU standard da comprimere.</param>
         /// <returns>La stringa MIU compressa.</returns>
-        public static string InflateMIUString(string input)
+        public static string DeflateMIUString(string input)
         {
             if (string.IsNullOrEmpty(input))
             {
@@ -79,7 +79,7 @@ namespace MIU.Core
         /// </summary>
         /// <param name="compressedInput">La stringa MIU compressa da decomprimere.</param>
         /// <returns>La stringa MIU standard decompressa.</returns>
-        public static string DeflateMIUString(string compressedInput)
+        public static string InflateMIUString(string compressedInput)
         {
             if (string.IsNullOrEmpty(compressedInput))
             {

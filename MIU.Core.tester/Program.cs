@@ -1,5 +1,17 @@
-﻿using EvolutiveSystem.Core;
-using EvolutiveSystem.SQL.Core;
+﻿// sostituito 16.6.25 12.02
+// sostituito 16.6.2025 12.10
+// sostituito 16.6.2025 12.16
+//  sostituito 16.6.2025 15.31
+// Corretto 17.6.25: Rimossi riferimenti a EvolutiveSystem.Core.
+// Aggiunta la definizione di SerializableDictionary direttamente in questo file.
+// Corretto l'uso di Database e Table per puntare a EvolutiveSystem.SQL.Core.
+// Aggiunta la definizione di SerializableDictionary direttamente in questo file (per compatibilità).
+// per risolvere gli errori su 'DataRecords' e pulire codice non funzionale.
+// NUOVA MODIFICA 17.6.25: Integrazione di MIURepository nel case 3 per il caricamento delle regole.
+// NUOVA MODIFICA 19.6.25: Integrazione di MasterLog.Logger.
+// NUOVA MODIFICA 20.6.25: Implementazione della persistenza dei dati di ricerca (Fase 1 roadmap).
+
+using EvolutiveSystem.SQL.Core; // Per SQLiteSchemaLoader, Database, Table
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,73 +21,67 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using static System.Net.WebRequestMethods;
+using MIU.Core; // Per MIURepository, RuleStatistics, TransitionStatistics, IMIUDataManager, PathStepInfo
+using MasterLog; // Necessario per la tua classe Logger
 
 namespace MIU.Core.tester
 {
+    public class SerializableDictionary<TKey, TValue> : Dictionary<TKey, TValue>
+    {
+        public SerializableDictionary() : base() { }
+        public SerializableDictionary(IDictionary<TKey, TValue> dictionary) : base(dictionary) { }
+    }
+
     internal class Program
     {
-        private const long passi = 10;
+        private const long passi = 10; // Massima profondità di ricerca
+
+        private static Logger _logger; // Istanza del logger
+        private static MIURepository _repository; // Repository per la persistenza (reso statico per gli eventi)
+        private static long _currentSearchId; // ID della ricerca corrente per correlare eventi (reso statico)
+
+
         static void Main(string[] args)
         {
+            // Inizializzazione del Logger
+            string logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            _logger = new Logger(logDirectory, "MIULog", 7); // Conserva gli ultimi 7 giorni di log
+            _logger.SwLogLevel = _logger.LOG_INFO | _logger.LOG_DEBUG | _logger.LOG_ERROR | _logger.LOG_WARNING; // Imposta i livelli di log attivi
+            _logger.Log(LogLevel.INFO, "Menomale che Gemini ha ripristinato il progeto");
+            // Propaga il logger a RegoleMIUManager (che è statico)
+            RegoleMIUManager.LoggerInstance = _logger;
+
+
             string[,] arrayString =
             {
                 {"MI", "MI", "MI", "MI", "MI", "MI", "MIIIIII","MII","MUI", "MI"},
                 {"MIU","MII","MIIII","MUI","MUIU","MUIIU", "MUU", "MU","MIU","MIIIIIIIII"}
             };
 
-            //string[,] arrayString =
-            //{
-            //    {"MI", "MI", "MI", "MII", "MII", "MUI", "MUI", "MI", "MIIII", "MIIII"},
-            //    {"MIIU", "MIIIIU", "MUIU", "MIIIIIIII", "MUIUI", "MIUIU", "MUU", "MIIIIUU", "MUIIU", "MIIIIIIIIU"}
-            //};
+            string databaseFilePath = @"C:\Progetti\EvolutiveSystem\Database\miu_data.db";
 
-            //string[,] arrayString =
-            //{
-            //    {"M", "MI", "MIU"},
-            //    {"MMMMMMMMMM","MIIIIIIIIII","MUIUIUIU"}
-            //};
-
-            //string[,] arrayString =
-            //{
-            //    {"MI"},
-            //    {"MIIU"}
-            //};
-
-            string databaseFilePath = @"C:\Progetti\EvolutiveSystem\xml\MIUProject.xml";
-            //Console.WriteLine($"Process: {Process.GetCurrentProcess().Id}");
-            //Console.WriteLine("Test nr. (1÷5)");
-            int tipotest = 4;// Convert.ToInt32(Console.ReadLine());
+            int tipotest = 7; // Impostato a 7 per eseguire il test di persistenza con la ricerca BFS specifica
             Process myProc = new Process();
             switch (tipotest)
             {
-                case 2:
-                    {
-                        ApplicazioneRegoleMIU();
-                    }
-                    break;
                 case 3:
                     {
                         Random rnd = new Random();
                         databaseFilePath = @"C:\Progetti\EvolutiveSystem\Database\miu_data.db";
                         SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath);
-                        List<string> regole = _schemaLoader.SQLiteSelect("SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU;");
-                        RegoleMIUManager.CaricaRegoleDaOggettoSQLite(regole);
+
+                        // Istanzia MIUDatabaseManager e MIURepository con logger
+                        MIUDatabaseManager _dbManager = new MIUDatabaseManager(_schemaLoader, _logger);
+                        IMIUDataManager _dataManager = (IMIUDataManager)_dbManager;
+                        _repository = new MIURepository(_dataManager, _logger); // Assegna al campo statico
+
+                        List<RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
+                        RegoleMIUManager.CaricaRegoleDaOggettoRepository(regoleMIUList);
+
                         RegoleMIUManager.OnRuleApplied += RegoleMIUManager_OnRuleApplied;
                         RegoleMIUManager.OnSolutionFound += RegoleMIUManager_OnSolutionFound;
                         List<string> MIUstringList = _schemaLoader.SQLiteSelect("SELECT StateID, CurrentString, StringLength, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount FROM MIU_States;");
-                        /*
-                        int index = 0;
-                        foreach (string s in MIUstringList)
-                        {
-                            index++;
-                            string[] sArray = s.Split(';');
-                            string deflateString = MIUStringConverter.DeflateMIUString(sArray[1]);
-                            //string sqlUpdate = $"UPDATE MIU_States SET CurrentString = '{deflateString}', StringLength = '{deflateString.Length}', DeflateString='{sArray[1]}' WHERE StateID = '{index}' ";
-                            //int i = _schemaLoader.SQLiteUpdate(sqlUpdate);
-                            Console.WriteLine($"Source: {sArray[1]} target: {MIUStringConverter.DeflateMIUString(sArray[1])}");
-                        }
-                        */
+
                         if (RegoleMIUManager.Regole.Count > 0)
                         {
                             foreach (string s in MIUstringList)
@@ -83,8 +89,17 @@ namespace MIU.Core.tester
                                 string[] MIUstringsSource = s.Split(';');
                                 int index = rnd.Next(0, MIUstringsSource.Length - 1);
                                 string[] MIUstringDestination = MIUstringList[index].Split(';');
-                                List<string> miu = RegoleMIUManager.TrovaDerivazioneBFS(MIUstringsSource[1], MIUstringDestination[1], passi);
+
+                                // Inserisci la ricerca iniziale e ottieni l'ID
+                                _currentSearchId = _repository.InsertSearch(MIUstringsSource[1], MIUstringDestination[1], "BFS"); // Salva la stringa standard per initial/target
+
+                                List<PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, MIUstringsSource[1], MIUstringDestination[1], passi);
                             }
+                        }
+                        else
+                        {
+                            Console.WriteLine("[DEBUG] Nessuna regola MIU caricata dal repository. Controllare i dati del database.");
+                            _logger.Log(LogLevel.DEBUG, "[DEBUG] Nessuna regola MIU caricata dal repository. Controllare i dati del database.");
                         }
                     }
                     break;
@@ -92,49 +107,141 @@ namespace MIU.Core.tester
                     {
                         databaseFilePath = @"C:\Progetti\EvolutiveSystem\Database\miu_data.db";
                         SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath);
+
+                        // Istanzia MIUDatabaseManager e MIURepository con logger
+                        MIUDatabaseManager _dbManager = new MIUDatabaseManager(_schemaLoader, _logger);
+                        IMIUDataManager _dataManager = (IMIUDataManager)_dbManager;
+                        _repository = new MIURepository(_dataManager, _logger); // Assegna al campo statico
+
                         List<string> regole = _schemaLoader.SQLiteSelect("SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU;");
+
+                        string StringIn = "M2U3I4MI";
                         RegoleMIUManager.CaricaRegoleDaOggettoSQLite(regole);
-                        string StringIn = "M2UM"; // "M2U4MI";
-                        bool response = RegoleMIUManager.Regole[0].TryApply(StringIn, out string regola1);
-                        Console.WriteLine($"String in: {StringIn} Regola 1: {regola1} response: {response}");
-                        StringIn = "3IU"; // "M2U";
-                        response = RegoleMIUManager.Regole[1].TryApply(StringIn, out string regola2);
-                        Console.WriteLine($"String in: {StringIn} Regola 2: {regola2} response: {response}");
-                        StringIn = "M2U4MI"; // "M3IU3I2U";
-                        response = RegoleMIUManager.Regole[2].TryApply(StringIn, out string regola3);
-                        Console.WriteLine($"String in: {StringIn} Regola 3: {regola3} response: {response}");
-                        StringIn = "3MIU3I"; //"M3IU3I2U";
-                        response = RegoleMIUManager.Regole[3].TryApply(StringIn, out string regola4);
-                        Console.WriteLine($"String in: {StringIn} Regola 4: {regola4} response: {response}");
+
+                        // Questo case è un test di applicazione regole senza ricerca e persistenza completa
+                        // Quindi non avrà un SearchID correlato automaticamente.
+
+                        string currentTestString = MIUStringConverter.DeflateMIUString(StringIn);
+                        bool response0 = RegoleMIUManager.Regole[0].TryApply(currentTestString, out string regola0Output);
+                        Console.WriteLine($"String in: {currentTestString} Regola 0: {regola0Output} response: {response0}");
+                        _logger.Log(LogLevel.INFO, $"String in: {currentTestString} Regola 0: {regola0Output} response: {response0}");
+
+                        currentTestString = MIUStringConverter.DeflateMIUString(MIUStringConverter.InflateMIUString(regola0Output));
+                        bool response1 = RegoleMIUManager.Regole[1].TryApply(currentTestString, out string regola1Output);
+                        Console.WriteLine($"String in: {currentTestString} Regola 1: {regola1Output} response: {response1}");
+                        _logger.Log(LogLevel.INFO, $"String in: {currentTestString} Regola 1: {regola1Output} response: {response1}");
+
+                        currentTestString = MIUStringConverter.DeflateMIUString(MIUStringConverter.InflateMIUString(regola1Output));
+                        bool response2 = RegoleMIUManager.Regole[2].TryApply(currentTestString, out string regola2Output);
+                        Console.WriteLine($"String in: {currentTestString} Regola 2: {regola2Output} response: {response2}");
+                        _logger.Log(LogLevel.INFO, $"String in: {currentTestString} Regola 2: {regola2Output} response: {response2}");
+
+                        currentTestString = MIUStringConverter.DeflateMIUString(MIUStringConverter.InflateMIUString(regola2Output));
+                        bool response3 = RegoleMIUManager.Regole[3].TryApply(currentTestString, out string regola3Output);
+                        Console.WriteLine($"String in: {currentTestString} Regola 3: {regola3Output} response: {response3}");
+                        _logger.Log(LogLevel.INFO, $"String in: {currentTestString} Regola 3: {regola3Output} response: {response3}");
                     }
                     break;
                 case 5:
                     {
+                        databaseFilePath = @"C:\Progetti\EvolutiveSystem\Database\miu_data.db";
+                        SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath);
 
-                        long maxProfondita = 10; // Imposta una profondità massima ragionevole
+                        // Istanzia MIUDatabaseManager e MIURepository con logger
+                        MIUDatabaseManager _dbManager = new MIUDatabaseManager(_schemaLoader, _logger);
+                        IMIUDataManager _dataManager = (IMIUDataManager)_dbManager;
+                        _repository = new MIURepository(_dataManager, _logger); // Assegna al campo statico
+
+                        List<RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
+                        RegoleMIUManager.CaricaRegoleDaOggettoRepository(regoleMIUList);
+
+                        RegoleMIUManager.OnRuleApplied += RegoleMIUManager_OnRuleApplied;
+                        RegoleMIUManager.OnSolutionFound += RegoleMIUManager_OnSolutionFound;
+
+                        long maxProfondita = 10;
                         int cntDwn = 22;
                         while (cntDwn >= 1)
                         {
                             for (int y = 0; y < arrayString.GetLength(1); y++)
                             {
-                                RicercaDiDerivazioneDFS(arrayString[0, y], arrayString[1, y], maxProfondita);
+                                // Inserisci la ricerca iniziale e ottieni l'ID
+                                _currentSearchId = _repository.InsertSearch(arrayString[0, y], arrayString[1, y], "DFS"); // Salva le stringhe standard
+                                RicercaDiDerivazioneDFS(_currentSearchId, arrayString[0, y], arrayString[1, y], maxProfondita);
                             }
                             cntDwn--;
                         }
-
                     }
                     break;
                 case 6:
                     {
                         Random r = new Random();
-                        for (int i= 0; i < 10; i++)
+                        for (int i = 0; i < 10; i++)
                         {
                             Console.Write(r.Next(1, 3));
+                            _logger.Log(LogLevel.INFO, $"Random number: {r.Next(1, 3)}");
                             Console.WriteLine("Hit any key");
                             Console.ReadKey();
                         }
-                        
 
+                    }
+                    break;
+                case 7: // Il tuo test specifico per BFS con persistenza
+                    {
+                        Random rnd = new Random();
+                        databaseFilePath = @"C:\Progetti\EvolutiveSystem\Database\miu_data.db";
+                        SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath);
+
+                        // Istanzia MIUDatabaseManager e MIURepository con logger
+                        MIUDatabaseManager _dbManager = new MIUDatabaseManager(_schemaLoader, _logger);
+                        IMIUDataManager _dataManager = (IMIUDataManager)_dbManager;
+                        _repository = new MIURepository(_dataManager, _logger); // Assegna al campo statico
+
+                        List<RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
+                        RegoleMIUManager.CaricaRegoleDaOggettoRepository(regoleMIUList);
+
+                        RegoleMIUManager.OnRuleApplied += RegoleMIUManager_OnRuleApplied;
+                        RegoleMIUManager.OnSolutionFound += RegoleMIUManager_OnSolutionFound;
+
+                        // Stringhe specifiche per il test BFS
+                        string testStartStringStandard = "MUUIIIMMMMI";
+                        string testTargetStringStandard = "MUMMMMIUMUMMMMIU";
+
+                        // Inserisci la ricerca iniziale e ottieni l'ID
+                        _currentSearchId = _repository.InsertSearch(testStartStringStandard, testTargetStringStandard, "BFS"); // Salva le stringhe standard per initial/target
+
+                        _logger.Log(LogLevel.INFO, $"--- Inizio Test Derivazione Specifica (BFS) con persistenza: {testStartStringStandard} -> {testTargetStringStandard} ---");
+
+                        // Le stringhe da passare a TrovaDerivazioneBFS devono essere compresse
+                        string compressedStart = MIUStringConverter.InflateMIUString(testStartStringStandard);
+                        string compressedTarget = MIUStringConverter.InflateMIUString(testTargetStringStandard);
+
+                        // Richiama TrovaDerivazioneBFS passando l'ID della ricerca
+                        List<PathStepInfo> miuPath = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, compressedStart, compressedTarget, passi);
+
+                        if (miuPath != null)
+                        {
+                            _logger.Log(LogLevel.INFO, $"\n--- Percorso trovato per '{testStartStringStandard}' -> '{testTargetStringStandard}': ---");
+                            foreach (PathStepInfo step in miuPath)
+                            {
+                                // Recupera la stringa standard per il log
+                                string logMessage = $"Stato: {step.StateStringStandard}";
+                                if (step.AppliedRuleID.HasValue)
+                                {
+                                    RegolaMIU appliedRule = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == step.AppliedRuleID.Value);
+                                    logMessage += $", Regola Applicata: {appliedRule?.Nome ?? "Sconosciuta"} (ID: {step.AppliedRuleID.Value})";
+                                }
+                                if (step.ParentStateStringStandard != null)
+                                {
+                                    logMessage += $", Parent: {step.ParentStateStringStandard}";
+                                }
+                                _logger.Log(LogLevel.INFO, logMessage);
+                            }
+                        }
+                        else
+                        {
+                            _logger.Log(LogLevel.INFO, $"\n--- Nessun percorso trovato per '{testStartStringStandard}' -> '{testTargetStringStandard}' ---");
+                        }
+                        _logger.Log(LogLevel.INFO, "--- Fine Test Derivazione Specifica ---");
                     }
                     break;
             }
@@ -144,168 +251,127 @@ namespace MIU.Core.tester
 
         private static void RegoleMIUManager_OnSolutionFound(object sender, SolutionFoundEventArgs e)
         {
-            Console.WriteLine($"ElapsedMilliseconds: {e.ElapsedMilliseconds} ElapsedTicks: {e.ElapsedTicks} InitialString: {e.InitialString} MaxDepthReached: {e.MaxDepthReached} NodesExplored: {e.NodesExplored} Path: {e.Path} {e.StepsTaken} Success: {e.Success} TargetString: {e.TargetString}");
+            // Converti la lista di PathStepInfo in una stringa leggibile per il log/console
+            string pathString = "N/A";
+            if (e.SolutionPathSteps != null && e.SolutionPathSteps.Any())
+            {
+                pathString = string.Join(" -> ", e.SolutionPathSteps.Select(step => step.StateStringStandard));
+            }
+
+            string message = $"SearchID: {e.SearchID} ElapsedMilliseconds: {e.ElapsedMilliseconds} ElapsedTicks: {e.ElapsedTicks} InitialString: {e.InitialString} MaxDepthReached: {e.MaxDepthReached} NodesExplored: {e.NodesExplored} Path: {pathString} StepsTaken: {e.StepsTaken} Success: {e.Success} TargetString: {e.TargetString}";
+            Console.WriteLine(message);
+            _logger.Log(e.Success ? LogLevel.INFO : LogLevel.WARNING, message);
+
+            // Persistenza dei dati della ricerca complessiva
+            _repository.UpdateSearch(e.SearchID, e.Success, e.ElapsedMilliseconds, e.StepsTaken, e.NodesExplored, e.MaxDepthReached);
+
+            // Persistenza dei passi del percorso della soluzione (solo se la ricerca ha avuto successo)
+            if (e.Success && e.SolutionPathSteps != null)
+            {
+                for (int i = 0; i < e.SolutionPathSteps.Count; i++)
+                {
+                    PathStepInfo currentStep = e.SolutionPathSteps[i];
+
+                    // Upsert dello stato corrente
+                    long currentStateId = _repository.UpsertMIUState(currentStep.StateStringStandard);
+
+                    // Upsert dello stato genitore (se esiste)
+                    long? parentStateId = null;
+                    if (currentStep.ParentStateStringStandard != null)
+                    {
+                        parentStateId = _repository.UpsertMIUState(currentStep.ParentStateStringStandard);
+                    }
+
+                    // Determina se questo passo è il target
+                    bool isTarget = (currentStep.StateStringStandard == MIUStringConverter.DeflateMIUString(e.TargetString));
+
+                    // Inserisce il passo del percorso
+                    _repository.InsertSolutionPathStep(
+                        e.SearchID,
+                        i + 1, // StepNumber
+                        currentStateId,
+                        parentStateId,
+                        currentStep.AppliedRuleID,
+                        isTarget,
+                        e.Success, // isSuccess si riferisce al successo dell'intera ricerca
+                        i // Depth
+                    );
+                }
+            }
         }
 
         private static void RegoleMIUManager_OnRuleApplied(object sender, RuleAppliedEventArgs e)
         {
-            Console.WriteLine($"AppliedRuleID: {e.AppliedRuleID} AppliedRuleName: {e.AppliedRuleName} CurrentDepth: {e.CurrentDepth}  ");
+            string message = $"AppliedRuleID: {e.AppliedRuleID} AppliedRuleName: {e.AppliedRuleName} OriginalString: {e.OriginalString} NewString: {e.NewString} CurrentDepth: {e.CurrentDepth}";
+            Console.WriteLine(message);
+            _logger.Log(LogLevel.DEBUG, message);
+
+            // Persistenza dell'applicazione della regola
+            // Ottieni gli ID degli stati coinvolti
+            long parentStateId = _repository.UpsertMIUState(e.OriginalString);
+            long newStateId = _repository.UpsertMIUState(e.NewString);
+
+            _repository.InsertRuleApplication(
+                _currentSearchId, // Usa l'ID della ricerca corrente
+                parentStateId,
+                newStateId,
+                e.AppliedRuleID,
+                e.CurrentDepth
+            );
         }
 
-        private static void RicercaDiDerivazioneDFS(string startString, string targetString, long maxProfondita)
+        private static void RicercaDiDerivazioneDFS(long searchId, string startString, string targetString, long maxProfondita)
         {
+            Console.WriteLine($"Inizio Ricerca DFS da '{startString}' a '{targetString}' (Max Profondità: {maxProfondita})");
+            _logger.Log(LogLevel.INFO, $"Inizio Ricerca DFS da '{startString}' a '{targetString}' (Max Profondità: {maxProfondita})");
 
-            List<string> percorsoDFS = RegoleMIUManager.TrovaDerivazioneDFS(startString, targetString, maxProfondita);
+            // Le stringhe da passare a TrovaDerivazioneDFS devono essere compresse
+            string compressedStart = MIUStringConverter.InflateMIUString(startString);
+            string compressedTarget = MIUStringConverter.InflateMIUString(targetString);
+
+            List<PathStepInfo> percorsoDFS = RegoleMIUManager.TrovaDerivazioneDFS(searchId, compressedStart, compressedTarget, maxProfondita);
 
             if (percorsoDFS != null)
             {
                 Console.WriteLine("Percorso DFS trovato:");
+                _logger.Log(LogLevel.INFO, "Percorso DFS trovato:");
                 foreach (var s in percorsoDFS)
                 {
-                    Console.WriteLine(s);
+                    Console.WriteLine(s.StateStringStandard); // Stampa la stringa standard
+                    _logger.Log(LogLevel.INFO, s.StateStringStandard);
                 }
             }
             else
             {
                 Console.WriteLine($"Nessuna derivazione trovata con DFS entro la profondità {maxProfondita}.");
+                _logger.Log(LogLevel.INFO, $"Nessuna derivazione trovata con DFS entro la profondità {maxProfondita}.");
             }
         }
-        private static void RicercaDiDerivazioneBFS(string inizio, string fine, long passi)
+        private static void RicercaDiDerivazioneBFS(long searchId, string inizio, string fine, long passi)
         {
             Console.WriteLine($"inizio: {inizio} fine: {fine} passi: {passi}");
-            List<string> miu = RegoleMIUManager.TrovaDerivazioneBFS(inizio, fine, passi);
+            _logger.Log(LogLevel.INFO, $"Inizio Ricerca BFS da '{inizio}' a '{fine}' (Max Passi: {passi})");
+
+            // Le stringhe da passare a TrovaDerivazioneBFS devono essere compresse
+            string compressedInizio = MIUStringConverter.InflateMIUString(inizio);
+            string compressedFine = MIUStringConverter.InflateMIUString(fine); // Era un errore qui, deve essere DeflateString
+
+            List<PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(searchId, compressedInizio, compressedFine, passi);
             if (miu != null)
             {
-                foreach (string item in miu)
+                Console.WriteLine("Percorso BFS trovato:");
+                _logger.Log(LogLevel.INFO, "Percorso BFS trovato:");
+                foreach (PathStepInfo item in miu)
                 {
-                    Console.WriteLine(item);
+                    Console.WriteLine(item.StateStringStandard); // Stampa la stringa standard
+                    _logger.Log(LogLevel.INFO, item.StateStringStandard);
                 }
             }
             else
-                Console.WriteLine("FAIL!");
-        } 
-        private static void ApplicazioneRegoleMIU()
-        {
-            Console.OutputEncoding = System.Text.Encoding.UTF8; // Per visualizzare correttamente i caratteri speciali
-
-            // 1. Creazione di un database mock
-            EvolutiveSystem.Core.Database mockDatabase = new EvolutiveSystem.Core.Database();
-
-            // 2. Creazione della tabella "RegoleMIU"
-            EvolutiveSystem.Core.Table regoleTable = new EvolutiveSystem.Core.Table { TableName = "RegoleMIU" };
-
-            // 3. Aggiunta di record di regole alla tabella
-            // Regola 1: M -> MU (se la stringa termina con M)
-            regoleTable.DataRecords.Add(new EvolutiveSystem.Core.SerializableDictionary<string, object>
-        {
-            { "ID", "R1" },
-            { "Nome", "Regola 1 (M->MU)" },
-            { "Descrizione", "Aggiunge una U alla fine di una stringa che termina con M." },
-            { "Pattern", "M$" }, // $ indica la fine della stringa
-            { "Sostituzione", "MU" }
-        });
-
-            // Regola 2: IU -> U (se IU è presente)
-            regoleTable.DataRecords.Add(new EvolutiveSystem.Core.SerializableDictionary<string, object>
-        {
-            { "ID", "R2" },
-            { "Nome", "Regola 2 (IU->U)" },
-            { "Descrizione", "Sostituisce IU con U." },
-            { "Pattern", "IU" },
-            { "Sostituzione", "U" }
-        });
-
-            // Regola 3: UU -> (vuoto) (se UU è presente)
-            regoleTable.DataRecords.Add(new EvolutiveSystem.Core.SerializableDictionary<string, object>
-        {
-            { "ID", "R3" },
-            { "Nome", "Regola 3 (UU->)" },
-            { "Descrizione", "Rimuove le occorrenze di UU." },
-            { "Pattern", "UU" },
-            { "Sostituzione", "" } // Sostituzione con stringa vuota per rimuovere
-        });
-
-            // Regola 4: Qualsiasi stringa che inizia con 'I' -> 'MI'
-            regoleTable.DataRecords.Add(new EvolutiveSystem.Core.SerializableDictionary<string, object>
-        {
-            { "ID", "R4" },
-            { "Nome", "Regola 4 (I...->MI)" },
-            { "Descrizione", "Aggiunge M all'inizio di una stringa che inizia con I." },
-            { "Pattern", "^I" }, // ^ indica l'inizio della stringa
-            { "Sostituzione", "MI" }
-        });
-
-            // Regola 5: Sostituisce 'X' con 'Y' (esempio di regola che non si applica sempre)
-            regoleTable.DataRecords.Add(new EvolutiveSystem.Core.SerializableDictionary<string, object>
-        {
-            { "ID", "R5" },
-            { "Nome", "Regola 5 (X->Y)" },
-            { "Descrizione", "Sostituisce la lettera X con Y." },
-            { "Pattern", "X" },
-            { "Sostituzione", "Y" }
-        });
-
-            mockDatabase.Tables.Add(regoleTable);
-
-            // 4. Caricamento delle regole tramite RegoleMIUManager
-            Console.WriteLine("--- Caricamento delle regole MIU ---");
-            //MIU.Core.RegoleMIUManager.CaricaRegoleDaOggettoDatabase(mockDatabase);
-            Console.WriteLine("------------------------------------");
-
-            // 5. Test di applicazione delle regole
-            Console.WriteLine("\n--- Test di applicazione delle regole ---");
-
-            // Test Case 1: Stringa semplice che dovrebbe attivare R1
-            string test1 = "MI";
-            MIU.Core.RegoleMIUManager.ApplicaRegole(test1);
-            Console.WriteLine("\n------------------------------------");
-
-            // Test Case 2: Stringa che dovrebbe attivare R2 e poi R3
-            string test2 = "MIIUUI";
-            MIU.Core.RegoleMIUManager.ApplicaRegole(test2);
-            Console.WriteLine("\n------------------------------------");
-
-            // Test Case 3: Stringa che inizia con I e dovrebbe attivare R4
-            string test3 = "I";
-            MIU.Core.RegoleMIUManager.ApplicaRegole(test3);
-            Console.WriteLine("\n------------------------------------");
-
-            // Test Case 4: Stringa senza corrispondenze iniziali
-            string test4 = "ABCM";
-            MIU.Core.RegoleMIUManager.ApplicaRegole(test4);
-            Console.WriteLine("\n------------------------------------");
-
-            // Test Case 5: Stringa con pattern che non si applica
-            string test5 = "MIU";
-            MIU.Core.RegoleMIUManager.ApplicaRegole(test5);
-            Console.WriteLine("\n------------------------------------");
-
-            // Test Case 6: Stringa con una X
-            string test6 = "MIX";
-            MIU.Core.RegoleMIUManager.ApplicaRegole(test6);
-            Console.WriteLine("\n------------------------------------");
+            {
+                Console.WriteLine("FAIL! Nessun percorso BFS trovato.");
+                _logger.Log(LogLevel.WARNING, "FAIL! Nessun percorso BFS trovato.");
+            }
         }
-        //private static void loadDatabase()
-        //{
-        //    string miuProjectXmlPath = (Path.Combine(@"C:\Progetti\EvolutiveSystem\xml\", "MIUProject.xml"));
-        //    MiuRulesLoader loader = new MiuRulesLoader();
-
-        //    // Tenta di caricare le regole
-        //    bool success = loader.LoadMiuRulesFromFile(miuProjectXmlPath);
-
-        //    if (success)
-        //    {
-        //        Console.WriteLine("\n--- Regole MIU Caricate ---");
-        //        foreach (var rule in RegoleMIUManager.Regole)
-        //        {
-        //            Console.WriteLine($"ID: {rule.Id}, Nome: {rule.Nome}, Pattern: {rule.Pattern}");
-        //            // Puoi stampare tutti i dettagli che desideri
-        //        }
-        //    }
-        //    else
-        //    {
-        //        Console.WriteLine("\nErrore: Impossibile caricare le regole MIU.");
-        //    }
-        //}
     }
 }

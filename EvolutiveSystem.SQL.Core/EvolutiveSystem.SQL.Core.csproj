@@ -38,7 +38,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -48,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EvolutiveSystem.SQL.Core.cs" />
+    <Compile Include="MIUDatabaseManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -57,6 +57,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="RRU_EvolutiveSystem.pfx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
+      <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
+      <Name>MasterLogMutex</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
+      <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
+      <Name>MIU.Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

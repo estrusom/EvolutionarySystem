@@ -1,4 +1,5 @@
-﻿using System;
+﻿//creato 5.6.2025 0.59
+using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
@@ -224,6 +225,35 @@ namespace EvolutiveSystem.SQL.Core
                 ret = cmdUpdate.ExecuteNonQuery();
                 return ret;
             }
+        }
+        public long SQLiteInsert(string SqlInsert)
+        {
+            long newRowId = -1;
+            try
+            {
+                using (var connection = new SQLiteConnection(this._connectionString))
+                {
+                    connection.Open();
+                    using (var command = new SQLiteCommand(SqlInsert, connection))
+                    {
+                        command.CommandType = System.Data.CommandType.Text;
+                        command.ExecuteNonQuery(); // Esegue l'INSERT
+
+                        // Recupera l'ID dell'ultima riga inserita
+                        using (var idCommand = new SQLiteCommand("SELECT last_insert_rowid()", connection))
+                        {
+                            newRowId = (long)idCommand.ExecuteScalar();
+                        }
+                    }
+                }
+                Console.WriteLine($"[DB DEBUG] SQLiteInsert eseguita con successo. Nuova riga ID: {newRowId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DB ERROR] Errore in SQLiteInsert: {ex.Message}");
+                // Potresti voler loggare l'errore o gestirlo ulteriormente.
+            }
+            return newRowId;
         }
         public SQLiteDataReader SQLiteSelect(string SqlSelect, out List<string> FieldName)
         {

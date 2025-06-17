@@ -1,0 +1,568 @@
+﻿// creato 15/6/2025 02:13
+// sostituito 15/6/2025 02:23
+// CORREZIONE 17.6.25 16.18: Aggiunta implementazione dell'interfaccia IMIUDataManager.
+// MODIFICA 17.6.25 17.09: Correzione lettura della colonna 'ID' come long e conversione a stringa.
+// NUOVA MODIFICA 19.6.25: Integrazione di MasterLog.Logger.
+// NUOVA MODIFICA 19.6.25: Allineamento dei tipi in InsertRuleApplication e InsertSolutionPathStep con IMIUDataManager.
+// Modifica 20.6.25: Nessun cambiamento funzionale qui, solo re-invio per coerenza.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Data.SQLite;
+
+using MIU.Core;
+using MasterLog; // Necessario per la tua classe Logger
+
+namespace EvolutiveSystem.SQL.Core
+{
+    /// <summary>
+    /// Gestore del database MIU. Questa classe fornisce un'interfaccia di alto livello
+    /// per la persistenza dei dati relativi al sistema MIU (ricerche, stati, regole, statistiche, configurazione).
+    /// Ottiene la ConnectionString da SQLiteSchemaLoader e gestisce le proprie istanze
+    /// di SQLiteConnection e SQLiteTransaction per le operazioni di persistenza,
+    /// garantendo il controllo delle transazioni e l'uso di query parametrizzate.
+    /// Ora implementa l'interfaccia IMIUDataManager.
+    /// </summary>
+    public class MIUDatabaseManager : IMIUDataManager
+    {
+        private readonly SQLiteSchemaLoader _schemaLoader;
+        private readonly Logger _logger; // Campo per l'istanza del logger
+
+        /// <summary>
+        /// Costruttore di MIUDatabaseManager.
+        /// Riceve un'istanza di SQLiteSchemaLoader già configurata e pronta all'uso,
+        /// da cui ricaverà la ConnectionString.
+        /// </summary>
+        /// <param name="schemaLoader">L'istanza di SQLiteSchemaLoader che gestisce la connection string.</param>
+        /// <param name="logger">L'istanza del logger per la registrazione degli eventi.</param>
+        public MIUDatabaseManager(SQLiteSchemaLoader schemaLoader, Logger logger)
+        {
+            _schemaLoader = schemaLoader ?? throw new ArgumentNullException(nameof(schemaLoader), "SQLiteSchemaLoader non può essere nullo.");
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger), "Logger non può essere nullo.");
+            _logger.Log(LogLevel.DEBUG, "MIUDatabaseManager istanziato e ottiene ConnectionString da SQLiteSchemaLoader.");
+        }
+
+        // --- Metodi di Persistenza (Implementazione dell'interfaccia IMIUDataManager) ---
+
+        /// <summary>
+        /// Inserisce una nuova ricerca MIU nel database.
+        /// </summary>
+        /// <returns>L'ID della ricerca appena inserita, o -1 in caso di errore.</returns>
+        public long InsertSearch(string initialString, string targetString, string searchAlgorithm)
+        {
+            long lastId = -1;
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = $"INSERT INTO MIU_Searches (InitialString, TargetString, SearchAlgorithm, StartTime) VALUES (@initialString, @targetString, @searchAlgorithm, @startTime)";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@initialString", initialString);
+                        command.Parameters.AddWithValue("@targetString", targetString);
+                        command.Parameters.AddWithValue("@searchAlgorithm", searchAlgorithm);
+                        command.Parameters.AddWithValue("@startTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                        command.ExecuteNonQuery();
+
+                        using (var idCommand = new SQLiteCommand("SELECT last_insert_rowid()", connection))
+                        {
+                            lastId = (long)idCommand.ExecuteScalar();
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Search inserita: Initial='{initialString}', Target='{targetString}', Algo='{searchAlgorithm}'. ID: {lastId}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore in InsertSearch: {ex.Message}");
+            }
+            return lastId;
+        }
+
+        /// <summary>
+        /// Aggiorna una ricerca MIU esistente con i risultati finali.
+        /// </summary>
+        public void UpdateSearch(long searchId, bool success, double flightTimeMs, int stepsTaken, int nodesExplored, int maxDepthReached)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = $"UPDATE MIU_Searches SET Outcome = @outcome, EndTime = @endTime, StepsTaken = @stepsTaken, NodesExplored = @nodesExplored, MaxDepth = @maxDepth WHERE SearchID = @searchId";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@outcome", success ? "Success" : "Failure");
+                        command.Parameters.AddWithValue("@endTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                        command.Parameters.AddWithValue("@stepsTaken", stepsTaken);
+                        command.Parameters.AddWithValue("@nodesExplored", nodesExplored);
+                        command.Parameters.AddWithValue("@maxDepth", maxDepthReached);
+                        command.Parameters.AddWithValue("@searchId", searchId);
+                        command.ExecuteNonQuery();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Search '{searchId}' aggiornata: Success={success}, FlightTime={flightTimeMs}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore in UpdateSearch: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Inserisce o aggiorna uno stato MIU (una stringa MIU).
+        /// Se lo stato esiste già, ne incrementa l'uso. Altrimenti, lo inserisce.
+        /// </summary>
+        /// <param name="miuString">La stringa MIU standard (non compressa).</param>
+        /// <returns>L'ID dello stato MIU nel database.</returns>
+        public long UpsertMIUState(string miuString)
+        {
+            long stateId = -1;
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string selectSql = "SELECT StateID FROM MIU_States WHERE CurrentString = @miuString";
+                    using (var selectCommand = new SQLiteCommand(selectSql, connection))
+                    {
+                        selectCommand.Parameters.AddWithValue("@miuString", miuString);
+                        object result = selectCommand.ExecuteScalar();
+                        if (result != null)
+                        {
+                            stateId = (long)result;
+                            string updateSql = "UPDATE MIU_States SET UsageCount = UsageCount + 1, DiscoveryTime_Int = @timeInt, DiscoveryTime_Text = @timeText WHERE StateID = @stateId";
+                            using (var updateCommand = new SQLiteCommand(updateSql, connection))
+                            {
+                                updateCommand.Parameters.AddWithValue("@timeInt", DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                                updateCommand.Parameters.AddWithValue("@timeText", DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss"));
+                                updateCommand.Parameters.AddWithValue("@stateId", stateId);
+                                updateCommand.ExecuteNonQuery();
+                            }
+                            _logger.Log(LogLevel.DEBUG, $"MIUState '{miuString}' aggiornato. ID: {stateId}");
+                        }
+                        else
+                        {
+                            int stringLength = miuString.Length;
+                            long discoveryTimeInt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                            string discoveryTimeText = DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss");
+
+                            string insertSql = "INSERT INTO MIU_States (CurrentString, StringLength, DeflateString, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount) VALUES (@currentString, @stringLength, @deflateString, @hash, @timeInt, @timeText, 1); SELECT last_insert_rowid();";
+                            using (var insertCommand = new SQLiteCommand(insertSql, connection))
+                            {
+                                insertCommand.Parameters.AddWithValue("@currentString", miuString);
+                                insertCommand.Parameters.AddWithValue("@stringLength", stringLength);
+                                insertCommand.Parameters.AddWithValue("@deflateString", MIUStringConverter.InflateMIUString(miuString)); // Store compressed version
+                                insertCommand.Parameters.AddWithValue("@hash", miuString.GetHashCode().ToString()); // Simple hash for now
+                                insertCommand.Parameters.AddWithValue("@timeInt", discoveryTimeInt);
+                                insertCommand.Parameters.AddWithValue("@timeText", discoveryTimeText);
+                                stateId = (long)insertCommand.ExecuteScalar();
+                                _logger.Log(LogLevel.DEBUG, $"MIUState inserito: '{miuString}'. ID: {stateId}");
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore in UpsertMIUState: {ex.Message}");
+            }
+            return stateId;
+        }
+
+
+        /// <summary>
+        /// Registra un'applicazione di una regola MIU come parte di una ricerca.
+        /// </summary>
+        public void InsertRuleApplication(long searchId, long parentStateId, long newStateId, long appliedRuleID, int currentDepth)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = $"INSERT INTO MIU_RuleApplications (SearchID, ParentStateID, NewStateID, AppliedRuleID, CurrentDepth, Timestamp) VALUES (@searchId, @parentStateId, @newStateId, @appliedRuleID, @currentDepth, @timestamp)";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@searchId", searchId);
+                        command.Parameters.AddWithValue("@parentStateId", parentStateId);
+                        command.Parameters.AddWithValue("@newStateId", newStateId);
+                        command.Parameters.AddWithValue("@appliedRuleID", appliedRuleID);
+                        command.Parameters.AddWithValue("@currentDepth", currentDepth);
+                        command.Parameters.AddWithValue("@timestamp", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
+                        command.ExecuteNonQuery();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Applicazione Regola inserita: SearchID={searchId}, Parent={parentStateId}, New={newStateId}, Rule={appliedRuleID}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore in InsertRuleApplication: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Registra un passo del percorso della soluzione di una ricerca MIU.
+        /// </summary>
+        public void InsertSolutionPathStep(long searchId, int stepNumber, long stateId, long? parentStateId, long? appliedRuleID, bool isTarget, bool isSuccess, int depth)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = $"INSERT INTO MIU_Paths (SearchID, StepNumber, StateID, ParentStateID, AppliedRuleID, IsTarget, IsSuccess, Depth) VALUES (@searchId, @stepNumber, @stateId, @parentStateID, @appliedRuleID, @isTarget, @isSuccess, @depth)";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@searchId", searchId);
+                        command.Parameters.AddWithValue("@stepNumber", stepNumber);
+                        command.Parameters.AddWithValue("@stateId", stateId);
+                        command.Parameters.AddWithValue("@parentStateID", parentStateId.HasValue ? (object)parentStateId.Value : DBNull.Value);
+                        command.Parameters.AddWithValue("@appliedRuleID", appliedRuleID.HasValue ? (object)appliedRuleID.Value : DBNull.Value);
+                        command.Parameters.AddWithValue("@isTarget", isTarget ? 1 : 0);
+                        command.Parameters.AddWithValue("@isSuccess", isSuccess ? 1 : 0);
+                        command.Parameters.AddWithValue("@depth", depth);
+                        command.ExecuteNonQuery();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Passo Path soluzione inserito: SearchID={searchId}, Step={stepNumber}, StateID={stateId}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore in InsertSolutionPathStep: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Carica tutte le regole MIU dal database.
+        /// </summary>
+        /// <returns>Una lista di oggetti RegolaMIU.</returns>
+        public List<RegolaMIU> LoadRegoleMIU()
+        {
+            List<RegolaMIU> regole = new List<RegolaMIU>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            try
+                            {
+                                long id = reader.GetInt64(reader.GetOrdinal("ID"));
+                                string nome = reader.GetString(reader.GetOrdinal("Nome"));
+                                string pattern = reader.GetString(reader.GetOrdinal("Pattern"));
+                                string sostituzione = reader.GetString(reader.GetOrdinal("Sostituzione"));
+                                string descrizione = reader.GetString(reader.GetOrdinal("Descrizione"));
+
+                                regole.Add(new RegolaMIU(id, nome, descrizione, pattern, sostituzione));
+                            }
+                            catch (InvalidCastException ex)
+                            {
+                                _logger.Log(LogLevel.ERROR, $"Errore di cast durante la lettura di una colonna in LoadRegoleMIU.");
+                                for (int i = 0; i < reader.FieldCount; i++)
+                                {
+                                    string colName = reader.GetName(i);
+                                    string colTypeName = reader.GetDataTypeName(i);
+                                    object colValue = reader.GetValue(i);
+                                    _logger.Log(LogLevel.ERROR, $"  Colonna: '{colName}', Tipo DB: '{colTypeName}', Valore: '{colValue ?? "NULL"}' (Tipo runtime: {colValue?.GetType().Name ?? "NULL"})");
+                                }
+                                _logger.Log(LogLevel.ERROR, $"  Dettagli eccezione: {ex.Message}");
+                                throw;
+                            }
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, "RegoleMIU caricate dal database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore generale caricamento RegoleMIU: {ex.Message}. Restituisco lista vuota.");
+                return new List<RegolaMIU>();
+            }
+            return regole;
+        }
+
+        /// <summary>
+        /// Inserisce o aggiorna un elenco di regole MIU nel database.
+        /// Utilizza una transazione per garantire l'atomicità dell'operazione.
+        /// </summary>
+        public void UpsertRegoleMIU(List<RegolaMIU> regole)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        foreach (var regola in regole)
+                        {
+                            string sql = "INSERT OR REPLACE INTO RegoleMIU (ID, Nome, Pattern, Sostituzione, Descrizione) VALUES (@id, @nome, @pattern, @sostituzione, @descrizione)";
+                            using (var command = new SQLiteCommand(sql, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@id", regola.ID);
+                                command.Parameters.AddWithValue("@nome", regola.Nome);
+                                command.Parameters.AddWithValue("@pattern", regola.Pattern);
+                                command.Parameters.AddWithValue("@sostituzione", regola.Sostituzione);
+                                command.Parameters.AddWithValue("@descrizione", regola.Descrizione);
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Upserted {regole.Count} RegoleMIU al database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore salvataggio RegoleMIU: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Carica i parametri di configurazione dal database.
+        /// </summary>
+        /// <returns>Un dizionario con chiave=NomeParametro e valore=ValoreParametro.</returns>
+        public Dictionary<string, string> LoadMIUParameterConfigurator()
+        {
+            var config = new Dictionary<string, string>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT NomeParametro, ValoreParametro FROM MIUParameterConfigurator";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string nomeParametro = reader.GetString(reader.GetOrdinal("NomeParametro"));
+                            string valoreParametro = reader.GetString(reader.GetOrdinal("ValoreParametro"));
+                            config[nomeParametro] = valoreParametro;
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, "Parametri da MIUParameterConfigurator caricati.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore caricamento MIUParameterConfigurator: {ex.Message}. Restituisco configurazione vuota.");
+                return new Dictionary<string, string>();
+            }
+            return config;
+        }
+
+        /// <summary>
+        /// Salva (upsert) i parametri di configurazione nel database.
+        /// Utilizza una transazione per garantire l'atomicità dell'operazione.
+        /// </summary>
+        public void SaveMIUParameterConfigurator(Dictionary<string, string> config)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        foreach (var entry in config)
+                        {
+                            var stats = entry.Value;
+                            string sql = "INSERT OR REPLACE INTO MIUParameterConfigurator (NomeParametro, ValoreParametro) VALUES (@nomeParametro, @valoreParametro)";
+                            using (var command = new SQLiteCommand(sql, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@nomeParametro", entry.Key);
+                                command.Parameters.AddWithValue("@valoreParametro", entry.Value);
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Salvati {config.Count} parametri in MIUParameterConfigurator.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore salvataggio MIUParameterConfigurator: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Carica le statistiche delle regole di apprendimento dal database.
+        /// </summary>
+        /// <returns>Un dizionario di RuleStatistics, con chiave=RuleID.</returns>
+        public Dictionary<int, RuleStatistics> LoadRuleStatistics()
+        {
+            var ruleStats = new Dictionary<int, RuleStatistics>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT RuleID, ApplicationCount, EffectivenessScore, LastUpdated FROM Learning_RuleStatistics";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            int ruleId = reader.GetInt32(reader.GetOrdinal("RuleID"));
+                            int appCount = reader.GetInt32(reader.GetOrdinal("ApplicationCount"));
+                            double effScore = reader.GetDouble(reader.GetOrdinal("EffectivenessScore"));
+
+                            DateTime lastUpdated = DateTime.MinValue;
+                            if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
+                            {
+                                ruleStats[ruleId] = new RuleStatistics
+                                {
+                                    RuleID = ruleId,
+                                    ApplicationCount = appCount,
+                                    EffectivenessScore = effScore,
+                                    LastApplicationTimestamp = lastUpdated
+                                };
+                            }
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, "RuleStatistics caricate dal database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore caricamento RuleStatistics: {ex.Message}. Restituisco dizionario vuoto.");
+                return new Dictionary<int, RuleStatistics>();
+            }
+            return ruleStats;
+        }
+
+        /// <summary>
+        /// Salva (upsert) le statistiche delle regole di apprendimento nel database.
+        /// Utilizza una transazione per garantire l'atomicità dell'operazione.
+        /// </summary>
+        public void SaveRuleStatistics(Dictionary<int, RuleStatistics> ruleStats)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        foreach (var entry in ruleStats)
+                        {
+                            var stats = entry.Value;
+                            string sql = "INSERT OR REPLACE INTO Learning_RuleStatistics (RuleID, ApplicationCount, EffectivenessScore, LastUpdated) VALUES (@ruleId, @appCount, @effScore, @lastUpdated)";
+                            using (var command = new SQLiteCommand(sql, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@ruleId", stats.RuleID);
+                                command.Parameters.AddWithValue("@appCount", stats.ApplicationCount);
+                                command.Parameters.AddWithValue("@effScore", stats.EffectivenessScore.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                                command.Parameters.AddWithValue("@lastUpdated", stats.LastApplicationTimestamp.ToString("yyyy/MM/dd HH:mm:ss"));
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Salvate {ruleStats.Count} RuleStatistics nel database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore salvataggio RuleStatistics: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Carica le statistiche di transizione di apprendimento dal database.
+        /// </summary>
+        /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
+        public Dictionary<Tuple<string, int>, TransitionStatistics> LoadTransitionStatistics()
+        {
+            var transitionStats = new Dictionary<Tuple<string, int>, TransitionStatistics>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT ParentStringCompressed, AppliedRuleID, ApplicationCount, SuccessfulCount, LastUpdated FROM Learning_TransitionStatistics";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string parentString = reader.GetString(reader.GetOrdinal("ParentStringCompressed"));
+                            int appliedRuleId = reader.GetInt32(reader.GetOrdinal("AppliedRuleID"));
+                            int appCount = reader.GetInt32(reader.GetOrdinal("ApplicationCount"));
+                            int succCount = reader.GetInt32(reader.GetOrdinal("SuccessfulCount"));
+
+                            DateTime lastUpdated = DateTime.MinValue;
+                            if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
+                            {
+                                var key = Tuple.Create(parentString, appliedRuleId);
+                                transitionStats[key] = new TransitionStatistics
+                                {
+                                    ParentStringCompressed = parentString,
+                                    AppliedRuleID = appliedRuleId,
+                                    ApplicationCount = appCount,
+                                    SuccessfulCount = succCount,
+                                    LastUpdated = lastUpdated
+                                };
+                            }
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, "TransitionStatistics caricate dal database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore caricamento TransitionStatistics: {ex.Message}. Restituisco dizionario vuoto.");
+                return new Dictionary<Tuple<string, int>, TransitionStatistics>();
+            }
+            return transitionStats;
+        }
+
+        /// <summary>
+        /// Salva (upsert) le statistiche di transizione di apprendimento nel database.
+        /// Utilizza una transazione per garantire l'atomicità dell'operazione.
+        /// </summary>
+        public void SaveTransitionStatistics(Dictionary<Tuple<string, int>, TransitionStatistics> transitionStats)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        foreach (var entry in transitionStats)
+                        {
+                            var stats = entry.Value;
+                            string sql = "INSERT OR REPLACE INTO Learning_TransitionStatistics (ParentStringCompressed, AppliedRuleID, ApplicationCount, SuccessfulCount, LastUpdated) VALUES (@parentStringCompressed, @appliedRuleId, @appCount, @succCount, @lastUpdated)";
+                            using (var command = new SQLiteCommand(sql, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@parentStringCompressed", stats.ParentStringCompressed);
+                                command.Parameters.AddWithValue("@appliedRuleId", stats.AppliedRuleID);
+                                command.Parameters.AddWithValue("@appCount", stats.ApplicationCount);
+                                command.Parameters.AddWithValue("@succCount", stats.SuccessfulCount);
+                                command.Parameters.AddWithValue("@lastUpdated", stats.LastUpdated.ToString("yyyy/MM/dd HH:mm:ss"));
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Salvate {transitionStats.Count} TransitionStatistics nel database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore salvataggio TransitionStatistics: {ex.Message}");
+            }
+        }
+    }
+}

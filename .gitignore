@@ -362,3 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /CommandHandling
+"Database/miu_data.db" 
+Database/miu_data.db
+"Database/miu_data.db" 
