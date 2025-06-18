@@ -1,18 +1,28 @@
-﻿// creato 15/6/2025 02:13
+﻿// Data di riferimento: 4 giugno 2025 (questo file non esisteva prima)
+// creato 15/6/2025 02:13
 // sostituito 15/6/2025 02:23
 // CORREZIONE 17.6.25 16.18: Aggiunta implementazione dell'interfaccia IMIUDataManager.
 // MODIFICA 17.6.25 17.09: Correzione lettura della colonna 'ID' come long e conversione a stringa.
 // NUOVA MODIFICA 19.6.25: Integrazione di MasterLog.Logger.
 // NUOVA MODIFICA 19.6.25: Allineamento dei tipi in InsertRuleApplication e InsertSolutionPathStep con IMIUDataManager.
-// Modifica 20.6.25: Nessun cambiamento funzionale qui, solo re-invio per coerenza.
+// NUOVA MODIFICA 20.6.25: Implementazione dei metodi per la persistenza delle statistiche di apprendimento.
+// Questa interfaccia definisce il contratto per la gestione dei dati MIU.
+// Questa interfaccia definisce i metodi che devono essere implementati da qualsiasi gestore
+// di persistenza per il sistema MIU, garantendo un'astrazione dal meccanismo di storage sottostante.
+// Aggiornato 19.06.2025: Allineamento definitivo dei tipi per AppliedRuleID e ParentStateID a long/long?.
+// NUOVA MODIFICA 19.6.25 19.21: Aggiunta delle firme dei metodi per la persistenza delle statistiche di apprendimento.
+// File: C:\Progetti\EvolutiveSystem\SQL.Core\MIUDatabaseManager.cs
+// Data di riferimento: 20 giugno 2025
+// Data di riferimento: 20 giugno 2025 (Correzione definitiva tipi Dictionary a long)
+// Gestore del database MIU con implementazione per la persistenza delle statistiche di apprendimento.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data.SQLite;
-
 using MIU.Core;
 using MasterLog; // Necessario per la tua classe Logger
+using System.Globalization; // Per CultureInfo.InvariantCulture
 
 namespace EvolutiveSystem.SQL.Core
 {
@@ -22,7 +32,7 @@ namespace EvolutiveSystem.SQL.Core
     /// Ottiene la ConnectionString da SQLiteSchemaLoader e gestisce le proprie istanze
     /// di SQLiteConnection e SQLiteTransaction per le operazioni di persistenza,
     /// garantendo il controllo delle transazioni e l'uso di query parametrizzate.
-    /// Ora implementa l'interfaccia IMIUDataManager.
+    /// Implementa l'interfaccia IMIUDataManager.
     /// </summary>
     public class MIUDatabaseManager : IMIUDataManager
     {
@@ -396,25 +406,26 @@ namespace EvolutiveSystem.SQL.Core
         }
 
         /// <summary>
-        /// Carica le statistiche delle regole di apprendimento dal database.
+        /// Carica le statistiche di apprendimento delle regole dal database.
         /// </summary>
         /// <returns>Un dizionario di RuleStatistics, con chiave=RuleID.</returns>
-        public Dictionary<int, RuleStatistics> LoadRuleStatistics()
+        public Dictionary<long, RuleStatistics> LoadRuleStatistics() // Modificato il tipo della chiave a long
         {
-            var ruleStats = new Dictionary<int, RuleStatistics>();
+            var ruleStats = new Dictionary<long, RuleStatistics>();
             try
             {
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
                     connection.Open();
-                    string sql = "SELECT RuleID, ApplicationCount, EffectivenessScore, LastUpdated FROM Learning_RuleStatistics";
+                    string sql = "SELECT RuleID, ApplicationCount, SuccessfulCount, EffectivenessScore, LastUpdated FROM Learning_RuleStatistics";
                     using (var command = new SQLiteCommand(sql, connection))
                     using (var reader = command.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            int ruleId = reader.GetInt32(reader.GetOrdinal("RuleID"));
+                            long ruleId = reader.GetInt64(reader.GetOrdinal("RuleID"));
                             int appCount = reader.GetInt32(reader.GetOrdinal("ApplicationCount"));
+                            int succCount = reader.GetInt32(reader.GetOrdinal("SuccessfulCount"));
                             double effScore = reader.GetDouble(reader.GetOrdinal("EffectivenessScore"));
 
                             DateTime lastUpdated = DateTime.MinValue;
@@ -424,6 +435,7 @@ namespace EvolutiveSystem.SQL.Core
                                 {
                                     RuleID = ruleId,
                                     ApplicationCount = appCount,
+                                    SuccessfulCount = succCount,
                                     EffectivenessScore = effScore,
                                     LastApplicationTimestamp = lastUpdated
                                 };
@@ -436,7 +448,7 @@ namespace EvolutiveSystem.SQL.Core
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, $"Errore caricamento RuleStatistics: {ex.Message}. Restituisco dizionario vuoto.");
-                return new Dictionary<int, RuleStatistics>();
+                return new Dictionary<long, RuleStatistics>();
             }
             return ruleStats;
         }
@@ -445,7 +457,7 @@ namespace EvolutiveSystem.SQL.Core
         /// Salva (upsert) le statistiche delle regole di apprendimento nel database.
         /// Utilizza una transazione per garantire l'atomicità dell'operazione.
         /// </summary>
-        public void SaveRuleStatistics(Dictionary<int, RuleStatistics> ruleStats)
+        public void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats) // Modificato il tipo della chiave a long
         {
             try
             {
@@ -457,12 +469,13 @@ namespace EvolutiveSystem.SQL.Core
                         foreach (var entry in ruleStats)
                         {
                             var stats = entry.Value;
-                            string sql = "INSERT OR REPLACE INTO Learning_RuleStatistics (RuleID, ApplicationCount, EffectivenessScore, LastUpdated) VALUES (@ruleId, @appCount, @effScore, @lastUpdated)";
+                            string sql = "INSERT OR REPLACE INTO Learning_RuleStatistics (RuleID, ApplicationCount, SuccessfulCount, EffectivenessScore, LastUpdated) VALUES (@ruleId, @appCount, @succCount, @effScore, @lastUpdated)";
                             using (var command = new SQLiteCommand(sql, connection, transaction))
                             {
                                 command.Parameters.AddWithValue("@ruleId", stats.RuleID);
                                 command.Parameters.AddWithValue("@appCount", stats.ApplicationCount);
-                                command.Parameters.AddWithValue("@effScore", stats.EffectivenessScore.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                                command.Parameters.AddWithValue("@succCount", stats.SuccessfulCount);
+                                command.Parameters.AddWithValue("@effScore", stats.EffectivenessScore.ToString(CultureInfo.InvariantCulture));
                                 command.Parameters.AddWithValue("@lastUpdated", stats.LastApplicationTimestamp.ToString("yyyy/MM/dd HH:mm:ss"));
                                 command.ExecuteNonQuery();
                             }
@@ -482,9 +495,9 @@ namespace EvolutiveSystem.SQL.Core
         /// Carica le statistiche di transizione di apprendimento dal database.
         /// </summary>
         /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
-        public Dictionary<Tuple<string, int>, TransitionStatistics> LoadTransitionStatistics()
+        public Dictionary<Tuple<string, long>, TransitionStatistics> LoadTransitionStatistics() // Modificato il tipo della chiave a long
         {
-            var transitionStats = new Dictionary<Tuple<string, int>, TransitionStatistics>();
+            var transitionStats = new Dictionary<Tuple<string, long>, TransitionStatistics>();
             try
             {
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
@@ -497,14 +510,14 @@ namespace EvolutiveSystem.SQL.Core
                         while (reader.Read())
                         {
                             string parentString = reader.GetString(reader.GetOrdinal("ParentStringCompressed"));
-                            int appliedRuleId = reader.GetInt32(reader.GetOrdinal("AppliedRuleID"));
+                            long appliedRuleId = reader.GetInt64(reader.GetOrdinal("AppliedRuleID"));
                             int appCount = reader.GetInt32(reader.GetOrdinal("ApplicationCount"));
                             int succCount = reader.GetInt32(reader.GetOrdinal("SuccessfulCount"));
 
                             DateTime lastUpdated = DateTime.MinValue;
                             if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
                             {
-                                var key = Tuple.Create(parentString, appliedRuleId);
+                                var key = Tuple.Create(parentString, appliedRuleId); // La chiave del dizionario è long
                                 transitionStats[key] = new TransitionStatistics
                                 {
                                     ParentStringCompressed = parentString,
@@ -522,7 +535,7 @@ namespace EvolutiveSystem.SQL.Core
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, $"Errore caricamento TransitionStatistics: {ex.Message}. Restituisco dizionario vuoto.");
-                return new Dictionary<Tuple<string, int>, TransitionStatistics>();
+                return new Dictionary<Tuple<string, long>, TransitionStatistics>();
             }
             return transitionStats;
         }
@@ -531,7 +544,7 @@ namespace EvolutiveSystem.SQL.Core
         /// Salva (upsert) le statistiche di transizione di apprendimento nel database.
         /// Utilizza una transazione per garantire l'atomicità dell'operazione.
         /// </summary>
-        public void SaveTransitionStatistics(Dictionary<Tuple<string, int>, TransitionStatistics> transitionStats)
+        public void SaveTransitionStatistics(Dictionary<Tuple<string, long>, TransitionStatistics> transitionStats) // Modificato il tipo della chiave a long
         {
             try
             {

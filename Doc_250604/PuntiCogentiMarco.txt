@@ -1,0 +1,48 @@
+Fissiamo alcuni punti chiave:
+
+Determinare se una stringa è derivabile in base alle regole imposte -> trovare e implementare l'algoritmo
+
+La distanza necessaria per determinare una derivazione è una misura di tempo
+
+Definire la distribuzione statistica delle distanze potrebbe essere una cosa importante, determinare le stringhe raggiungibili in pochi passi, quelle a cui necessita più tempo per essere derivate e quelle che sono impossibili da derivare, che però potremmo già conoscere
+
+L'energia è uno scalare ma il momento o l'impulso no.
+
+Questo è importante:
+
+Se pensiamo alle stringhe come a degli "stati" nel nostro "spazio MIU", l'applicazione di una regola può essere vista come un'azione che "sposta" lo stato da una stringa a un'altra. Potremmo analogamente pensare che ogni stringa abbia un suo "momento" concettuale nello spazio vettoriale che andremo a definire.
+
+Questo è importante:
+
+"Una possibilità potrebbe essere che la rappresentazione vettoriale di una stringa catturi non solo la sua composizione (quali simboli contiene e in che ordine), ma anche in qualche modo la sua "tendenza" o le "direzioni" in cui le regole potrebbero trasformarla più facilmente."
+
+
+
+Questi sono i concetti su cui devo ragionare
+
+
+
+
+Questa è l'idea di Gemini
+
+Fissiamo alcuni punti chiave:
+
+Determinare se una stringa è derivabile in base alle regole imposte -> trovare e implementare l'algoritmo
+
+La distanza necessaria per determinare una derivazione è una misura di tempo
+
+Definire la distribuzione statistica delle distanze potrebbe essere una cosa importante, determinare le stringhe raggiungibili in pochi passi, quelle a cui necessita più tempo per essere derivate e quelle che sono impossibili da derivare, che però potremmo già conoscere
+
+L'energia è uno scalare ma il momento o l'impulso no.
+
+Questo è importante:
+
+Se pensiamo alle stringhe come a degli "stati" nel nostro "spazio MIU", l'applicazione di una regola può essere vista come un'azione che "sposta" lo stato da una stringa a un'altra. Potremmo analogamente pensare che ogni stringa abbia un suo "momento" concettuale nello spazio vettoriale che andremo a definire.
+
+Questo è importante:
+
+"Una possibilità potrebbe essere che la rappresentazione vettoriale di una stringa catturi non solo la sua composizione (quali simboli contiene e in che ordine), ma anche in qualche modo la sua "tendenza" o le "direzioni" in cui le regole potrebbero trasformarla più facilmente."
+
+
+
+Questi sono i concetti su cui devo ragionare

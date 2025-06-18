@@ -1,0 +1,145 @@
+CREATE TABLE Learning_RuleStatistics (
+    RuleID             INTEGER PRIMARY KEY,
+    ApplicationCount   INTEGER NOT NULL
+                               DEFAULT 0,
+    EffectivenessScore REAL    NOT NULL
+                               DEFAULT 0.0,
+    LastUpdated        TEXT    NOT NULL
+);
+
+
+CREATE TABLE Learning_TransitionStatistics (
+    ParentStringCompressed TEXT    NOT NULL,
+    AppliedRuleID          INTEGER NOT NULL,
+    ApplicationCount       INTEGER NOT NULL
+                                   DEFAULT 0,
+    SuccessfulCount        INTEGER NOT NULL
+                                   DEFAULT 0,
+    LastUpdated            TEXT    NOT NULL,
+    PRIMARY KEY (
+        ParentStringCompressed,
+        AppliedRuleID
+    ),
+    FOREIGN KEY (
+        AppliedRuleID
+    )
+    REFERENCES RegoleMIU (ID) 
+);
+
+
+CREATE TABLE MIU_Actions (
+    ID                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    OperationID        INTEGER,
+    OperationType      TEXT    NOT NULL,
+    OperationData      TEXT,
+    OperationTime_Int  INTEGER,
+    OperationTime_Text TEXT
+);
+
+
+CREATE TABLE MIU_Paths (
+    PathID        INTEGER PRIMARY KEY AUTOINCREMENT,
+    SearchID      INTEGER NOT NULL,
+    StepNumber    INTEGER NOT NULL,
+    StateID       INTEGER NOT NULL,
+    ParentStateID INTEGER,
+    AppliedRuleID INTEGER,
+    IsTarget      BOOLEAN DEFAULT FALSE,
+    IsSuccess     BOOLEAN,
+    Depth         INTEGER,
+    FOREIGN KEY (
+        SearchID
+    )
+    REFERENCES MIU_Searches (SearchID),
+    FOREIGN KEY (
+        StateID
+    )
+    REFERENCES MIU_States (StateID),
+    FOREIGN KEY (
+        ParentStateID
+    )
+    REFERENCES MIU_States (StateID),
+    FOREIGN KEY (
+        AppliedRuleID
+    )
+    REFERENCES RegoleMIU (ID) 
+);
+
+
+CREATE TABLE MIU_RuleApplications (
+    ApplicationID INTEGER PRIMARY KEY AUTOINCREMENT,
+    SearchID      INTEGER NOT NULL,
+    ParentStateID INTEGER NOT NULL,
+    NewStateID    INTEGER NOT NULL,
+    AppliedRuleID INTEGER NOT NULL,
+    CurrentDepth  INTEGER NOT NULL,
+    Timestamp     TEXT    NOT NULL,
+    FOREIGN KEY (
+        SearchID
+    )
+    REFERENCES MIU_Searches (SearchID),
+    FOREIGN KEY (
+        ParentStateID
+    )
+    REFERENCES MIU_States (StateID),
+    FOREIGN KEY (
+        NewStateID
+    )
+    REFERENCES MIU_States (StateID),
+    FOREIGN KEY (
+        AppliedRuleID
+    )
+    REFERENCES RegoleMIU (ID) 
+);
+
+
+CREATE TABLE MIU_Searches (
+    SearchID        INTEGER  PRIMARY KEY AUTOINCREMENT,
+    InitialString   TEXT     NOT NULL,
+    TargetString    TEXT     NOT NULL,
+    SearchAlgorithm TEXT,
+    StartTime       DATETIME,
+    EndTime         DATETIME,
+    Outcome         TEXT,
+    StepsTaken      INTEGER,
+    MaxDepth        INTEGER,
+    NodesExplored   INTEGER
+);
+
+
+CREATE TABLE MIU_States (
+    StateID            INTEGER PRIMARY KEY AUTOINCREMENT,
+    CurrentString      TEXT    UNIQUE
+                               NOT NULL,
+    StringLength       INTEGER,
+    DeflateString      TEXT,
+    Hash               TEXT,
+    DiscoveryTime_Int  INTEGER,
+    DiscoveryTime_Text TEXT,
+    UsageCount         INTEGER DEFAULT 0
+);
+
+
+CREATE TABLE MIUParameterConfigurator (
+    ID              INTEGER PRIMARY KEY ON CONFLICT ROLLBACK AUTOINCREMENT
+                            UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    NomeParametro   TEXT    UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    ValoreParametro TEXT    UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL,
+    Descrizione     TEXT
+);
+
+
+CREATE TABLE RegoleMIU (
+    ID           INTEGER    PRIMARY KEY ON CONFLICT ROLLBACK AUTOINCREMENT
+                            UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    Nome         TEXT (16)  NOT NULL ON CONFLICT ROLLBACK,
+    Pattern      TEXT (16)  UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    Sostituzione TEXT (12)  UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    Descrizione  TEXT (512) 
+);

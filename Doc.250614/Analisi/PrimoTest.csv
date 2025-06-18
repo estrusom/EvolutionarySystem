@@ -1,0 +1,151 @@
+Prova 1,Prova 2,Prova 3
+"Analisi per: Iniziale='MI', Target='MIU'
+  Min Tempo: 0,01 ms
+  Max Tempo: 0,43 ms
+  Media Tempo: 0,04 ms
+  Dev. Std: 0,09 ms
+Analisi per: Iniziale='MI', Target='MII'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,13 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MI', Target='MIIII'
+  Min Tempo: 0,03 ms
+  Max Tempo: 1,26 ms
+  Media Tempo: 0,11 ms
+  Dev. Std: 0,26 ms
+Analisi per: Iniziale='MI', Target='MUI'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,11 ms
+  Media Tempo: 0,07 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MI', Target='MUIU'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,13 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MI', Target='MUIIU'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,11 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MIIIIII', Target='MUU'
+  Min Tempo: 0,02 ms
+  Max Tempo: 0,19 ms
+  Media Tempo: 0,04 ms
+  Dev. Std: 0,04 ms
+Analisi per: Iniziale='MII', Target='MU'
+  Min Tempo: 0,04 ms
+  Max Tempo: 0,13 ms
+  Media Tempo: 0,07 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MUI', Target='MIU'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,11 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MI', Target='MIIIIIIIII'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,19 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,03 ms","Analisi per: Iniziale='MI', Target='MIU'
+  Min Tempo: 0,01 ms
+  Max Tempo: 0,53 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,11 ms
+Analisi per: Iniziale='MI', Target='MII'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,10 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MI', Target='MIIII'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,37 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,07 ms
+Analisi per: Iniziale='MI', Target='MUI'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,10 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MI', Target='MUIU'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,17 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,03 ms
+Analisi per: Iniziale='MI', Target='MUIIU'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,09 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MIIIIII', Target='MUU'
+  Min Tempo: 0,02 ms
+  Max Tempo: 0,07 ms
+  Media Tempo: 0,04 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MII', Target='MU'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,09 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,01 ms
+Analisi per: Iniziale='MUI', Target='MIU'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,07 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,01 ms
+Analisi per: Iniziale='MI', Target='MIIIIIIIII'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,14 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,02 ms","
+Analisi per: Iniziale='MI', Target='MIU'
+  Min Tempo: 0,01 ms
+  Max Tempo: 0,53 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,11 ms
+Analisi per: Iniziale='MI', Target='MII'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,09 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,01 ms
+Analisi per: Iniziale='MI', Target='MIIII'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,41 ms
+  Media Tempo: 0,07 ms
+  Dev. Std: 0,08 ms
+Analisi per: Iniziale='MI', Target='MUI'
+  Min Tempo: 0,02 ms
+  Max Tempo: 0,11 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MI', Target='MUIU'
+  Min Tempo: 0,02 ms
+  Max Tempo: 0,08 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,01 ms
+Analisi per: Iniziale='MI', Target='MUIIU'
+  Min Tempo: 0,02 ms
+  Max Tempo: 0,08 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MIIIIII', Target='MUU'
+  Min Tempo: 0,02 ms
+  Max Tempo: 0,06 ms
+  Media Tempo: 0,03 ms
+  Dev. Std: 0,01 ms
+Analisi per: Iniziale='MII', Target='MU'
+  Min Tempo: 0,04 ms
+  Max Tempo: 0,09 ms
+  Media Tempo: 0,06 ms
+  Dev. Std: 0,01 ms
+Analisi per: Iniziale='MUI', Target='MIU'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,08 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,02 ms
+Analisi per: Iniziale='MI', Target='MIIIIIIIII'
+  Min Tempo: 0,03 ms
+  Max Tempo: 0,12 ms
+  Media Tempo: 0,05 ms
+  Dev. Std: 0,02 ms
+"

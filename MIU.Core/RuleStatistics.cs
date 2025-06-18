@@ -1,64 +1,78 @@
 ﻿// creato il 15.6.2025 1.56
-// File: MIU.Core\RuleStatistics.cs
+// File: C:\Progetti\EvolutiveSystem_250604\MIU.Core\RuleStatistics.cs
 // Questo file definisce la classe RuleStatistics, un modello di dati
 // per memorizzare le statistiche di applicazione e efficacia delle regole MIU.
+// Data: 20 giugno 2025
+// Descrizione: Classe per la memorizzazione delle statistiche di apprendimento per ciascuna regola MIU.
+
+
+
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace MIU.Core
 {
     /// <summary>
     /// Rappresenta le statistiche di apprendimento per una singola regola MIU.
-    /// Corrisponde alla tabella 'Learning_RuleStatistics' nel database.
+    /// Utilizzata per calcolare l'efficacia delle regole.
     /// </summary>
     public class RuleStatistics
     {
-        // Corrisponde a 'RuleID' nella tabella Learning_RuleStatistics
-        public int RuleID { get; set; }
+        /// <summary>
+        /// L'ID univoco della regola a cui si riferiscono queste statistiche.
+        /// Corrisponde all'ID della classe RegolaMIU.
+        /// Nota: Utilizziamo 'long' per allineare al tipo di ID di RegolaMIU.
+        /// </summary>
+        public long RuleID { get; set; }
 
-        // Corrisponde a 'ApplicationCount' nella tabella Learning_RuleStatistics
+        /// <summary>
+        /// Il numero totale di volte in cui questa regola è stata applicata.
+        /// </summary>
         public int ApplicationCount { get; set; }
 
-        // Corrisponde a 'EffectivenessScore' nella tabella Learning_RuleStatistics
+        /// <summary>
+        /// Il numero di volte in cui questa regola è stata applicata come parte
+        /// di un percorso di derivazione che ha portato a una soluzione di successo.
+        /// </summary>
+        public int SuccessfulCount { get; set; }
+
+        /// <summary>
+        /// Il punteggio di efficacia della regola, calcolato come SuccessfulCount / ApplicationCount.
+        /// Un valore più alto indica una regola più efficace nelle derivazioni di successo.
+        /// </summary>
         public double EffectivenessScore { get; set; }
 
-        // Corrisponde a 'LastUpdated' nella tabella Learning_RuleStatistics
+        /// <summary>
+        /// Timestamp dell'ultima volta in cui queste statistiche sono state aggiornate o la regola è stata applicata.
+        /// </summary>
         public DateTime LastApplicationTimestamp { get; set; }
 
         /// <summary>
         /// Costruttore predefinito.
+        /// Inizializza i contatori a zero e il punteggio a 0.0.
         /// </summary>
         public RuleStatistics()
         {
-            LastApplicationTimestamp = DateTime.UtcNow; // Inizializza con l'ora corrente UTC
+            ApplicationCount = 0;
+            SuccessfulCount = 0;
+            EffectivenessScore = 0.0;
+            LastApplicationTimestamp = DateTime.MinValue; // Valore predefinito
         }
 
         /// <summary>
-        /// Costruttore per inizializzare RuleStatistics con valori specifici.
+        /// Ricalcola l'EffectivenessScore basandosi sugli ApplicationCount e SuccessfulCount attuali.
+        /// Da chiamare ogni volta che SuccessfulCount o ApplicationCount vengono modificati.
         /// </summary>
-        public RuleStatistics(int ruleId, int applicationCount, double effectivenessScore, DateTime lastApplicationTimestamp)
+        public void RecalculateEffectiveness()
         {
-            RuleID = ruleId;
-            ApplicationCount = applicationCount;
-            EffectivenessScore = effectivenessScore;
-            LastApplicationTimestamp = lastApplicationTimestamp;
+            if (ApplicationCount > 0)
+            {
+                EffectivenessScore = (double)SuccessfulCount / ApplicationCount;
+            }
+            else
+            {
+                EffectivenessScore = 0.0; // Evita divisione per zero
+            }
         }
-
-        /// <summary>
-        /// Aggiorna le statistiche con una nuova applicazione della regola.
-        /// </summary>
-        public void IncrementApplicationCount(bool wasSuccessful)
-        {
-            ApplicationCount++;
-            // Logica per l'aggiornamento dell'EffectivenessScore può essere aggiunta qui in futuro.
-            // Per ora, aggiorniamo solo il conteggio.
-            LastApplicationTimestamp = DateTime.UtcNow;
-        }
-
-        // Potresti aggiungere altri metodi o proprietà, come AverageEffectiveness, ecc.
     }
 }

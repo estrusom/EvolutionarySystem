@@ -1,0 +1,41 @@
+Situazione al 10/6/2025 23.52
+
+MIU.Core.csproj
+
+STRUTTURA MIU.Core
+AnalisiMIU.cs			->	class TempoAnalisiRisultati	(NON USATA)
+					class DataAnalysis		(NON USATA)
+EmergingProcesses.cs		->	class EmergingProcesses 
+ILearningAdvisor.cs		->	interface ILearningAdvisor
+ILearningStatePersistence.cs	->	interface ILearningStatePersistence
+IMIURepository.cs		->	interface IMIURepository
+InflaeDeflateMIUstring.cs	->	class MIUStringConverter
+LearningModels.cs		->	class RuleStatistics
+					class TransitionStatistics
+MIU.Core.Topology.Map.cs	->	class TopologicalMap
+MIURules.cs			->	interface IRegolaMIU
+				->	class MIURuleSet
+MIUStringGenerator.cs		->	class MIUStringData
+					class MIUStringGenerator
+					class GenerationProgressEventArgs : EventArgs
+RegolaMIU.cs			->	class RegolaMIU
+RegoleMIU.cs			->	class EmergingProcesses
+					class SolutionFoundEventArgs 
+					class RuleAppliedEventArgs 
+					class RegoleMIUManager
+RicercaMIU.cs			->	class RicercaMIU
+RisultatoRicerca.cs		->	class RisultatoRicerca
+Rule.cs				->	class Rule
+State.cs			->	class State
+TransitionRecord.cs		->	class TransitionRecord
+
+
+EvolutiveSystem.SQL.Core.csproj
+
+DatabaseManager.cs		->	class DatabaseManager
+EvolutiveSystem.SQL.Core.cs	->	class Field
+					class Table
+					class Database
+					class SQLiteSchemaLoader
+MIUDatabaseManager.cs		->	class MIUDatabaseManager
+MIURepository.cs		->	class MIURepository 
