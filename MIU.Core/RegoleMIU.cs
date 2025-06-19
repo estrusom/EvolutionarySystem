@@ -1,11 +1,14 @@
 ﻿// File: C:\Progetti\EvolutiveSystem_250604\MIU.Core\RegoleMIU.cs
 // Data di riferimento: 4 giugno 2025
+// aggiornato 19.6.25 9.46
 // Contiene la classe RegoleMIUManager per la gestione delle regole MIU e gli eventi correlati.
 // CORREZIONE 17.6.25: Rimossa la direttiva 'using EvolutiveSystem.SQL.Core;' per eliminare la dipendenza inversa.
 // MODIFICA 17.6.25: Adattato TrovaDerivazioneBFS e TrovaDerivazioneDFS per operare su stringhe standard (decompresse).
 // NUOVA MODIFICA 19.6.25: Integrazione di MasterLog.Logger per sostituire Console.WriteLine e aggiunta LoggerInstance.
 // CORREZIONE 20.6.25: AGGIUNTA EFFETTIVA DELLA PROPRIETA' LoggerInstance MANCANTE.
 // NUOVA MODIFICA 20.6.25: Aggiornamento SolutionFoundEventArgs e logica BFS/DFS per persistenza completa.
+// MODIFICA 20.6.25: Implementazione della gestione interna di MaxProfonditaRicerca e MassimoPassiRicerca.
+// NUOVA MODIFICA 21.6.25: Aggiunta logica di ordinamento delle regole basata su RuleStatistics.
 
 using System;
 using System.Collections.Generic;
@@ -41,6 +44,7 @@ namespace MIU.Core
         public int StepsTaken { get; set; } // Numero di passi nella soluzione
         public int NodesExplored { get; set; } // Numero di nodi esplorati durante la ricerca
         public int MaxDepthReached { get; set; } // Profondità massima raggiunta
+        public bool FromCache { get; set; } // Indica se la soluzione è stata trovata in cache (aggiunto per completezza con altri membri)
     }
 
     // EventArgs per l'evento OnRuleApplied
@@ -57,6 +61,27 @@ namespace MIU.Core
     {
         // Proprietà statica per l'istanza del logger
         public static Logger LoggerInstance { get; set; }
+
+        // Proprietà statiche per i parametri di configurazione (MaxDepth e MaxSteps)
+        /// <summary>
+        /// Profondità massima consentita per le ricerche in profondità (DFS).
+        /// Viene impostata dall'orchestratore all'avvio.
+        /// </summary>
+        public static long MaxProfonditaRicerca { get; set; }
+
+        /// <summary>
+        /// Numero massimo di passi/nodi da esplorare per le ricerche in ampiezza (BFS).
+        /// Viene impostato dall'orchestratore all'avvio.
+        /// </summary>
+        public static long MassimoPassiRicerca { get; set; }
+
+        // NUOVO: Proprietà statica per accedere alle RuleStatistics caricate dall'orchestratore
+        /// <summary>
+        /// Riferimento al dizionario delle RuleStatistics correnti, caricato da Program.cs.
+        /// Utilizzato per l'ordinamento delle regole in base alla loro efficacia.
+        /// </summary>
+        public static Dictionary<long, RuleStatistics> CurrentRuleStatistics { get; set; }
+
 
         // Collezione statica di tutte le regole MIU disponibili.
         public static List<RegolaMIU> Regole { get; private set; } = new List<RegolaMIU>();
@@ -129,7 +154,27 @@ namespace MIU.Core
             do
             {
                 appliedAnyRule = false;
-                foreach (var rule in Regole)
+                // MODIFICA: Ordina le regole prima di applicarle
+                var orderedRules = Regole.OrderByDescending(rule =>
+                {
+                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out RuleStatistics stats))
+                    {
+                        return stats.EffectivenessScore;
+                    }
+                    return 0.0; // Punteggio predefinito per regole senza statistiche
+                })
+                .ThenByDescending(rule =>
+                {
+                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out RuleStatistics stats))
+                    {
+                        return stats.ApplicationCount;
+                    }
+                    return 0; // Conteggio predefinito per regole senza statistiche
+                })
+                .ToList();
+
+
+                foreach (var rule in orderedRules) // Usa le regole ordinate
                 {
                     if (rule.TryApply(currentStringStandard, out string newStringStandard))
                     {
@@ -139,7 +184,7 @@ namespace MIU.Core
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
                             OriginalString = currentStringStandard, // Stringa STANDARD
-                            NewString = newStringStandard,   // Stringa STANDARD
+                            NewString = newStringStandard,    // Stringa STANDARD
                             CurrentDepth = step
                         });
                         currentStringStandard = newStringStandard;
@@ -156,9 +201,10 @@ namespace MIU.Core
         /// <summary>
         /// Implementazione della ricerca in profondità (DFS) per trovare una derivazione.
         /// Opera su stringhe STANDARD internamente, ma accetta/restituisce stringhe COMPRESSE.
+        /// Utilizza la proprietà statica MaxProfonditaRicerca per il limite di profondità.
         /// </summary>
         /// <param name="searchId">L'ID della ricerca corrente per la persistenza.</param>
-        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed, long maxProfondita)
+        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed)
         {
             // Decomprimi le stringhe iniziali e target per la ricerca interna
             string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
@@ -200,6 +246,7 @@ namespace MIU.Core
                         TargetString = targetStringCompressed, // Stringa COMPRESSA target
                         Success = true,
                         ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                        FromCache = false, // Considera sempre false per ora
                         ElapsedTicks = stopwatch.ElapsedTicks,
                         SolutionPathSteps = currentPath, // Percorso completo già pronto
                         StepsTaken = currentPath.Count - 1,
@@ -210,9 +257,28 @@ namespace MIU.Core
                     return currentPath; // Restituisce percorso in PathStepInfo
                 }
 
-                if (currentPath.Count - 1 >= maxProfondita) continue; // errore Profondità massima raggiunta
+                if (currentPath.Count - 1 >= MaxProfonditaRicerca) continue; // Profondità massima raggiunta
 
-                foreach (var rule in Regole)
+                // MODIFICA: Ordina le regole prima di applicarle
+                var orderedRules = Regole.OrderByDescending(rule =>
+                {
+                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out RuleStatistics stats))
+                    {
+                        return stats.EffectivenessScore;
+                    }
+                    return 0.0; // Punteggio predefinito per regole senza statistiche
+                })
+                .ThenByDescending(rule =>
+                {
+                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out RuleStatistics stats))
+                    {
+                        return stats.ApplicationCount;
+                    }
+                    return 0; // Conteggio predefinito per regole senza statistiche
+                })
+                .ToList();
+
+                foreach (var rule in orderedRules) // Usa le regole ordinate
                 {
                     // TryApply opera su stringhe STANDARD
                     if (rule.TryApply(currentStandard, out string newStringStandard))
@@ -222,7 +288,7 @@ namespace MIU.Core
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
                             OriginalString = currentStandard, // Stringa STANDARD
-                            NewString = newStringStandard,   // Stringa STANDARD
+                            NewString = newStringStandard,    // Stringa STANDARD
                             CurrentDepth = currentPath.Count - 1 // Profondità corrente
                         });
 
@@ -252,6 +318,7 @@ namespace MIU.Core
                 Success = false,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                 ElapsedTicks = stopwatch.ElapsedTicks,
+                FromCache = false, // Considera sempre false per ora
                 SolutionPathSteps = null, // Percorso nullo se non trovato
                 StepsTaken = -1,
                 NodesExplored = nodesExplored,
@@ -265,9 +332,10 @@ namespace MIU.Core
         /// <summary>
         /// Implementazione della ricerca in ampiezza (BFS) per trovare la derivazione più breve.
         /// Opera su stringhe STANDARD internamente, ma accetta/restituisce una lista di PathStepInfo.
+        /// Utilizza la proprietà statica MassimoPassiRicerca per il limite di passi.
         /// </summary>
         /// <param name="searchId">L'ID della ricerca corrente per la persistenza.</param>
-        public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed, long maxPassi)
+        public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed)
         {
             // Decomprimi le stringhe iniziali e target per la ricerca interna
             string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
@@ -292,7 +360,7 @@ namespace MIU.Core
             int nodesExplored = 0;
             int maxDepthReached = 0;
 
-            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Inizio ricerca da '{startStringStandard}' a '{targetStringStandard}' (Max passi: {maxPassi})");
+            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Inizio ricerca da '{startStringStandard}' a '{targetStringStandard}' (Max passi: {MassimoPassiRicerca})");
 
             while (queue.Count > 0)
             {
@@ -312,6 +380,7 @@ namespace MIU.Core
                         Success = true,
                         ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                         ElapsedTicks = stopwatch.ElapsedTicks,
+                        FromCache = false, // Considera sempre false per ora
                         SolutionPathSteps = currentPath, // Percorso completo già pronto
                         StepsTaken = currentPath.Count - 1,
                         NodesExplored = nodesExplored,
@@ -321,13 +390,33 @@ namespace MIU.Core
                     return currentPath; // Restituisce percorso in PathStepInfo
                 }
 
-                if (currentPath.Count - 1 >= maxPassi)
+                if (currentPath.Count - 1 >= MassimoPassiRicerca)
                 {
-                    // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Raggiunta profondità massima ({maxPassi}) per '{currentStandard}'. Saltando esplorazione.");
+                    // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Raggiunta profondità massima ({MassimoPassiRicerca}) per '{currentStandard}'. Saltando esplorazione.");
                     continue; // Profondità massima raggiunta
                 }
 
-                foreach (var rule in Regole)
+                // MODIFICA: Ordina le regole prima di applicarle
+                var orderedRules = Regole.OrderByDescending(rule =>
+                {
+                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out RuleStatistics stats))
+                    {
+                        return stats.EffectivenessScore;
+                    }
+                    return 0.0; // Punteggio predefinito per regole senza statistiche
+                })
+                .ThenByDescending(rule =>
+                {
+                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out RuleStatistics stats))
+                    {
+                        return stats.ApplicationCount;
+                    }
+                    return 0; // Conteggio predefinito per regole senza statistiche
+                })
+                .ToList();
+
+
+                foreach (var rule in orderedRules) // Usa le regole ordinate
                 {
                     // TryApply opera su stringhe STANDARD
                     if (rule.TryApply(currentStandard, out string newStringStandard))
@@ -337,7 +426,7 @@ namespace MIU.Core
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
                             OriginalString = currentStandard, // Stringa STANDARD
-                            NewString = newStringStandard,   // Stringa STANDARD
+                            NewString = newStringStandard,    // Stringa STANDARD
                             CurrentDepth = currentPath.Count - 1 // Profondità corrente
                         });
 
@@ -353,7 +442,7 @@ namespace MIU.Core
                             };
                             List<PathStepInfo> newPath = new List<PathStepInfo>(currentPath) { newPathStep };
                             queue.Enqueue((newStringStandard, newPath));
-                            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Aggiunto nuovo stato: '{newStringStandard}' (da '{currentStandard}' con regola '{rule.Nome}'). Profondità: {currentPath.Count}. Coda: {queue.Count}");
+                            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Aggiunto nuovo stato: '{newStringStandard}' (da '{currentStandard}' con regola '{(rule.Nome)}'). Profondità: {currentPath.Count}. Coda: {queue.Count}");
                         }
                         else
                         {
@@ -372,6 +461,7 @@ namespace MIU.Core
                 Success = false,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                 ElapsedTicks = stopwatch.ElapsedTicks,
+                FromCache = false, // Considera sempre false per ora
                 SolutionPathSteps = null, // Percorso nullo se non trovato
                 StepsTaken = -1,
                 NodesExplored = nodesExplored,

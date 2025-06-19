@@ -1,0 +1,24 @@
++--------------------------+
+|     EvolutiveSystem-02  | ← UI grafica (client+server socket)
++--------------------------+
+           ↑      ↓
+           │ Comunicazione socket biunivoca
+           ↓      ↑
++--------------------------+
+|     SemantiProcessor     | ← Servizio centrale (gestisce MIU + database)
++--------------------------+
+           │
+           │ Usa
+           ↓
++--------------------------+        +--------------------------+
+|     MIU.Core             |        |  EvolutiveSystem.SQL.Core |
+|  - Logica MIU            |        |  - Accesso a SQLite        |
+|  - Regole e percorsi     |        +--------------------------+
+|  - Eventi e osservazioni |
++--------------------------+
+
+                     ▲
+        Test locale  │
++--------------------------+
+|   MIU.Core.Tester        |
++--------------------------+

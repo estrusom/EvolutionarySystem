@@ -312,7 +312,7 @@ namespace EvolutiveSystem_02
                     Settings.Default.DBFileName = openFileDialog.FileName;
                     Settings.Default.Save();
                     string databaseFilePath = openFileDialog.FileName;
-                    _schemaLoader = new SQLiteSchemaLoader(databaseFilePath);
+                    _schemaLoader = new SQLiteSchemaLoader(databaseFilePath, _logger);
                     _currentDatabaseSchema = _schemaLoader.LoadSchema();
                     PopolaTreeView(_currentDatabaseSchema); // Metodo per popolare la TreeView con lo schema
                     AppendToMonitor(Settings.Default.DBFileName);
@@ -336,7 +336,7 @@ namespace EvolutiveSystem_02
                     if (File.Exists(Settings.Default.DBFileName))
                     {
                         string databaseFilePath = Settings.Default.DBFileName;
-                        _schemaLoader = new SQLiteSchemaLoader(databaseFilePath);
+                        _schemaLoader = new SQLiteSchemaLoader(databaseFilePath, _logger);
                         _currentDatabaseSchema = _schemaLoader.LoadSchema();
                         PopolaTreeView(_currentDatabaseSchema); // Metodo per popolare la TreeView con lo schema
                         AppendToMonitor(Settings.Default.DBFileName);

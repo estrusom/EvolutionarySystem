@@ -1,20 +1,6 @@
 ﻿// File: C:\Progetti\EvolutiveSystem_250604\MIU.Core.tester\Program.cs
-// sostituito 16.6.25 12.02
-// Data di riferimento: 20 giugno 2025 (Correzione definitiva errori di compilazione e allineamento tipi)
-// sostituito 16.6.2025 12.10
-// sostituito 16.6.2025 12.16
-//  sostituito 16.6.2025 15.31
-// Corretto 17.6.25: Rimossi riferimenti a EvolutiveSystem.Core.
-// Aggiunta la definizione di SerializableDictionary direttamente in questo file.
-// Corretto l'uso di Database e Table per puntare a EvolutiveSystem.SQL.Core.
-// Aggiunta la definizione di SerializableDictionary direttamente in questo file (per compatibilità).
-// per risolvere gli errori su 'DataRecords' e pulire codice non funzionale.
-// NUOVA MODIFICA 17.6.25: Integrazione di MIURepository nel case 3 per il caricamento delle regole.
-// NUOVA MODIFICA 19.6.25: Integrazione di MasterLog.Logger.
-// NUOVA MODIFICA 20.6.25: Implementazione della persistenza dei dati di ricerca (Fase 1 roadmap).
-// Data di riferimento: 20 giugno 2025
-// Integrazione della logica principale per l'inizializzazione del logger,
-// la gestione del repository e l'integrazione delle metriche di apprendimento delle regole.
+// Data di riferimento: 21 giugno 2025
+// AGGIORNAMENTO 21.6.25: Assegnazione definitiva delle RuleStatistics caricate a RegoleMIUManager.CurrentRuleStatistics.
 
 using EvolutiveSystem.SQL.Core; // Per SQLiteSchemaLoader, Database, Table
 using System;
@@ -40,12 +26,17 @@ namespace MIU.Core.tester
 
     internal class Program
     {
-        private const long passi = 10; // Massima profondità di ricerca per BFS (esempi preesistenti)
+        // RIMOSSO: La costante 'passi' non è più hardcoded.
+        // private const long passi = 10; // Massima profondità di ricerca per BFS (esempi preesistenti)
 
         private static Logger _logger; // Istanza del logger
         private static MIURepository _repository; // Repository per la persistenza (reso statico per gli eventi)
         private static long _currentSearchId; // ID della ricerca corrente per correlare eventi (reso statico)
         private static Dictionary<long, RuleStatistics> _ruleStatistics; // DICTIONARY AGGIUNTO: Statistiche delle regole (RuleID è long)
+
+        // NUOVO: Campi per i parametri di configurazione caricati dal DB, con valori predefiniti
+        private static long _configuredMaxDepth = 10; // Valore predefinito per ProfonditaDiRicerca
+        private static long _configuredMaxSteps = 10; // Valore predefinito per MassimoPassiRicerca
 
         static void Main(string[] args)
         {
@@ -74,14 +65,44 @@ namespace MIU.Core.tester
             IMIUDataManager _dataManager = (IMIUDataManager)_dbManager;
             _repository = new MIURepository(_dataManager, _logger); // Assegna al campo statico
 
-            // NUOVO: Carica le statistiche delle regole all'avvio dell'applicazione
-            // Ora che i tipi sono allineati, non è più necessario il ToDictionary con cast
+            // Carica i parametri di configurazione dal database
+            var configParams = _repository.LoadMIUParameterConfigurator();
+            if (configParams.TryGetValue("ProfonditaDiRicerca", out string depthStr) && long.TryParse(depthStr, out long parsedDepth))
+            {
+                _configuredMaxDepth = parsedDepth;
+                _logger.Log(LogLevel.INFO, $"[Program INFO] Caricato ProfonditaDiRicerca dal DB: {_configuredMaxDepth}");
+            }
+            else
+            {
+                _logger.Log(LogLevel.WARNING, $"[Program WARNING] Parametro 'ProfonditaDiRicerca' non trovato o non valido. Usato valore predefinito: {_configuredMaxDepth}");
+            }
+
+            if (configParams.TryGetValue("MassimoPassiRicerca", out string stepsStr) && long.TryParse(stepsStr, out long parsedSteps))
+            {
+                _configuredMaxSteps = parsedSteps;
+                _logger.Log(LogLevel.INFO, $"[Program INFO] Caricato MassimoPassiRicerca dal DB: {_configuredMaxSteps}");
+            }
+            else
+            {
+                _logger.Log(LogLevel.WARNING, $"[Program WARNING] Parametro 'MassimoPassiRicerca' non trovato o non valido. Usato valore predefinito: {_configuredMaxSteps}");
+            }
+
+            // Imposta le proprietà statiche in RegoleMIUManager con i valori caricati
+            RegoleMIUManager.MaxProfonditaRicerca = _configuredMaxDepth;
+            RegoleMIUManager.MassimoPassiRicerca = _configuredMaxSteps;
+            _logger.Log(LogLevel.INFO, $"[Program INFO] RegoleMIUManager impostato con MaxProfonditaRicerca: {RegoleMIUManager.MaxProfonditaRicerca} e MassimoPassiRicerca: {RegoleMIUManager.MassimoPassiRicerca}");
+
+
+            // Carica le statistiche delle regole all'avvio dell'applicazione
             _ruleStatistics = _repository.LoadRuleStatistics();
             if (_ruleStatistics == null)
             {
                 _ruleStatistics = new Dictionary<long, RuleStatistics>();
             }
             _logger.Log(LogLevel.INFO, $"[Program INFO] Caricate {_ruleStatistics.Count} RuleStatistics all'avvio.");
+
+            // QUESTA È L'UNICA RIGA AGGIUNTA
+            RegoleMIUManager.CurrentRuleStatistics = _ruleStatistics;
 
 
             // Collega gli handler degli eventi
@@ -114,9 +135,10 @@ namespace MIU.Core.tester
 
                                 // Le stringhe da passare a TrovaDerivazioneBFS devono essere compresse
                                 string compressedSource = MIUStringConverter.InflateMIUString(MIUstringsSource[1]);
-                                string compressedDestination = MIUStringConverter.InflateMIUString(MIUstringDestination[1]);
+                                string compressedTarget = MIUStringConverter.InflateMIUString(MIUstringDestination[1]);
 
-                                List<PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, compressedSource, compressedDestination, passi);
+                                // Rimosso l'argomento 'passi'. RegoleMIUManager ora usa la sua proprietà statica.
+                                List<PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, compressedSource, compressedTarget);
                             }
                         }
                         else
@@ -165,7 +187,8 @@ namespace MIU.Core.tester
                         List<RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
                         RegoleMIUManager.CaricaRegoleDaOggettoRepository(regoleMIUList);
 
-                        long maxProfondita = 10;
+                        // RIMOSSO: La variabile locale 'maxProfondita' non è più usata.
+                        // long maxProfondita = 10;
                         int cntDwn = 22;
                         while (cntDwn >= 1)
                         {
@@ -177,7 +200,8 @@ namespace MIU.Core.tester
                                 // Le stringhe da passare a TrovaDerivazioneDFS devono essere compresse
                                 string compressedStart = MIUStringConverter.InflateMIUString(arrayString[0, y]);
                                 string compressedTarget = MIUStringConverter.InflateMIUString(arrayString[1, y]);
-                                RicercaDiDerivazioneDFS(_currentSearchId, compressedStart, compressedTarget, maxProfondita);
+                                // Rimosso l'argomento 'maxProfondita'. RegoleMIUManager ora usa la sua proprietà statica.
+                                RicercaDiDerivazioneDFS(_currentSearchId, compressedStart, compressedTarget);
                             }
                             cntDwn--;
                         }
@@ -212,11 +236,12 @@ namespace MIU.Core.tester
                         _logger.Log(LogLevel.INFO, $"--- Inizio Test Derivazione Specifica (BFS) con persistenza: {testStartStringStandard} -> {testTargetStringStandard} ---");
 
                         // Le stringhe da passare a TrovaDerivazioneBFS devono essere compresse
-                        string compressedStart = MIUStringConverter.InflateMIUString(testStartStringStandard);
+                        string compressedSource = MIUStringConverter.InflateMIUString(testStartStringStandard);
                         string compressedTarget = MIUStringConverter.InflateMIUString(testTargetStringStandard);
 
                         // Richiama TrovaDerivazioneBFS passando l'ID della ricerca
-                        List<PathStepInfo> miuPath = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, compressedStart, compressedTarget, passi);
+                        // Rimosso l'argomento 'passi'. RegoleMIUManager ora usa la sua proprietà statica.
+                        List<PathStepInfo> miuPath = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, compressedSource, compressedTarget);
 
                         if (miuPath != null)
                         {
@@ -248,7 +273,7 @@ namespace MIU.Core.tester
             Console.WriteLine("premi un tasto");
             Console.ReadKey();
 
-            // NUOVO: Salva le statistiche delle regole alla fine dell'esecuzione dell'applicazione
+            // Salva le statistiche delle regole alla fine dell'esecuzione dell'applicazione
             if (_ruleStatistics != null)
             {
                 _repository.SaveRuleStatistics(_ruleStatistics);
@@ -272,7 +297,7 @@ namespace MIU.Core.tester
             // Persistenza dei dati della ricerca complessiva
             _repository.UpdateSearch(e.SearchID, e.Success, e.ElapsedMilliseconds, e.StepsTaken, e.NodesExplored, e.MaxDepthReached);
 
-            // NUOVO: Aggiorna SuccessfulCount e EffectivenessScore per le regole nel percorso di successo
+            // Aggiorna SuccessfulCount e EffectivenessScore per le regole nel percorso di successo
             if (e.Success && e.SolutionPathSteps != null)
             {
                 foreach (PathStepInfo step in e.SolutionPathSteps)
@@ -360,7 +385,7 @@ namespace MIU.Core.tester
                 e.CurrentDepth
             );
 
-            // NUOVO: Aggiorna ApplicationCount per la regola applicata
+            // Aggiorna ApplicationCount per la regola applicata
             long ruleId = e.AppliedRuleID; // RuleID è long
             if (!_ruleStatistics.ContainsKey(ruleId))
             {
@@ -376,12 +401,12 @@ namespace MIU.Core.tester
         }
 
         // Metodo per la ricerca DFS (esistente, non modificato per le statistiche in questo step)
-        private static void RicercaDiDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed, long maxProfondita)
+        private static void RicercaDiDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed)
         {
-            Console.WriteLine($"Inizio Ricerca DFS da '{startStringCompressed}' a '{targetStringCompressed}' (Max Profondità: {maxProfondita})");
-            _logger.Log(LogLevel.INFO, $"Inizio Ricerca DFS da '{startStringCompressed}' a '{targetStringCompressed}' (Max Profondità: {maxProfondita})");
+            Console.WriteLine($"Inizio Ricerca DFS da '{startStringCompressed}' a '{targetStringCompressed}' (Max Profondità: {RegoleMIUManager.MaxProfonditaRicerca})"); // Modificato log
+            _logger.Log(LogLevel.INFO, $"Inizio Ricerca DFS da '{startStringCompressed}' a '{targetStringCompressed}' (Max Profondità: {RegoleMIUManager.MaxProfonditaRicerca})"); // Modificato log
 
-            List<PathStepInfo> percorsoDFS = RegoleMIUManager.TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed, maxProfondita);
+            List<PathStepInfo> percorsoDFS = RegoleMIUManager.TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed);
 
             if (percorsoDFS != null)
             {
@@ -395,18 +420,18 @@ namespace MIU.Core.tester
             }
             else
             {
-                Console.WriteLine($"Nessuna derivazione trovata con DFS entro la profondità {maxProfondita}.");
-                _logger.Log(LogLevel.INFO, $"Nessuna derivazione trovata con DFS entro la profondità {maxProfondita}.");
+                Console.WriteLine($"Nessuna derivazione trovata con DFS entro la profondità {RegoleMIUManager.MaxProfonditaRicerca}."); // Modificato log
+                _logger.Log(LogLevel.INFO, $"Nessuna derivazione trovata con DFS entro la profondità {RegoleMIUManager.MaxProfonditaRicerca}."); // Modificato log
             }
         }
 
         // Metodo per la ricerca BFS (esistente, non modificato per le statistiche in questo step)
-        private static void RicercaDiDerivazioneBFS(long searchId, string inizioCompressed, string fineCompressed, long passi)
+        private static void RicercaDiDerivazioneBFS(long searchId, string inizioCompressed, string fineCompressed)
         {
-            Console.WriteLine($"inizio: {inizioCompressed} fine: {fineCompressed} passi: {passi}");
-            _logger.Log(LogLevel.INFO, $"Inizio Ricerca BFS da '{inizioCompressed}' a '{fineCompressed}' (Max Passi: {passi})");
+            Console.WriteLine($"inizio: {inizioCompressed} fine: {fineCompressed} passi: {RegoleMIUManager.MassimoPassiRicerca}"); // Modificato log
+            _logger.Log(LogLevel.INFO, $"Inizio Ricerca BFS da '{inizioCompressed}' a '{fineCompressed}' (Max Passi: {RegoleMIUManager.MassimoPassiRicerca})"); // Modificato log
 
-            List<PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(searchId, inizioCompressed, fineCompressed, passi);
+            List<PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(searchId, inizioCompressed, fineCompressed);
             if (miu != null)
             {
                 Console.WriteLine("Percorso BFS trovato:");

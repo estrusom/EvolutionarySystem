@@ -1,3 +1,5 @@
+ROLBACK
+C:\Progetti\EvolutiveSystem\MIU.Core\RegoleMIU.cs
 // File: C:\Progetti\EvolutiveSystem_250604\MIU.Core\RegoleMIU.cs
 // Data di riferimento: 4 giugno 2025
 // Contiene la classe RegoleMIUManager per la gestione delle regole MIU e gli eventi correlati.
@@ -17,7 +19,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using MasterLog; // Required for your Logger class
-using EvolutiveSystem.SQL.Core; // NEW: Added for IMIUDataManager access
 
 namespace MIU.Core
 {
@@ -89,13 +90,7 @@ namespace MIU.Core
     {
         // Proprietà statica per l'istanza del logger
         public static Logger LoggerInstance { get; set; }
-        // NEW: Proprietà statica per l'istanza di IMIUDataManager
-        public static IMIUDataManager DataManagerInstance { get; set; }
 
-        // NEW: Campi statici per i parametri di configurazione letti dal database
-        private static int _maxDepthConfig = 20;   // Valore di default se non trovato in config
-        private static int _maxStepsConfig = 1000; // Valore di default se non trovato in config
-        
         // Collezione statica di tutte le regole MIU disponibili.
         public static List<RegolaMIU> Regole { get; private set; } = new List<RegolaMIU>();
 
@@ -106,71 +101,6 @@ namespace MIU.Core
         // Campo per memorizzare le statistiche delle regole caricate in memoria.
         // La chiave è l'ID della regola (long).
         private static Dictionary<long, RuleStatistics> _ruleStatistics;
-
-        /// <summary>
-        /// Inizializza il RegoleMIUManager caricando le statistiche delle regole
-        /// e i parametri di configurazione dal database.
-        /// Questo metodo deve essere chiamato una volta all'avvio dell'applicazione.
-        /// </summary>
-        /// <param name="logger">L'istanza del logger da utilizzare.</param>
-        /// <param name="dataManager">L'istanza di IMIUDataManager per l'accesso al database.</param>
-        public static void Initialize(Logger logger, IMIUDataManager dataManager)
-        {
-            LoggerInstance = logger ?? throw new ArgumentNullException(nameof(logger), "LoggerInstance cannot be null.");
-            DataManagerInstance = dataManager ?? throw new ArgumentNullException(nameof(dataManager), "DataManagerInstance cannot be null.");
-
-            // Carica le RuleStatistics dal database
-            _ruleStatistics = DataManagerInstance.LoadRuleStatistics();
-            LoggerInstance?.Log(LogLevel.DEBUG, $"[RegoleMIUManager DEBUG] RuleStatistics set. Content: {_ruleStatistics?.Count ?? 0} items.");
-
-            // Carica le regole MIU dal database (se non già caricate)
-            if (Regole.Count == 0)
-            {
-                CaricaRegoleDaOggettoRepository(DataManagerInstance.LoadRegoleMIU());
-            }
-
-            // NEW: Carica i parametri di configurazione dal database
-            LoadConfigurationParameters();
-        }
-
-        // NEW: Metodo per caricare i parametri di configurazione dal database
-        private static void LoadConfigurationParameters()
-        {
-            if (DataManagerInstance == null)
-            {
-                LoggerInstance?.Log(LogLevel.ERROR, "[RegoleMIUManager ERROR] DataManagerInstance is null. Cannot load configuration parameters.");
-                return;
-            }
-
-            var config = DataManagerInstance.LoadMIUParameterConfigurator();
-            if (config != null)
-            {
-                if (config.TryGetValue("ProfonditaDiRicerca", out string depthStr) && int.TryParse(depthStr, out int parsedDepth))
-                {
-                    _maxDepthConfig = parsedDepth;
-                    LoggerInstance?.Log(LogLevel.DEBUG, $"[RegoleMIUManager] Loaded MaxDepth from config: {_maxDepthConfig}");
-                }
-                else
-                {
-                    LoggerInstance?.Log(LogLevel.WARNING, "[RegoleMIUManager WARNING] 'ProfonditaDiRicerca' not found or invalid in config. Using default: 20");
-                }
-
-                if (config.TryGetValue("MassimoPassiRicerca", out string stepsStr) && int.TryParse(stepsStr, out int parsedSteps))
-                {
-                    _maxStepsConfig = parsedSteps;
-                    LoggerInstance?.Log(LogLevel.DEBUG, $"[RegoleMIUManager] Loaded MaxSteps from config: {_maxStepsConfig}");
-                }
-                else
-                {
-                    LoggerInstance?.Log(LogLevel.WARNING, "[RegoleMIUManager WARNING] 'MassimoPassiRicerca' not found or invalid in config. Using default: 1000");
-                }
-            }
-            else
-            {
-                LoggerInstance?.Log(LogLevel.ERROR, "[RegoleMIUManager ERROR] Failed to load configuration parameters. Using defaults.");
-            }
-        }
-
 
         /// <summary>
         /// Imposta le statistiche delle regole che verranno utilizzate per la prioritizzazione.
@@ -277,8 +207,7 @@ namespace MIU.Core
         /// Opera su stringhe STANDARD internamente, ma accetta/restituisce stringhe COMPRESSE.
         /// </summary>
         /// <param name="searchId">L'ID della ricerca corrente per la persistenza.</param>
-        // MODIFIED: Rimosso il parametro maxProfondita dalla firma
-        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed)
+        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed, long maxProfondita)
         {
             // Decompress the initial and target strings for internal search
             string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
@@ -303,8 +232,7 @@ namespace MIU.Core
             int nodesExplored = 0;
             int maxDepthReached = 0;
 
-            // MODIFIED: Utilizza _maxDepthConfig dal campo statico
-            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max Depth: {_maxDepthConfig})");
+            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max Depth: {maxProfondita})");
 
             while (stack.Count > 0)
             {
@@ -332,8 +260,7 @@ namespace MIU.Core
                     return currentPath; // Returns path in PathStepInfo
                 }
 
-                // MODIFIED: Utilizza _maxDepthConfig dal campo statico
-                if (currentPath.Count - 1 >= _maxDepthConfig) continue; // Max depth reached
+                if (currentPath.Count - 1 >= maxProfondita) continue; // Max depth reached
 
                 // NEW: Order rules based on EffectivenessScore for DFS
                 var orderedRules = Regole.OrderByDescending(rule =>
@@ -375,10 +302,6 @@ namespace MIU.Core
                             stack.Push((newStringStandard, newPath));
                             LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{rule.Nome}'). Depth: {currentPath.Count}. Stack size: {stack.Count}");
                         }
-                        else
-                        {
-                            // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] State '{newStringStandard}' already visited. Skipping.");
-                        }
                     }
                 }
             }
@@ -406,8 +329,7 @@ namespace MIU.Core
         /// Opera su stringhe STANDARD internamente, ma accetta/restituisce una lista di PathStepInfo.
         /// </summary>
         /// <param name="searchId">L'ID della ricerca corrente per la persistenza.</param>
-        // MODIFIED: Rimosso il parametro maxPassi dalla firma
-        public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed)
+        public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed, long maxPassi)
         {
             // Decompress the initial and target strings for internal search
             string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
@@ -432,8 +354,7 @@ namespace MIU.Core
             int nodesExplored = 0;
             int maxDepthReached = 0;
 
-            // MODIFIED: Utilizza _maxStepsConfig dal campo statico
-            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max Steps: {_maxStepsConfig})");
+            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max Steps: {maxPassi})");
 
             while (queue.Count > 0)
             {
@@ -461,19 +382,9 @@ namespace MIU.Core
                     return currentPath; // Returns path in PathStepInfo
                 }
 
-                // MODIFIED: Utilizza _maxStepsConfig dal campo statico
-                // Importante: per BFS, maxPassi di solito si riferisce al numero di *nodi esplorati* o *passi fatti*
-                // L'uso di currentPath.Count - 1 qui significa che agisce più come un limite di profondità.
-                // Se intendi "max passi" come "max nodi visitati/esplorati", il controllo dovrebbe essere su nodesExplored.
-                // Il tuo log precedente mostrava "Max Steps: 10" e poi "StepsTaken: 4, Nodes explored: 26".
-                // Questo indica che "Max Steps" è più simile a "MaxDepth" o "MaxPathLength".
-                // Lascio il controllo su currentPath.Count - 1 (profondità) come da tua implementazione precedente.
-                // Se "MassimoPassiRicerca" dovrebbe limitare i *nodi esplorati*, spostiamo il controllo qui:
-                // if (nodesExplored >= _maxStepsConfig) { LoggerInstance?.Log(LogLevel.WARNING, $"[BFS] Max nodes explored ({_maxStepsConfig}) reached. Stopping search."); break; }
-                // Per ora, lo lascio come limite di profondità (currentPath.Count - 1).
-                if (currentPath.Count - 1 >= _maxStepsConfig)
+                if (currentPath.Count - 1 >= maxPassi)
                 {
-                    LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Max depth (from MassimoPassiRicerca: {_maxStepsConfig}) reached for '{currentStandard}'. Skipping exploration.");
+                    // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Max depth ({maxPassi}) reached for '{currentStandard}'. Skipping exploration.");
                     continue; // Max depth reached
                 }
 
