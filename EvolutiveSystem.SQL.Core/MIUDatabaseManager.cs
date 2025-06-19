@@ -11,6 +11,7 @@ using MIU.Core; // Assicurati che questo namespace sia corretto per le classi MI
 using MasterLog;
 using System.Globalization;
 using System.Text; // Necessario per StringBuilder in LoadRegoleMIU o altri metodi di utilità
+using EvolutiveSystem.Common; // Aggiunto per le classi modello spostate
 
 namespace EvolutiveSystem.SQL.Core
 {

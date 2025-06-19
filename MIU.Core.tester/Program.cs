@@ -1,19 +1,24 @@
 ﻿// File: C:\Progetti\EvolutiveSystem_250604\MIU.Core.tester\Program.cs
-// Data di riferimento: 21 giugno 2025
-// AGGIORNAMENTO 21.6.25: Assegnazione definitiva delle RuleStatistics caricate a RegoleMIUManager.CurrentRuleStatistics.
+// Data di riferimento: 21 giugno 2025 (Aggiornamento Finale)
+// CORREZIONE 21.6.25: Posizione corretta di PathStepInfo (in MIU.Core, non in Common).
+//                     Reintroduzione di configParams.
+//                     Qualificazione precisa di tutti i tipi.
+// NUOVA CORREZIONE 21.6.25: Correzione delle firme degli event handler per SolutionFoundEventArgs
+//                           e RuleAppliedEventArgs (non sono annidati in RegoleMIUManager).
 
-using EvolutiveSystem.SQL.Core; // Per SQLiteSchemaLoader, Database, Table
+using EvolutiveSystem.SQL.Core; // Per SQLiteSchemaLoader, MIUDatabaseManager
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using MIU.Core; // Per MIURepository, RuleStatistics, TransitionStatistics, IMIUDataManager, PathStepInfo
+using MIU.Core; // Per MIURepository, IMIUDataManager, MIUStringConverter, RegoleMIUManager, SolutionFoundEventArgs, RuleAppliedEventArgs, PathStepInfo
 using MasterLog; // Necessario per la tua classe Logger
+using EvolutiveSystem.Common; // Per RegolaMIU, RuleStatistics, TransitionStatistics
+
 
 namespace MIU.Core.tester
 {
@@ -26,15 +31,13 @@ namespace MIU.Core.tester
 
     internal class Program
     {
-        // RIMOSSO: La costante 'passi' non è più hardcoded.
-        // private const long passi = 10; // Massima profondità di ricerca per BFS (esempi preesistenti)
-
         private static Logger _logger; // Istanza del logger
         private static MIURepository _repository; // Repository per la persistenza (reso statico per gli eventi)
         private static long _currentSearchId; // ID della ricerca corrente per correlare eventi (reso statico)
-        private static Dictionary<long, RuleStatistics> _ruleStatistics; // DICTIONARY AGGIUNTO: Statistiche delle regole (RuleID è long)
+        // DICHIARAZIONE AGGIORNATA E QUALIFICATA (RuleStatistics è in Common)
+        private static System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> _ruleStatistics; // Statistiche delle regole (RuleID è long)
 
-        // NUOVO: Campi per i parametri di configurazione caricati dal DB, con valori predefiniti
+        // Campi per i parametri di configurazione caricati dal DB, con valori predefiniti
         private static long _configuredMaxDepth = 10; // Valore predefinito per ProfonditaDiRicerca
         private static long _configuredMaxSteps = 10; // Valore predefinito per MassimoPassiRicerca
 
@@ -66,8 +69,11 @@ namespace MIU.Core.tester
             _repository = new MIURepository(_dataManager, _logger); // Assegna al campo statico
 
             // Carica i parametri di configurazione dal database
-            var configParams = _repository.LoadMIUParameterConfigurator();
-            if (configParams.TryGetValue("ProfonditaDiRicerca", out string depthStr) && long.TryParse(depthStr, out long parsedDepth))
+            // DICHIARAZIONE E ASSEGNAZIONE CORRETTA DI configParams
+            System.Collections.Generic.Dictionary<string, string> configParams = _repository.LoadMIUParameterConfigurator();
+
+            long parsedDepth = _configuredMaxDepth; // Inizializza con il valore predefinito
+            if (configParams.TryGetValue("ProfonditaDiRicerca", out string depthStr) && long.TryParse(depthStr, out parsedDepth))
             {
                 _configuredMaxDepth = parsedDepth;
                 _logger.Log(LogLevel.INFO, $"[Program INFO] Caricato ProfonditaDiRicerca dal DB: {_configuredMaxDepth}");
@@ -77,7 +83,8 @@ namespace MIU.Core.tester
                 _logger.Log(LogLevel.WARNING, $"[Program WARNING] Parametro 'ProfonditaDiRicerca' non trovato o non valido. Usato valore predefinito: {_configuredMaxDepth}");
             }
 
-            if (configParams.TryGetValue("MassimoPassiRicerca", out string stepsStr) && long.TryParse(stepsStr, out long parsedSteps))
+            long parsedSteps = _configuredMaxSteps; // Inizializza con il valore predefinito
+            if (configParams.TryGetValue("MassimoPassiRicerca", out string stepsStr) && long.TryParse(stepsStr, out parsedSteps))
             {
                 _configuredMaxSteps = parsedSteps;
                 _logger.Log(LogLevel.INFO, $"[Program INFO] Caricato MassimoPassiRicerca dal DB: {_configuredMaxSteps}");
@@ -94,18 +101,19 @@ namespace MIU.Core.tester
 
 
             // Carica le statistiche delle regole all'avvio dell'applicazione
+            // IL TIPO È GIÀ STATO QUALIFICATO IN ALTO NELLA DICHIARAZIONE DELLA VARIABILE
             _ruleStatistics = _repository.LoadRuleStatistics();
             if (_ruleStatistics == null)
             {
-                _ruleStatistics = new Dictionary<long, RuleStatistics>();
+                _ruleStatistics = new System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics>(); // Qualificato anche qui
             }
             _logger.Log(LogLevel.INFO, $"[Program INFO] Caricate {_ruleStatistics.Count} RuleStatistics all'avvio.");
 
-            // QUESTA È L'UNICA RIGA AGGIUNTA
             RegoleMIUManager.CurrentRuleStatistics = _ruleStatistics;
 
 
             // Collega gli handler degli eventi
+            // CORREZIONE QUI: Usa i tipi direttamente dal namespace MIU.Core, non da RegoleMIUManager
             RegoleMIUManager.OnRuleApplied += RegoleMIUManager_OnRuleApplied;
             RegoleMIUManager.OnSolutionFound += RegoleMIUManager_OnSolutionFound;
 
@@ -117,10 +125,11 @@ namespace MIU.Core.tester
                     {
                         Random rnd = new Random();
 
-                        List<RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
+                        // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
+                        System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
                         RegoleMIUManager.CaricaRegoleDaOggettoRepository(regoleMIUList);
 
-                        List<string> MIUstringList = _schemaLoader.SQLiteSelect("SELECT StateID, CurrentString, StringLength, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount FROM MIU_States;");
+                        System.Collections.Generic.List<string> MIUstringList = _schemaLoader.SQLiteSelect("SELECT StateID, CurrentString, StringLength, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount FROM MIU_States;");
 
                         if (RegoleMIUManager.Regole.Count > 0)
                         {
@@ -131,14 +140,28 @@ namespace MIU.Core.tester
                                 string[] MIUstringDestination = MIUstringList[index].Split(';');
 
                                 // Inserisci la ricerca iniziale e ottieni l'ID
-                                _currentSearchId = _repository.InsertSearch(MIUstringsSource[1], MIUstringDestination[1], "BFS"); // Salva la stringa standard per initial/target
+                                // AGGIORNAMENTO CHIAMATA A INSERTSEARCH CON 9 PARAMETRI
+                                string currentInitialStringCase3 = MIUstringsSource[1]; // Stringa standard
+                                string currentTargetStringCase3 = MIUstringDestination[1]; // Stringa standard
+
+                                _currentSearchId = _repository.InsertSearch(
+                                    currentInitialStringCase3,
+                                    currentTargetStringCase3,
+                                    "BFS",
+                                    currentInitialStringCase3.Length,
+                                    currentTargetStringCase3.Length,
+                                    MIUStringConverter.CountChar(currentInitialStringCase3, 'I'),
+                                    MIUStringConverter.CountChar(currentInitialStringCase3, 'U'),
+                                    MIUStringConverter.CountChar(currentTargetStringCase3, 'I'),
+                                    MIUStringConverter.CountChar(currentTargetStringCase3, 'U')
+                                );
 
                                 // Le stringhe da passare a TrovaDerivazioneBFS devono essere compresse
                                 string compressedSource = MIUStringConverter.InflateMIUString(MIUstringsSource[1]);
                                 string compressedTarget = MIUStringConverter.InflateMIUString(MIUstringDestination[1]);
 
-                                // Rimosso l'argomento 'passi'. RegoleMIUManager ora usa la sua proprietà statica.
-                                List<PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, compressedSource, compressedTarget);
+                                // QUALIFICAZIONE DEL TIPO (PathStepInfo è in MIU.Core)
+                                System.Collections.Generic.List<MIU.Core.PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, compressedSource, compressedTarget);
                             }
                         }
                         else
@@ -150,7 +173,7 @@ namespace MIU.Core.tester
                     break;
                 case 4:
                     {
-                        List<string> regole = _schemaLoader.SQLiteSelect("SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU;");
+                        System.Collections.Generic.List<string> regole = _schemaLoader.SQLiteSelect("SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU;");
                         string StringIn = "M2U3I4MI";
                         RegoleMIUManager.CaricaRegoleDaOggettoSQLite(regole);
 
@@ -159,24 +182,28 @@ namespace MIU.Core.tester
 
                         string currentTestString = MIUStringConverter.DeflateMIUString(StringIn);
                         string regola0Output = string.Empty; // FIX: Inizializza la variabile
+                        // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
                         bool response0 = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == 0)?.TryApply(currentTestString, out regola0Output) ?? false;
                         Console.WriteLine($"String in: {currentTestString} Regola 0: {regola0Output} response: {response0}");
                         _logger.Log(LogLevel.INFO, $"String in: {currentTestString} Regola 0: {regola0Output} response: {response0}");
 
                         currentTestString = MIUStringConverter.DeflateMIUString(MIUStringConverter.InflateMIUString(regola0Output ?? string.Empty));
                         string regola1Output = string.Empty; // FIX: Inizializza la variabile
+                        // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
                         bool response1 = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == 1)?.TryApply(currentTestString, out regola1Output) ?? false;
                         Console.WriteLine($"String in: {currentTestString} Regola 1: {regola1Output} response: {response1}");
                         _logger.Log(LogLevel.INFO, $"String in: {currentTestString} Regola 1: {regola1Output} response: {response1}");
 
                         currentTestString = MIUStringConverter.DeflateMIUString(MIUStringConverter.InflateMIUString(regola1Output ?? string.Empty));
                         string regola2Output = string.Empty; // FIX: Inizializza la variabile
+                        // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
                         bool response2 = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == 2)?.TryApply(currentTestString, out regola2Output) ?? false;
                         Console.WriteLine($"String in: {currentTestString} Regola 2: {regola2Output} response: {response2}");
                         _logger.Log(LogLevel.INFO, $"String in: {currentTestString} Regola 2: {regola2Output} response: {response2}");
 
                         currentTestString = MIUStringConverter.DeflateMIUString(MIUStringConverter.InflateMIUString(regola2Output ?? string.Empty));
                         string regola3Output = string.Empty; // FIX: Inizializza la variabile
+                        // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
                         bool response3 = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == 3)?.TryApply(currentTestString, out regola3Output) ?? false;
                         Console.WriteLine($"String in: {currentTestString} Regola 3: {regola3Output} response: {response3}");
                         _logger.Log(LogLevel.INFO, $"String in: {currentTestString} Regola 3: {regola3Output} response: {response3}");
@@ -184,18 +211,33 @@ namespace MIU.Core.tester
                     break;
                 case 5:
                     {
-                        List<RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
+                        Random rnd = new Random();
+
+                        // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
+                        System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
                         RegoleMIUManager.CaricaRegoleDaOggettoRepository(regoleMIUList);
 
-                        // RIMOSSO: La variabile locale 'maxProfondita' non è più usata.
-                        // long maxProfondita = 10;
                         int cntDwn = 22;
                         while (cntDwn >= 1)
                         {
                             for (int y = 0; y < arrayString.GetLength(1); y++)
                             {
                                 // Inserisci la ricerca iniziale e ottieni l'ID
-                                _currentSearchId = _repository.InsertSearch(arrayString[0, y], arrayString[1, y], "DFS"); // Salva le stringhe standard
+                                // AGGIORNAMENTO CHIAMATA A INSERTSEARCH CON 9 PARAMETRI
+                                string currentInitialStringCase5 = arrayString[0, y]; // Stringa standard
+                                string currentTargetStringCase5 = arrayString[1, y]; // Stringa standard
+
+                                _currentSearchId = _repository.InsertSearch(
+                                    currentInitialStringCase5,
+                                    currentTargetStringCase5,
+                                    "DFS",
+                                    currentInitialStringCase5.Length,
+                                    currentTargetStringCase5.Length,
+                                    MIUStringConverter.CountChar(currentInitialStringCase5, 'I'),
+                                    MIUStringConverter.CountChar(currentInitialStringCase5, 'U'),
+                                    MIUStringConverter.CountChar(currentTargetStringCase5, 'I'),
+                                    MIUStringConverter.CountChar(currentTargetStringCase5, 'U')
+                                );
 
                                 // Le stringhe da passare a TrovaDerivazioneDFS devono essere compresse
                                 string compressedStart = MIUStringConverter.InflateMIUString(arrayString[0, y]);
@@ -223,7 +265,8 @@ namespace MIU.Core.tester
                     {
                         Random rnd = new Random();
 
-                        List<RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
+                        // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
+                        System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> regoleMIUList = _repository.LoadRegoleMIU();
                         RegoleMIUManager.CaricaRegoleDaOggettoRepository(regoleMIUList);
 
                         // Stringhe specifiche per il test BFS
@@ -231,7 +274,18 @@ namespace MIU.Core.tester
                         string testTargetStringStandard = "MUMMMMIUMUMMMMIU";
 
                         // Inserisci la ricerca iniziale e ottieni l'ID
-                        _currentSearchId = _repository.InsertSearch(testStartStringStandard, testTargetStringStandard, "BFS"); // Salva le stringhe standard per initial/target
+                        // AGGIORNAMENTO CHIAMATA A INSERTSEARCH CON 9 PARAMETRI
+                        _currentSearchId = _repository.InsertSearch(
+                            testStartStringStandard,
+                            testTargetStringStandard,
+                            "BFS",
+                            testStartStringStandard.Length,
+                            testTargetStringStandard.Length,
+                            MIUStringConverter.CountChar(testStartStringStandard, 'I'),
+                            MIUStringConverter.CountChar(testStartStringStandard, 'U'),
+                            MIUStringConverter.CountChar(testTargetStringStandard, 'I'),
+                            MIUStringConverter.CountChar(testTargetStringStandard, 'U')
+                        );
 
                         _logger.Log(LogLevel.INFO, $"--- Inizio Test Derivazione Specifica (BFS) con persistenza: {testStartStringStandard} -> {testTargetStringStandard} ---");
 
@@ -241,18 +295,20 @@ namespace MIU.Core.tester
 
                         // Richiama TrovaDerivazioneBFS passando l'ID della ricerca
                         // Rimosso l'argomento 'passi'. RegoleMIUManager ora usa la sua proprietà statica.
-                        List<PathStepInfo> miuPath = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, compressedSource, compressedTarget);
+                        // QUALIFICAZIONE DEL TIPO (PathStepInfo è in MIU.Core)
+                        System.Collections.Generic.List<MIU.Core.PathStepInfo> miuPath = RegoleMIUManager.TrovaDerivazioneBFS(_currentSearchId, compressedSource, compressedTarget);
 
                         if (miuPath != null)
                         {
                             _logger.Log(LogLevel.INFO, $"\n--- Percorso trovato per '{testStartStringStandard}' -> '{testTargetStringStandard}': ---");
-                            foreach (PathStepInfo step in miuPath)
+                            foreach (MIU.Core.PathStepInfo step in miuPath) // QUALIFICAZIONE DEL TIPO (PathStepInfo è in MIU.Core)
                             {
                                 // Recupera la stringa standard per il log
                                 string logMessage = $"Stato: {step.StateStringStandard}";
                                 if (step.AppliedRuleID.HasValue)
                                 {
-                                    RegolaMIU appliedRule = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == step.AppliedRuleID.Value);
+                                    // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
+                                    EvolutiveSystem.Common.RegolaMIU appliedRule = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == step.AppliedRuleID.Value);
                                     logMessage += $", Regola Applicata: {appliedRule?.Nome ?? "Sconosciuta"} (ID: {step.AppliedRuleID.Value})";
                                 }
                                 if (step.ParentStateStringStandard != null)
@@ -281,12 +337,14 @@ namespace MIU.Core.tester
             }
         }
 
-        private static void RegoleMIUManager_OnSolutionFound(object sender, SolutionFoundEventArgs e)
+        // CORREZIONE QUI: Modificato il tipo di 'e' da RegoleMIUManager.SolutionFoundEventArgs a MIU.Core.SolutionFoundEventArgs
+        private static void RegoleMIUManager_OnSolutionFound(object sender, MIU.Core.SolutionFoundEventArgs e)
         {
             // Converti la lista di PathStepInfo in una stringa leggibile per il log/console
             string pathString = "N/A";
             if (e.SolutionPathSteps != null && e.SolutionPathSteps.Any())
             {
+                // QUALIFICAZIONE DEL TIPO (PathStepInfo è in MIU.Core)
                 pathString = string.Join(" -> ", e.SolutionPathSteps.Select(step => step.StateStringStandard));
             }
 
@@ -300,7 +358,7 @@ namespace MIU.Core.tester
             // Aggiorna SuccessfulCount e EffectivenessScore per le regole nel percorso di successo
             if (e.Success && e.SolutionPathSteps != null)
             {
-                foreach (PathStepInfo step in e.SolutionPathSteps)
+                foreach (MIU.Core.PathStepInfo step in e.SolutionPathSteps) // QUALIFICAZIONE DEL TIPO (PathStepInfo è in MIU.Core)
                 {
                     if (step.AppliedRuleID.HasValue)
                     {
@@ -311,6 +369,7 @@ namespace MIU.Core.tester
                             // Ricalcola l'EffectivenessScore
                             _ruleStatistics[ruleId].RecalculateEffectiveness();
                             _ruleStatistics[ruleId].LastApplicationTimestamp = DateTime.Now; // Aggiorna anche l'ultimo utilizzo
+                            // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
                             _logger.Log(LogLevel.DEBUG, $"[Apprendimento] Regola {ruleId} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == ruleId)?.Nome ?? "Sconosciuta"}) SuccessfulCount incrementato a {_ruleStatistics[ruleId].SuccessfulCount}. Effectiveness: {_ruleStatistics[ruleId].EffectivenessScore:F4}");
                         }
                         else
@@ -318,7 +377,7 @@ namespace MIU.Core.tester
                             // Questo caso non dovrebbe verificarsi spesso se tutte le regole sono caricate,
                             // ma lo gestiamo creando una nuova entry (con ApplicationCount = 0 per coerenza)
                             _logger.Log(LogLevel.WARNING, $"[Apprendimento] Regola {ruleId} trovata nel percorso di successo ma non in _ruleStatistics. Creazione nuova entry.");
-                            _ruleStatistics[ruleId] = new RuleStatistics
+                            _ruleStatistics[ruleId] = new EvolutiveSystem.Common.RuleStatistics // QUALIFICAZIONE DEL TIPO (RuleStatistics è in Common)
                             {
                                 RuleID = ruleId,
                                 ApplicationCount = 0, // Verrà incrementato da OnRuleApplied
@@ -336,7 +395,7 @@ namespace MIU.Core.tester
             {
                 for (int i = 0; i < e.SolutionPathSteps.Count; i++)
                 {
-                    PathStepInfo currentStep = e.SolutionPathSteps[i];
+                    MIU.Core.PathStepInfo currentStep = e.SolutionPathSteps[i]; // QUALIFICAZIONE DEL TIPO (PathStepInfo è in MIU.Core)
 
                     // Upsert dello stato corrente
                     long currentStateId = _repository.UpsertMIUState(currentStep.StateStringStandard);
@@ -366,7 +425,8 @@ namespace MIU.Core.tester
             }
         }
 
-        private static void RegoleMIUManager_OnRuleApplied(object sender, RuleAppliedEventArgs e)
+        // CORREZIONE QUI: Modificato il tipo di 'e' da RegoleMIUManager.RuleAppliedEventArgs a MIU.Core.RuleAppliedEventArgs
+        private static void RegoleMIUManager_OnRuleApplied(object sender, MIU.Core.RuleAppliedEventArgs e)
         {
             string message = $"AppliedRuleID: {e.AppliedRuleID} AppliedRuleName: {e.AppliedRuleName} OriginalString: {e.OriginalString} NewString: {e.NewString} CurrentDepth: {e.CurrentDepth}";
             Console.WriteLine(message);
@@ -391,12 +451,14 @@ namespace MIU.Core.tester
             {
                 // Se la regola non è ancora presente nelle statistiche caricate, la aggiungiamo.
                 // Questo può accadere se una nuova regola viene introdotta o se il database era vuoto.
-                _ruleStatistics[ruleId] = new RuleStatistics { RuleID = ruleId };
+                _logger.Log(LogLevel.WARNING, $"[Apprendimento] Regola {ruleId} trovata in _ruleStatistics ma non in _ruleStatistics. Creazione nuova entry.");
+                _ruleStatistics[ruleId] = new EvolutiveSystem.Common.RuleStatistics { RuleID = ruleId }; // QUALIFICAZIONE DEL TIPO (RuleStatistics è in Common)
                 _logger.Log(LogLevel.DEBUG, $"[Apprendimento] Creata nuova entry RuleStatistics per regola {ruleId}.");
             }
             _ruleStatistics[ruleId].ApplicationCount++;
             _ruleStatistics[ruleId].LastApplicationTimestamp = DateTime.Now; // Aggiorna l'ultimo utilizzo
-            _logger.Log(LogLevel.DEBUG, $"[Apprendimento] Regola {ruleId} ({e.AppliedRuleName}) ApplicationCount incrementato a {_ruleStatistics[ruleId].ApplicationCount}.");
+            // QUALIFICAZIONE DEL TIPO (RegolaMIU è in Common)
+            _logger.Log(LogLevel.DEBUG, $"[Apprendimento] Regola {ruleId} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == ruleId)?.Nome ?? "Sconosciuta"}) ApplicationCount incrementato a {_ruleStatistics[ruleId].ApplicationCount}.");
             // Nota: EffectivenessScore non ricalcolato qui, solo a fine ricerca quando si sa se la regola ha contribuito a una soluzione.
         }
 
@@ -406,7 +468,8 @@ namespace MIU.Core.tester
             Console.WriteLine($"Inizio Ricerca DFS da '{startStringCompressed}' a '{targetStringCompressed}' (Max Profondità: {RegoleMIUManager.MaxProfonditaRicerca})"); // Modificato log
             _logger.Log(LogLevel.INFO, $"Inizio Ricerca DFS da '{startStringCompressed}' a '{targetStringCompressed}' (Max Profondità: {RegoleMIUManager.MaxProfonditaRicerca})"); // Modificato log
 
-            List<PathStepInfo> percorsoDFS = RegoleMIUManager.TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed);
+            // QUALIFICAZIONE DEL TIPO (PathStepInfo è in MIU.Core)
+            System.Collections.Generic.List<MIU.Core.PathStepInfo> percorsoDFS = RegoleMIUManager.TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed);
 
             if (percorsoDFS != null)
             {
@@ -431,12 +494,13 @@ namespace MIU.Core.tester
             Console.WriteLine($"inizio: {inizioCompressed} fine: {fineCompressed} passi: {RegoleMIUManager.MassimoPassiRicerca}"); // Modificato log
             _logger.Log(LogLevel.INFO, $"Inizio Ricerca BFS da '{inizioCompressed}' a '{fineCompressed}' (Max Passi: {RegoleMIUManager.MassimoPassiRicerca})"); // Modificato log
 
-            List<PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(searchId, inizioCompressed, fineCompressed);
+            // QUALIFICAZIONE DEL TIPO (PathStepInfo è in MIU.Core)
+            System.Collections.Generic.List<MIU.Core.PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneBFS(searchId, inizioCompressed, fineCompressed);
             if (miu != null)
             {
                 Console.WriteLine("Percorso BFS trovato:");
                 _logger.Log(LogLevel.INFO, "Percorso BFS trovato:");
-                foreach (PathStepInfo item in miu)
+                foreach (MIU.Core.PathStepInfo item in miu) // QUALIFICAZIONE DEL TIPO (PathStepInfo è in MIU.Core)
                 {
                     Console.WriteLine(item.StateStringStandard);
                     _logger.Log(LogLevel.INFO, item.StateStringStandard);

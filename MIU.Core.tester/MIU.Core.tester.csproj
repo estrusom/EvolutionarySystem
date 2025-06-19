@@ -53,6 +53,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EvolutiveSystem.Common\EvolutiveSystem.Common.csproj">
+      <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
+      <Name>EvolutiveSystem.Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
       <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
       <Name>EvolutiveSystem.SQL.Core</Name>

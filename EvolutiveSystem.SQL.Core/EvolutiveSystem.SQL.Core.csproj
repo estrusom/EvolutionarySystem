@@ -59,6 +59,10 @@
     <None Include="RRU_EvolutiveSystem.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EvolutiveSystem.Common\EvolutiveSystem.Common.csproj">
+      <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
+      <Name>EvolutiveSystem.Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
       <Name>MasterLogMutex</Name>

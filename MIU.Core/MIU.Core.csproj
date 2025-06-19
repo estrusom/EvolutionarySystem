@@ -52,12 +52,13 @@
     <Compile Include="MIURepository.cs" />
     <Compile Include="MIUStringGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RegolaMIU.cs" />
     <Compile Include="RegoleMIU.cs" />
-    <Compile Include="RuleStatistics.cs" />
-    <Compile Include="TransitionStatistics.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EvolutiveSystem.Common\EvolutiveSystem.Common.csproj">
+      <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
+      <Name>EvolutiveSystem.Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
       <Name>MasterLogMutex</Name>

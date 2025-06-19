@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EvolutiveSystem.Common; // Per RegolaMIU, RuleStatistics, TransitionStatistics
 
 namespace MIU.Core
 {
@@ -59,19 +60,19 @@ namespace MIU.Core
 
         // Operazioni per MIU_Paths (INVARIATE)
         void InsertSolutionPathStep(long searchId, int stepNumber, long stateId, long? parentStateId, long? appliedRuleID, bool isTarget, bool isSuccess, int depth);
-
+        
         // Operazioni per RegoleMIU (INVARIATE)
-        List<RegolaMIU> LoadRegoleMIU();
-        void UpsertRegoleMIU(List<RegolaMIU> regole);
+        System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> LoadRegoleMIU(); // 19.6.2025 23.48
+        void UpsertRegoleMIU(System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> regole);// 19.6.2025 23.48
 
         // Operazioni per MIUParameterConfigurator (INVARIATE)
         Dictionary<string, string> LoadMIUParameterConfigurator();
         void SaveMIUParameterConfigurator(Dictionary<string, string> config);
 
         // Metodi per le statistiche di apprendimento (Chiave Dictionary ora 'long' e Tuple.Item2 a 'long') (INVARIATE)
-        Dictionary<long, RuleStatistics> LoadRuleStatistics();
-        void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats);
-        Dictionary<Tuple<string, long>, TransitionStatistics> LoadTransitionStatistics();
-        void SaveTransitionStatistics(Dictionary<Tuple<string, long>, TransitionStatistics> transitionStats);
+        System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> LoadRuleStatistics();// 19.6.2025 23.48
+        void SaveRuleStatistics(System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> ruleStats);// 19.6.2025 23.48
+        System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> LoadTransitionStatistics();// 19.6.2025 23.48
+        void SaveTransitionStatistics(System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> transitionStats);// 19.6.2025 23.48
     }
 }

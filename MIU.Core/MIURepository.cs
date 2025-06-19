@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 // Assicurati che EvolutiveSystem.SQL.Core sia referenziato nel progetto MIU.Core.csproj
-using EvolutiveSystem.SQL.Core;
+using EvolutiveSystem.Common; // Aggiunto per le classi modello spostate
 
 namespace MIU.Core
 {
