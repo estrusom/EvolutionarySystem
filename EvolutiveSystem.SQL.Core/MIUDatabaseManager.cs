@@ -1,28 +1,16 @@
-﻿// Data di riferimento: 4 giugno 2025 (questo file non esisteva prima)
-// creato 15/6/2025 02:13
-// sostituito 15/6/2025 02:23
-// CORREZIONE 17.6.25 16.18: Aggiunta implementazione dell'interfaccia IMIUDataManager.
-// MODIFICA 17.6.25 17.09: Correzione lettura della colonna 'ID' come long e conversione a stringa.
-// NUOVA MODIFICA 19.6.25: Integrazione di MasterLog.Logger.
-// NUOVA MODIFICA 19.6.25: Allineamento dei tipi in InsertRuleApplication e InsertSolutionPathStep con IMIUDataManager.
-// NUOVA MODIFICA 20.6.25: Implementazione dei metodi per la persistenza delle statistiche di apprendimento.
-// Questa interfaccia definisce il contratto per la gestione dei dati MIU.
-// Questa interfaccia definisce i metodi che devono essere implementati da qualsiasi gestore
-// di persistenza per il sistema MIU, garantendo un'astrazione dal meccanismo di storage sottostante.
-// Aggiornato 19.06.2025: Allineamento definitivo dei tipi per AppliedRuleID e ParentStateID a long/long?.
-// NUOVA MODIFICA 19.6.25 19.21: Aggiunta delle firme dei metodi per la persistenza delle statistiche di apprendimento.
-// File: C:\Progetti\EvolutiveSystem\SQL.Core\MIUDatabaseManager.cs
-// Data di riferimento: 20 giugno 2025
-// Data di riferimento: 20 giugno 2025 (Correzione definitiva tipi Dictionary a long)
-// Gestore del database MIU con implementazione per la persistenza delle statistiche di apprendimento.
+﻿// File: C:\Progetti\EvolutiveSystem\SQL.Core\MIUDatabaseManager.cs
+// AGGIORNAMENTO 21.6.25: Ricostruzione completa del file MIUDatabaseManager.cs
+// per implementare correttamente tutti i membri dell'interfaccia IMIUDataManager
+// e risolvere gli errori di compilazione causati da frammentazioni precedenti.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data.SQLite;
-using MIU.Core;
-using MasterLog; // Necessario per la tua classe Logger
-using System.Globalization; // Per CultureInfo.InvariantCulture
+using MIU.Core; // Assicurati che questo namespace sia corretto per le classi MIU.Core come RegolaMIU, RuleStatistics, TransitionStatistics
+using MasterLog;
+using System.Globalization;
+using System.Text; // Necessario per StringBuilder in LoadRegoleMIU o altri metodi di utilità
 
 namespace EvolutiveSystem.SQL.Core
 {
@@ -37,7 +25,7 @@ namespace EvolutiveSystem.SQL.Core
     public class MIUDatabaseManager : IMIUDataManager
     {
         private readonly SQLiteSchemaLoader _schemaLoader;
-        private readonly Logger _logger; // Campo per l'istanza del logger
+        private readonly Logger _logger;
 
         /// <summary>
         /// Costruttore di MIUDatabaseManager.
@@ -56,10 +44,20 @@ namespace EvolutiveSystem.SQL.Core
         // --- Metodi di Persistenza (Implementazione dell'interfaccia IMIUDataManager) ---
 
         /// <summary>
-        /// Inserisce una nuova ricerca MIU nel database.
+        /// Inserisce una nuova ricerca MIU nel database con le caratteristiche delle stringhe.
         /// </summary>
         /// <returns>L'ID della ricerca appena inserita, o -1 in caso di errore.</returns>
-        public long InsertSearch(string initialString, string targetString, string searchAlgorithm)
+        public long InsertSearch(
+            string initialString,
+            string targetString,
+            string searchAlgorithm,
+            int initialStringLength,
+            int targetStringLength,
+            int initialIcount,
+            int initialUcount,
+            int targetIcount,
+            int targetUcount
+        )
         {
             long lastId = -1;
             try
@@ -67,13 +65,36 @@ namespace EvolutiveSystem.SQL.Core
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
                     connection.Open();
-                    string sql = $"INSERT INTO MIU_Searches (InitialString, TargetString, SearchAlgorithm, StartTime) VALUES (@initialString, @targetString, @searchAlgorithm, @startTime)";
+                    string sql = @"
+                        INSERT INTO MIU_Searches (
+                            InitialString, TargetString, SearchAlgorithm,
+                            InitialStringLength, TargetStringLength,
+                            InitialIcount, InitialUcount, TargetIcount, TargetUcount,
+                            StartTime, Outcome, StepsTaken, NodesExplored, MaxDepth, ElapsedMilliseconds
+                        ) VALUES (
+                            @initialString, @targetString, @searchAlgorithm,
+                            @initialStringLength, @targetStringLength,
+                            @initialIcount, @initialUcount, @targetIcount, @targetUcount,
+                            @startTime, @outcome, @stepsTaken, @nodesExplored, @maxDepth, @elapsedMilliseconds
+                        )";
                     using (var command = new SQLiteCommand(sql, connection))
                     {
                         command.Parameters.AddWithValue("@initialString", initialString);
                         command.Parameters.AddWithValue("@targetString", targetString);
                         command.Parameters.AddWithValue("@searchAlgorithm", searchAlgorithm);
-                        command.Parameters.AddWithValue("@startTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                        command.Parameters.AddWithValue("@initialStringLength", initialStringLength);
+                        command.Parameters.AddWithValue("@targetStringLength", targetStringLength);
+                        command.Parameters.AddWithValue("@initialIcount", initialIcount);
+                        command.Parameters.AddWithValue("@initialUcount", initialUcount);
+                        command.Parameters.AddWithValue("@targetIcount", targetIcount);
+                        command.Parameters.AddWithValue("@targetUcount", targetUcount);
+                        command.Parameters.AddWithValue("@startTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffffff"));
+                        command.Parameters.AddWithValue("@outcome", "Pending");
+                        command.Parameters.AddWithValue("@stepsTaken", 0);
+                        command.Parameters.AddWithValue("@nodesExplored", 0);
+                        command.Parameters.AddWithValue("@maxDepth", 0);
+                        command.Parameters.AddWithValue("@elapsedMilliseconds", 0.0);
+
                         command.ExecuteNonQuery();
 
                         using (var idCommand = new SQLiteCommand("SELECT last_insert_rowid()", connection))
@@ -101,19 +122,28 @@ namespace EvolutiveSystem.SQL.Core
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
                     connection.Open();
-                    string sql = $"UPDATE MIU_Searches SET Outcome = @outcome, EndTime = @endTime, StepsTaken = @stepsTaken, NodesExplored = @nodesExplored, MaxDepth = @maxDepth WHERE SearchID = @searchId";
+                    string sql = @"
+                        UPDATE MIU_Searches
+                        SET Outcome = @outcome,
+                            EndTime = @endTime,
+                            StepsTaken = @stepsTaken,
+                            NodesExplored = @nodesExplored,
+                            MaxDepth = @maxDepth,
+                            ElapsedMilliseconds = @elapsedMilliseconds
+                        WHERE SearchID = @searchId";
                     using (var command = new SQLiteCommand(sql, connection))
                     {
-                        command.Parameters.AddWithValue("@outcome", success ? "Success" : "Failure");
-                        command.Parameters.AddWithValue("@endTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                        command.Parameters.AddWithValue("@outcome", success ? "Success" : "Failed");
+                        command.Parameters.AddWithValue("@endTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffffff"));
                         command.Parameters.AddWithValue("@stepsTaken", stepsTaken);
                         command.Parameters.AddWithValue("@nodesExplored", nodesExplored);
                         command.Parameters.AddWithValue("@maxDepth", maxDepthReached);
+                        command.Parameters.AddWithValue("@elapsedMilliseconds", flightTimeMs);
                         command.Parameters.AddWithValue("@searchId", searchId);
                         command.ExecuteNonQuery();
                     }
                 }
-                _logger.Log(LogLevel.DEBUG, $"Search '{searchId}' aggiornata: Success={success}, FlightTime={flightTimeMs}.");
+                _logger.Log(LogLevel.DEBUG, $"Search '{searchId}' aggiornata: Success={success}, ElapsedMilliseconds={flightTimeMs}.");
             }
             catch (Exception ex)
             {
@@ -159,6 +189,7 @@ namespace EvolutiveSystem.SQL.Core
                             long discoveryTimeInt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                             string discoveryTimeText = DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss");
 
+                            // Utilizza MIUStringConverter per la compressione
                             string insertSql = "INSERT INTO MIU_States (CurrentString, StringLength, DeflateString, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount) VALUES (@currentString, @stringLength, @deflateString, @hash, @timeInt, @timeText, 1); SELECT last_insert_rowid();";
                             using (var insertCommand = new SQLiteCommand(insertSql, connection))
                             {
@@ -181,7 +212,6 @@ namespace EvolutiveSystem.SQL.Core
             }
             return stateId;
         }
-
 
         /// <summary>
         /// Registra un'applicazione di una regola MIU come parte di una ricerca.
@@ -385,7 +415,6 @@ namespace EvolutiveSystem.SQL.Core
                     {
                         foreach (var entry in config)
                         {
-                            var stats = entry.Value;
                             string sql = "INSERT OR REPLACE INTO MIUParameterConfigurator (NomeParametro, ValoreParametro) VALUES (@nomeParametro, @valoreParametro)";
                             using (var command = new SQLiteCommand(sql, connection, transaction))
                             {
@@ -409,7 +438,7 @@ namespace EvolutiveSystem.SQL.Core
         /// Carica le statistiche di apprendimento delle regole dal database.
         /// </summary>
         /// <returns>Un dizionario di RuleStatistics, con chiave=RuleID.</returns>
-        public Dictionary<long, RuleStatistics> LoadRuleStatistics() // Modificato il tipo della chiave a long
+        public Dictionary<long, RuleStatistics> LoadRuleStatistics()
         {
             var ruleStats = new Dictionary<long, RuleStatistics>();
             try
@@ -457,7 +486,7 @@ namespace EvolutiveSystem.SQL.Core
         /// Salva (upsert) le statistiche delle regole di apprendimento nel database.
         /// Utilizza una transazione per garantire l'atomicità dell'operazione.
         /// </summary>
-        public void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats) // Modificato il tipo della chiave a long
+        public void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats)
         {
             try
             {
@@ -495,7 +524,7 @@ namespace EvolutiveSystem.SQL.Core
         /// Carica le statistiche di transizione di apprendimento dal database.
         /// </summary>
         /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
-        public Dictionary<Tuple<string, long>, TransitionStatistics> LoadTransitionStatistics() // Modificato il tipo della chiave a long
+        public Dictionary<Tuple<string, long>, TransitionStatistics> LoadTransitionStatistics()
         {
             var transitionStats = new Dictionary<Tuple<string, long>, TransitionStatistics>();
             try
@@ -517,7 +546,7 @@ namespace EvolutiveSystem.SQL.Core
                             DateTime lastUpdated = DateTime.MinValue;
                             if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
                             {
-                                var key = Tuple.Create(parentString, appliedRuleId); // La chiave del dizionario è long
+                                var key = Tuple.Create(parentString, appliedRuleId);
                                 transitionStats[key] = new TransitionStatistics
                                 {
                                     ParentStringCompressed = parentString,
@@ -544,7 +573,7 @@ namespace EvolutiveSystem.SQL.Core
         /// Salva (upsert) le statistiche di transizione di apprendimento nel database.
         /// Utilizza una transazione per garantire l'atomicità dell'operazione.
         /// </summary>
-        public void SaveTransitionStatistics(Dictionary<Tuple<string, long>, TransitionStatistics> transitionStats) // Modificato il tipo della chiave a long
+        public void SaveTransitionStatistics(Dictionary<Tuple<string, long>, TransitionStatistics> transitionStats)
         {
             try
             {

@@ -43,8 +43,15 @@ CREATE TABLE MIU_Searches (
     StepsTaken          INTEGER,
     MaxDepth            INTEGER,
     NodesExplored       INTEGER,
-    ElapsedMilliseconds REAL
+    ElapsedMilliseconds REAL,
+    TargetUcount        INTEGER,
+    TargetIcount        INTEGER,
+    InitialUcount       INTEGER,
+    InitialIcount       INTEGER,
+    TargetStringLength  INTEGER,
+    InitialStringLength INTEGER
 );
+
 
 CREATE TABLE MIU_RuleApplications (
     ApplicationID INTEGER PRIMARY KEY AUTOINCREMENT,

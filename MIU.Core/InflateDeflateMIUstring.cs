@@ -1,9 +1,12 @@
-﻿using System;
+﻿// File: C:\Progetti\EvolutiveSystem\MIU.Core\InflateDeflateMIUstring.cs
+// AGGIORNAMENTO 21.6.25: Aggiunta del metodo statico CountChar a MIUStringConverter
+// per la manipolazione di stringhe, garantendo la corretta organizzazione del codice.
+// sostituito 19.6.2025 13.22
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Linq; // Necessario per .Count()
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace MIU.Core
 {
@@ -111,6 +114,19 @@ namespace MIU.Core
             }
 
             return decompressedString.ToString();
+        }
+
+        /// <summary>
+        /// Conta le occorrenze di un carattere specifico in una stringa. sposta in MIUStringConverter da MIURepository nel file C:\Progetti\EvolutiveSystem\MIU.Core\MIURepository.cs
+        /// </summary>
+        /// <param name="s">La stringa in cui cercare.</param>
+        /// <param name="c">Il carattere da contare.</param>
+        /// <returns>Il numero di occorrenze del carattere.</returns>
+        public static int CountChar(string s, char c)
+        {
+
+            if (string.IsNullOrEmpty(s)) return 0;
+            return s.Count(ch => ch == c);
         }
     }
 }
