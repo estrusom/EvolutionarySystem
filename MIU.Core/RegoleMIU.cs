@@ -1,155 +1,155 @@
-﻿// File: C:\Progetti\EvolutiveSystem_250604\MIU.Core\RegoleMIU.cs
-// Data di riferimento: 21 giugno 2025 (Aggiornamento Finale)
+﻿// File: C:\Progetti\EvolutiveSystem\MIU.Core\RegoleMIU.cs
+// Data di riferimento: 20 giugno 2025 (Aggiornamento Finale)
 // Contiene la classe RegoleMIUManager per la gestione delle regole MIU e gli eventi correlati.
 // Questo aggiornamento corregge la posizione di PathStepInfo nel namespace MIU.Core
 // e qualifica correttamente tutti i riferimenti a RegolaMIU e RuleStatistics da EvolutiveSystem.Common.
-
+// Data di riferimento: 20 giugno 2025 (Aggiornamento per scelta automatica BFS/DFS)
+// Aggiunto il metodo TrovaDerivazioneAutomatica per la selezione intelligente dell'algoritmo.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
-using MasterLog; // Necessario per la tua classe Logger
-using EvolutiveSystem.Common; // Aggiunto per le classi modello (RegolaMIU, RuleStatistics, TransitionStatistics)
-// NON usare 'using MIU.Core;' qui perché siamo già nel namespace MIU.Core
+using MasterLog; // Necessary for your Logger class
+using EvolutiveSystem.Common; // Added for model classes (RegolaMIU, RuleStatistics, TransitionStatistics)
+// DO NOT use 'using MIU.Core;' here because we are already in the MIU.Core namespace
 
 namespace MIU.Core
 {
     /// <summary>
-    /// Struttura dati per un singolo passo nel percorso della soluzione.
-    /// Contiene la stringa dello stato, l'ID della regola applicata per raggiungerlo
-    /// e la stringa dello stato genitore.
-    /// Questa classe è nel namespace MIU.Core.
+    /// Data structure for a single step in the solution path.
+    /// Contains the state string, the ID of the rule applied to reach it,
+    /// and the parent state string.
+    /// This class is in the MIU.Core namespace.
     /// </summary>
     public class PathStepInfo
     {
-        public string StateStringStandard { get; set; } // La stringa MIU standard (decompressa) per questo stato
-        public long? AppliedRuleID { get; set; } // L'ID della regola applicata per arrivare a questo stato (null per lo stato iniziale)
-        public string ParentStateStringStandard { get; set; } // La stringa MIU standard (decompressa) del genitore (null per lo stato iniziale)
+        public string StateStringStandard { get; set; } // The standard (decompressed) MIU string for this state
+        public long? AppliedRuleID { get; set; } // The ID of the rule applied to reach this state (null for initial state)
+        public string ParentStateStringStandard { get; set; } // The standard (decompressed) MIU string of the parent (null for initial state)
     }
 
-    // EventArgs per l'evento OnSolutionFound
+    // EventArgs for the OnSolutionFound event
     public class SolutionFoundEventArgs : EventArgs
     {
-        public long SearchID { get; set; } // NUOVO: ID della ricerca
-        public string InitialString { get; set; } // Questa sarà la stringa COMPRESSA originale
-        public string TargetString { get; set; } // Questa sarà la stringa COMPRESSA target
+        public long SearchID { get; set; } // NEW: Search ID
+        public string InitialString { get; set; } // This will be the original COMPRESSED string
+        public string TargetString { get; set; } // This will be the target COMPRESSED string
         public bool Success { get; set; }
         public long ElapsedMilliseconds { get; set; }
         public long ElapsedTicks { get; set; }
-        // PathStepInfo è nel namespace MIU.Core, quindi non serve qualificazione completa qui se "using MIU.Core;" è attivo
-        // (che lo è implicitamente essendo nello stesso namespace)
-        public List<PathStepInfo> SolutionPathSteps { get; set; } // lista di PathStepInfo
-        public int StepsTaken { get; set; } // Numero di passi nella soluzione
-        public int NodesExplored { get; set; } // Numero di nodi esplorati durante la ricerca
-        public int MaxDepthReached { get; set; } // Profondità massima raggiunta
-        public bool FromCache { get; set; } // Indica se la soluzione è stata trovata in cache (aggiunto per completezza con altri membri)
+        public List<PathStepInfo> SolutionPathSteps { get; set; } // list of PathStepInfo
+        public int StepsTaken { get; set; } // Number of steps in the solution
+        public int NodesExplored { get; set; } // Number of nodes explored during the search
+        public int MaxDepthReached { get; set; } // Maximum depth reached
+        public bool FromCache { get; set; } // Indicates if the solution was found in cache (added for completeness with other members)
+        public string SearchAlgorithmUsed { get; set; } // New: Indicates which algorithm was used (BFS/DFS/Auto)
     }
 
-    // EventArgs per l'evento OnRuleApplied
+    // EventArgs for the OnRuleApplied event
     public class RuleAppliedEventArgs : EventArgs
     {
         public long AppliedRuleID { get; set; }
         public string AppliedRuleName { get; set; }
-        public string OriginalString { get; set; } // Questa sarà la stringa STANDARD
-        public string NewString { get; set; } // Questa sarà la stringa STANDARD
+        public string OriginalString { get; set; } // This will be the STANDARD string
+        public string NewString { get; set; } // This will be the STANDARD string
         public int CurrentDepth { get; set; }
     }
 
     public static class RegoleMIUManager
     {
-        // Proprietà statica per l'istanza del logger
+        // Static property for the logger instance
         public static Logger LoggerInstance { get; set; }
 
-        // Proprietà statiche per i parametri di configurazione (MaxDepth e MaxSteps)
+        // Static properties for configuration parameters (MaxDepth and MaxSteps)
         /// <summary>
-        /// Profondità massima consentita per le ricerche in profondità (DFS).
-        /// Viene impostata dall'orchestratore all'avvio.
+        /// Maximum allowed depth for Depth-First Searches (DFS).
+        /// Set by the orchestrator at startup.
         /// </summary>
         public static long MaxProfonditaRicerca { get; set; }
 
         /// <summary>
-        /// Numero massimo di passi/nodi da esplorare per le ricerche in ampiezza (BFS).
-        /// Viene impostato dall'orchestratore all'avvio.
+        /// Maximum number of steps/nodes to explore for Breadth-First Searches (BFS).
+        /// Set by the orchestrator at startup.
         /// </summary>
         public static long MassimoPassiRicerca { get; set; }
 
-        // NUOVO: Proprietà statica per accedere alle RuleStatistics caricate dall'orchestratore
+        // NEW: Static property to access current RuleStatistics loaded by the orchestrator
         /// <summary>
-        /// Riferimento al dizionario delle RuleStatistics correnti, caricato da Program.cs.
-        /// Utilizzato per l'ordinamento delle regole in base alla loro efficacia.
-        /// Qualificazione esplicita per RuleStatistics.
+        /// Reference to the current RuleStatistics dictionary, loaded from Program.cs.
+        /// Used for sorting rules based on their effectiveness.
+        /// Explicit qualification for RuleStatistics.
         /// </summary>
         public static System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> CurrentRuleStatistics { get; set; }
 
 
-        // Collezione statica di tutte le regole MIU disponibili.
-        // Qualificazione esplicita per RegolaMIU
+        // Static collection of all available MIU rules.
+        // Explicit qualification for RegolaMIU
         public static System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> Regole { get; private set; } = new System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU>();
 
-        // Eventi per notificare la soluzione trovata o l'applicazione di una regola.
+        // Events to notify when a solution is found or a rule is applied.
         public static event EventHandler<SolutionFoundEventArgs> OnSolutionFound;
         public static event EventHandler<RuleAppliedEventArgs> OnRuleApplied;
 
         /// <summary>
-        /// Carica le regole MIU da una lista di stringhe formattate come output SQLiteSelect.
-        /// Questo metodo è progettato per interfacciarsi con il formato stringa di SQLiteSchemaLoader.
-        /// ATTENZIONE: Questo metodo assume un formato stringa specifico e non è robusto a cambiamenti.
+        /// Loads MIU rules from a list of strings formatted as SQLiteSelect output.
+        /// This method is designed to interface with the string format of SQLiteSchemaLoader.
+        /// WARNING: This method assumes a specific string format and is not robust to changes.
         /// </summary>
-        /// <param name="regoleRawData">Lista di stringhe, ogni stringa rappresenta una riga di dati delimitata da ';'.</param>
+        /// <param name="regoleRawData">List of strings, each string represents a data row delimited by ';'.</param>
         public static void CaricaRegoleDaOggettoSQLite(System.Collections.Generic.List<string> regoleRawData)
         {
-            Regole.Clear(); // Pulisce le regole esistenti prima di caricare le nuove
+            Regole.Clear(); // Clears existing rules before loading new ones
 
             foreach (string riga in regoleRawData)
             {
                 string[] campi = riga.Split(';');
-                if (campi.Length >= 5) // Assicurati che ci siano abbastanza campi
+                if (campi.Length >= 5) // Ensure there are enough fields
                 {
                     try
                     {
-                        // Assumiamo l'ordine: ID, Nome, Pattern, Sostituzione, Descrizione
+                        // Assume order: ID, Nome, Pattern, Sostituzione, Descrizione
                         long id = Convert.ToInt64(campi[0]);
                         string nome = campi[1].Trim();
                         string pattern = campi[2].Trim();
                         string sostituzione = campi[3].Trim();
                         string descrizione = campi[4].Trim();
 
-                        // Qualificazione esplicita per RegolaMIU
+                        // Explicit qualification for RegolaMIU
                         Regole.Add(new EvolutiveSystem.Common.RegolaMIU(id, nome, descrizione, pattern, sostituzione));
                     }
                     catch (Exception ex)
                     {
-                        // Usa il LoggerInstance per il log degli errori
-                        LoggerInstance?.Log(LogLevel.ERROR, $"[RegoleMIUManager ERROR] Errore nel parsing di una riga regola: {riga}. Dettagli: {ex.Message}");
+                        // Use LoggerInstance for error logging
+                        LoggerInstance?.Log(LogLevel.ERROR, $"[RegoleMIUManager ERROR] Error parsing rule row: {riga}. Details: {ex.Message}");
                     }
                 }
             }
-            LoggerInstance?.Log(LogLevel.DEBUG, $"[RegoleMIUManager DEBUG] Caricate {Regole.Count} regole da oggetto SQLite.");
+            LoggerInstance?.Log(LogLevel.DEBUG, $"[RegoleMIUManager DEBUG] Loaded {Regole.Count} rules from SQLite object.");
         }
 
         /// <summary>
-        /// Carica le regole MIU da una lista di oggetti RegolaMIU.
-        /// Questo metodo è pensato per essere utilizzato con l'output di MIURepository.LoadRegoleMIU().
+        /// Loads MIU rules from a list of RegolaMIU objects.
+        /// This method is intended to be used with the output of MIURepository.LoadRegoleMIU().
         /// </summary>
-        /// <param name="regoleMIU">Lista di oggetti RegolaMIU.</param>
-        // Qualificazione esplicita per RegolaMIU nel parametro
+        /// <param name="regoleMIU">List of RegolaMIU objects.</param>
+        // Explicit qualification for RegolaMIU in the parameter
         public static void CaricaRegoleDaOggettoRepository(System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> regoleMIU)
         {
-            Regole.Clear(); // Pulisce le regole esistenti prima di caricare le nuove
-            Regole.AddRange(regoleMIU); // Aggiunge tutte le regole dalla lista fornita
-            LoggerInstance?.Log(LogLevel.DEBUG, $"[RegoleMIUManager DEBUG] Caricate {Regole.Count} regole da oggetto Repository.");
+            Regole.Clear(); // Clears existing rules before loading new ones
+            Regole.AddRange(regoleMIU); // Adds all rules from the provided list
+            LoggerInstance?.Log(LogLevel.DEBUG, $"[RegoleMIUManager DEBUG] Loaded {Regole.Count} rules from Repository object.");
         }
 
 
         /// <summary>
-        /// Applica le regole MIU a una stringa data in un ciclo, mostrando tutti i passaggi.
-        /// Questa funzione opera su stringhe STANDARD (decompresse).
+        /// Applies MIU rules to a given string in a loop, showing all steps.
+        /// This function operates on STANDARD (decompressed) strings.
         /// </summary>
-        /// <param name="initialStringStandard">La stringa iniziale standard (decompressa) a cui applicare le regole.</param>
+        /// <param name="initialStringStandard">The initial standard (decompressed) string to apply rules to.</param>
         public static void ApplicaRegole(string initialStringStandard)
         {
-            LoggerInstance?.Log(LogLevel.INFO, $"Stringa iniziale: {initialStringStandard}");
+            LoggerInstance?.Log(LogLevel.INFO, $"Initial string: {initialStringStandard}");
             string currentStringStandard = initialStringStandard;
             int step = 0;
             bool appliedAnyRule;
@@ -157,78 +157,76 @@ namespace MIU.Core
             do
             {
                 appliedAnyRule = false;
-                // MODIFICA: Ordina le regole prima di applicarle
+                // MODIFICATION: Sort rules before applying them
                 var orderedRules = Regole.OrderByDescending(rule =>
                 {
-                    // Qualificazione esplicita per RuleStatistics
+                    // Explicit qualification for RuleStatistics
                     if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
                     {
                         return stats.EffectivenessScore;
                     }
-                    return 0.0; // Punteggio predefinito per regole senza statistiche
+                    return 0.0; // Default score for rules without statistics
                 })
                 .ThenByDescending(rule =>
                 {
-                    // Qualificazione esplicita per RuleStatistics
+                    // Explicit qualification for RuleStatistics
                     if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
                     {
                         return stats.ApplicationCount;
                     }
-                    return 0; // Conteggio predefinito per regole senza statistiche
+                    return 0; // Default count for rules without statistics
                 })
                 .ToList();
 
 
-                foreach (var rule in orderedRules) // Usa le regole ordinate
+                foreach (var rule in orderedRules) // Use sorted rules
                 {
-                    // TryApply opera su stringhe STANDARD
-                    if (rule.TryApply(currentStringStandard, out string newStringStandard)) // <-- Corretto da currentStandard
+                    // TryApply operates on STANDARD strings
+                    if (rule.TryApply(currentStringStandard, out string newStringStandard))
                     {
                         OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs
                         {
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
-                            OriginalString = currentStringStandard, // <-- Corretto da currentStandard
+                            OriginalString = currentStringStandard, // STANDARD string
                             NewString = newStringStandard,
                             CurrentDepth = step
                         });
                         currentStringStandard = newStringStandard;
                         appliedAnyRule = true;
                         step++;
-                        break; // Applica una sola regola per passo per test
+                        break; // Apply only one rule per step for testing
                     }
                 }
             } while (appliedAnyRule);
 
-            LoggerInstance?.Log(LogLevel.INFO, $"Risultato finale dopo {step} passi: {currentStringStandard}");
+            LoggerInstance?.Log(LogLevel.INFO, $"Final result after {step} steps: {currentStringStandard}");
         }
 
         /// <summary>
-        /// Implementazione della ricerca in profondità (DFS) per trovare una derivazione.
-        /// Opera su stringhe STANDARD internamente, ma accetta/restituisce stringhe COMPRESSE.
-        /// Utilizza la proprietà statica MaxProfonditaRicerca per il limite di profondità.
+        /// Implementation of Depth-First Search (DFS) to find a derivation.
+        /// Operates on STANDARD strings internally, but accepts/returns COMPRESSED strings.
+        /// Uses the static property MaxProfonditaRicerca for the depth limit.
         /// </summary>
-        /// <param name="searchId">L'ID della ricerca corrente per la persistenza.</param>
-        // PathStepInfo è nel namespace MIU.Core, quindi non serve qualificazione completa qui se "using MIU.Core;" è attivo
-        // (che lo è implicitamente essendo nello stesso namespace)
+        /// <param name="searchId">The ID of the current search for persistence.</param>
         public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed)
         {
-            // Decomprimi le stringhe iniziali e target per la ricerca interna
+            // Decompress initial and target strings for internal search
             string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
             string targetStringStandard = MIUStringConverter.DeflateMIUString(targetStringCompressed);
 
-            // Stack per la DFS: (stato corrente standard, percorso di PathStepInfo fino a qui)
+            // Stack for DFS: (current standard state, list of PathStepInfo up to here)
             System.Collections.Generic.Stack<(string currentStandard, System.Collections.Generic.List<PathStepInfo> currentPath)> stack = new System.Collections.Generic.Stack<(string, System.Collections.Generic.List<PathStepInfo>)>();
-            System.Collections.Generic.HashSet<string> visitedStandard = new System.Collections.Generic.HashSet<string>(); // Per tracciare gli stati standard già visitati
+            System.Collections.Generic.HashSet<string> visitedStandard = new System.Collections.Generic.HashSet<string>(); // To track already visited standard states
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            // Aggiungi lo stato iniziale al percorso
+            // Add initial state to path
             var initialPathStep = new PathStepInfo
             {
                 StateStringStandard = startStringStandard,
-                AppliedRuleID = null, // Nessuna regola applicata per lo stato iniziale
-                ParentStateStringStandard = null // Nessun genitore per lo stato iniziale
+                AppliedRuleID = null, // No rule applied for initial state
+                ParentStateStringStandard = null // No parent for initial state
             };
             stack.Push((startStringStandard, new System.Collections.Generic.List<PathStepInfo> { initialPathStep }));
             visitedStandard.Add(startStringStandard);
@@ -245,80 +243,80 @@ namespace MIU.Core
                 if (currentStandard == targetStringStandard)
                 {
                     stopwatch.Stop();
-                    // Il percorso è già in PathStepInfo con stringhe standard
+                    // The path is already in PathStepInfo with standard strings
                     OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs
                     {
-                        SearchID = searchId, // Passa l'ID della ricerca
-                        InitialString = startStringCompressed, // Stringa COMPRESSA originale
-                        TargetString = targetStringCompressed, // Stringa COMPRESSA target
+                        SearchID = searchId, // Pass the search ID
+                        InitialString = startStringCompressed, // Original COMPRESSED string
+                        TargetString = targetStringCompressed, // Target COMPRESSED string
                         Success = true,
                         ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
-                        FromCache = false, // Considera sempre false per ora
+                        FromCache = false, // Always consider false for now
                         ElapsedTicks = stopwatch.ElapsedTicks,
-                        SolutionPathSteps = currentPath, // Percorso completo già pronto
+                        SolutionPathSteps = currentPath, // Complete path ready
                         StepsTaken = currentPath.Count - 1,
                         NodesExplored = nodesExplored,
-                        MaxDepthReached = maxDepthReached
+                        MaxDepthReached = maxDepthReached,
+                        SearchAlgorithmUsed = "DFS" // Specify the algorithm used
                     });
-                    LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Soluzione trovata: '{startStringCompressed}' -> '{targetStringCompressed}'. Passi: {currentPath.Count - 1}, Nodi esplorati: {nodesExplored}. Tempo: {stopwatch.ElapsedMilliseconds} ms.");
-                    return currentPath; // Restituisce percorso in PathStepInfo
+                    LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Solution found: '{startStringCompressed}' -> '{targetStringCompressed}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+                    return currentPath; // Returns path in PathStepInfo
                 }
 
-                if (currentPath.Count - 1 >= MaxProfonditaRicerca) continue; // Profondità massima raggiunta
+                if (currentPath.Count - 1 >= MaxProfonditaRicerca) continue; // Maximum depth reached
 
-                // MODIFICA: Ordina le regole prima di applicarle
+                // MODIFICATION: Sort rules before applying them
                 var orderedRules = Regole.OrderByDescending(rule =>
                 {
-                    // Qualificazione esplicita per RuleStatistics
+                    // Explicit qualification for RuleStatistics
                     if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
                     {
                         return stats.EffectivenessScore;
                     }
-                    return 0.0; // Punteggio predefinito per regole senza statistiche
+                    return 0.0; // Default score for rules without statistics
                 })
                 .ThenByDescending(rule =>
                 {
-                    // Qualificazione esplicita per RuleStatistics
+                    // Explicit qualification for RuleStatistics
                     if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
                     {
                         return stats.ApplicationCount;
                     }
-                    return 0; // Conteggio predefinito per regole senza statistiche
+                    return 0; // Default count for rules without statistics
                 })
                 .ToList();
 
-                foreach (var rule in orderedRules) // Usa le regole ordinate
+                foreach (var rule in orderedRules) // Use sorted rules
                 {
-                    // TryApply opera su stringhe STANDARD
+                    // TryApply operates on STANDARD strings
                     if (rule.TryApply(currentStandard, out string newStringStandard))
                     {
                         OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs
                         {
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
-                            OriginalString = currentStandard, // Stringa STANDARD
-                            NewString = newStringStandard,    // Stringa STANDARD
-                            CurrentDepth = currentPath.Count - 1 // Profondità corrente
+                            OriginalString = currentStandard, // STANDARD string
+                            NewString = newStringStandard,    // STANDARD string
+                            CurrentDepth = currentPath.Count - 1 // Current depth
                         });
 
                         if (!visitedStandard.Contains(newStringStandard))
                         {
                             visitedStandard.Add(newStringStandard);
-                            // Crea un nuovo passo per il percorso
+                            // Create a new step for the path
                             var newPathStep = new PathStepInfo
                             {
                                 StateStringStandard = newStringStandard,
                                 AppliedRuleID = rule.ID,
                                 ParentStateStringStandard = currentStandard
                             };
-                            // PathStepInfo è nel namespace MIU.Core
                             System.Collections.Generic.List<PathStepInfo> newPath = new System.Collections.Generic.List<PathStepInfo>(currentPath) { newPathStep };
                             stack.Push((newStringStandard, newPath));
-                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Aggiunto nuovo stato: '{newStringStandard}' (da '{currentStandard}' con regola '{(rule.Nome)}'). Profondità: {currentPath.Count}. Coda: {stack.Count}");
+                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{(rule.Nome)}'). Depth: {currentPath.Count}. Queue: {stack.Count}");
                         }
                         else
                         {
-                            // LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Stato '{newStringStandard}' già visitato. Saltando.");
+                            // LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] State '{newStringStandard}' already visited. Skipping.");
                         }
                     }
                 }
@@ -327,49 +325,48 @@ namespace MIU.Core
             stopwatch.Stop();
             OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs
             {
-                SearchID = searchId, // Passa l'ID della ricerca
-                InitialString = startStringCompressed, // Stringa COMPRESSA originale
-                TargetString = targetStringCompressed, // Stringa COMPRESSA target
+                SearchID = searchId, // Pass the search ID
+                InitialString = startStringCompressed, // Original COMPRESSED string
+                TargetString = targetStringCompressed, // Target COMPRESSED string
                 Success = false,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                 ElapsedTicks = stopwatch.ElapsedTicks,
-                FromCache = false, // Considera sempre false per ora
-                SolutionPathSteps = null, // Percorso nullo se non trovato
+                FromCache = false, // Always consider false for now
+                SolutionPathSteps = null, // Null path if not found
                 StepsTaken = -1,
                 NodesExplored = nodesExplored,
-                MaxDepthReached = maxDepthReached
+                MaxDepthReached = maxDepthReached,
+                SearchAlgorithmUsed = "DFS" // Specify the algorithm used
             });
-            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Nessuna soluzione trovata: '{startStringCompressed}' -> '{targetStringCompressed}'. Nodi esplorati: {nodesExplored}, Prof. Max: {maxDepthReached}. Tempo: {stopwatch.ElapsedMilliseconds} ms.");
-            return null; // Nessuna derivazione trovata
+            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] No solution found: '{startStringCompressed}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+            return null; // No derivation found
         }
 
 
         /// <summary>
-        /// Implementazione della ricerca in ampiezza (BFS) per trovare la derivazione più breve.
-        /// Opera su stringhe STANDARD internamente, ma accetta/restituisce una lista di PathStepInfo.
-        /// Utilizza la proprietà statica MassimoPassiRicerca per il limite di passi.
+        /// Implementation of Breadth-First Search (BFS) to find the shortest derivation.
+        /// Operates on STANDARD strings internally, but accepts/returns a list of PathStepInfo.
+        /// Uses the static property MassimoPassiRicerca for the step limit.
         /// </summary>
-        /// <param name="searchId">L'ID della ricerca corrente per la persistenza.</param>
-        // PathStepInfo è nel namespace MIU.Core, quindi non serve qualificazione completa qui se "using MIU.Core;" è attivo
-        // (che lo è implicitamente essendo nello stesso namespace)
+        /// <param name="searchId">The ID of the current search for persistence.</param>
         public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed)
         {
-            // Decomprimi le stringhe iniziali e target per la ricerca interna
+            // Decompress initial and target strings for internal search
             string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
             string targetStringStandard = MIUStringConverter.DeflateMIUString(targetStringCompressed);
 
-            // Coda per la BFS: (stato corrente standard, percorso di PathStepInfo fino a qui)
+            // Queue for BFS: (current standard state, list of PathStepInfo up to here)
             System.Collections.Generic.Queue<(string currentStandard, System.Collections.Generic.List<PathStepInfo> currentPath)> queue = new System.Collections.Generic.Queue<(string, System.Collections.Generic.List<PathStepInfo>)>();
-            System.Collections.Generic.HashSet<string> visitedStandard = new System.Collections.Generic.HashSet<string>(); // Per tracciare gli stati standard già visitati
+            System.Collections.Generic.HashSet<string> visitedStandard = new System.Collections.Generic.HashSet<string>(); // To track already visited standard states
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            // Aggiungi lo stato iniziale al percorso
+            // Add initial state to path
             var initialPathStep = new PathStepInfo
             {
                 StateStringStandard = startStringStandard,
-                AppliedRuleID = null, // Nessuna regola applicata per lo stato iniziale
-                ParentStateStringStandard = null // <-- Corretto da ParentStateStandard
+                AppliedRuleID = null, // No rule applied for initial state
+                ParentStateStringStandard = null // No parent for initial state
             };
             queue.Enqueue((startStringStandard, new System.Collections.Generic.List<PathStepInfo> { initialPathStep }));
             visitedStandard.Add(startStringStandard);
@@ -377,7 +374,7 @@ namespace MIU.Core
             int nodesExplored = 0;
             int maxDepthReached = 0;
 
-            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Inizio ricerca da '{startStringStandard}' a '{targetStringStandard}' (Max passi: {MassimoPassiRicerca})");
+            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max steps: {MassimoPassiRicerca})");
 
             while (queue.Count > 0)
             {
@@ -388,71 +385,72 @@ namespace MIU.Core
                 if (currentStandard == targetStringStandard)
                 {
                     stopwatch.Stop();
-                    // Il percorso è già in PathStepInfo con stringhe standard
+                    // The path is already in PathStepInfo with standard strings
                     OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs
                     {
-                        SearchID = searchId, // Passa l'ID della ricerca
-                        InitialString = startStringCompressed, // Stringa COMPRESSA originale
-                        TargetString = targetStringCompressed, // Stringa COMPRESSA target
+                        SearchID = searchId, // Pass the search ID
+                        InitialString = startStringCompressed, // Original COMPRESSED string
+                        TargetString = targetStringCompressed, // Target COMPRESSED string
                         Success = true,
                         ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                         ElapsedTicks = stopwatch.ElapsedTicks,
-                        FromCache = false, // Considera sempre false per ora
-                        SolutionPathSteps = currentPath, // Percorso completo già pronto
+                        FromCache = false, // Always consider false for now
+                        SolutionPathSteps = currentPath, // Complete path ready
                         StepsTaken = currentPath.Count - 1,
                         NodesExplored = nodesExplored,
-                        MaxDepthReached = maxDepthReached
+                        MaxDepthReached = maxDepthReached,
+                        SearchAlgorithmUsed = "BFS" // Specify the algorithm used
                     });
-                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS] Soluzione trovata: '{startStringStandard}' -> '{targetStringStandard}'. Passi: {currentPath.Count - 1}, Nodi esplorati: {nodesExplored}. Tempo: {stopwatch.ElapsedMilliseconds} ms.");
-                    return currentPath; // Restituisce percorso in PathStepInfo
+                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS] Solution found: '{startStringStandard}' -> '{targetStringStandard}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+                    return currentPath; // Returns path in PathStepInfo
                 }
 
                 if (currentPath.Count - 1 >= MassimoPassiRicerca)
                 {
-                    // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Raggiunta profondità massima ({MassimoPassiRicerca}) per '{currentStandard}'. Saltando esplorazione.");
-                    continue; // Profondità massima raggiunta
+                    // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Maximum depth reached ({MassimoPassiRicerca}) for '{currentStandard}'. Skipping exploration.");
+                    continue; // Maximum depth reached
                 }
 
-                // MODIFICA: Ordina le regole prima di applicarle
+                // MODIFICATION: Sort rules before applying them
                 var orderedRules = Regole.OrderByDescending(rule =>
                 {
-                    // Qualificazione esplicita per RuleStatistics
+                    // Explicit qualification for RuleStatistics
                     if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
                     {
                         return stats.EffectivenessScore;
                     }
-                    return 0.0; // Punteggio predefinito per regole senza statistiche
+                    return 0.0; // Default score for rules without statistics
                 })
                 .ThenByDescending(rule =>
                 {
-                    // Qualificazione esplicita per RuleStatistics
+                    // Explicit qualification for RuleStatistics
                     if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
                     {
                         return stats.ApplicationCount;
                     }
-                    return 0; // Conteggio predefinito per regole senza statistiche
+                    return 0; // Default count for rules without statistics
                 })
                 .ToList();
 
 
-                foreach (var rule in orderedRules) // Usa le regole ordinate
+                foreach (var rule in orderedRules) // Use sorted rules
                 {
-                    // TryApply opera su stringhe STANDARD
+                    // TryApply operates on STANDARD strings
                     if (rule.TryApply(currentStandard, out string newStringStandard))
                     {
                         OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs
                         {
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
-                            OriginalString = currentStandard, // Stringa STANDARD
-                            NewString = newStringStandard,    // Stringa STANDARD
-                            CurrentDepth = currentPath.Count - 1 // Profondità corrente
+                            OriginalString = currentStandard, // STANDARD string
+                            NewString = newStringStandard,    // STANDARD string
+                            CurrentDepth = currentPath.Count - 1 // Current depth
                         });
 
                         if (!visitedStandard.Contains(newStringStandard))
                         {
                             visitedStandard.Add(newStringStandard);
-                            // Crea un nuovo passo per il percorso
+                            // Create a new step for the path
                             var newPathStep = new PathStepInfo
                             {
                                 StateStringStandard = newStringStandard,
@@ -461,11 +459,11 @@ namespace MIU.Core
                             };
                             System.Collections.Generic.List<PathStepInfo> newPath = new System.Collections.Generic.List<PathStepInfo>(currentPath) { newPathStep };
                             queue.Enqueue((newStringStandard, newPath));
-                            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Aggiunto nuovo stato: '{newStringStandard}' (da '{currentStandard}' con regola '{(rule.Nome)}'). Profondità: {currentPath.Count}. Coda: {queue.Count}");
+                            LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{(rule.Nome)}'). Depth: {currentPath.Count}. Queue: {queue.Count}");
                         }
                         else
                         {
-                            // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] Stato '{newStringStandard}' già visitato. Saltando.");
+                            // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS] State '{newStringStandard}' already visited. Skipping.");
                         }
                     }
                 }
@@ -474,20 +472,65 @@ namespace MIU.Core
             stopwatch.Stop();
             OnSolutionFound?.Invoke(null, new SolutionFoundEventArgs
             {
-                SearchID = searchId, // Passa l'ID della ricerca
-                InitialString = startStringCompressed, // Stringa COMPRESSA originale
-                TargetString = targetStringCompressed, // Stringa COMPRESSA target
+                SearchID = searchId, // Pass the search ID
+                InitialString = startStringCompressed, // Original COMPRESSED string
+                TargetString = targetStringCompressed, // Target COMPRESSED string
                 Success = false,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                 ElapsedTicks = stopwatch.ElapsedTicks,
-                FromCache = false, // Considera sempre false per ora
-                SolutionPathSteps = null, // Percorso nullo se non trovato
+                FromCache = false, // Always consider false for now
+                SolutionPathSteps = null, // Null path if not found
                 StepsTaken = -1,
                 NodesExplored = nodesExplored,
-                MaxDepthReached = maxDepthReached
+                MaxDepthReached = maxDepthReached,
+                SearchAlgorithmUsed = "BFS" // Specify the algorithm used
             });
-            LoggerInstance?.Log(LogLevel.INFO, $"[BFS] Nessuna soluzione trovata: '{startStringStandard}' -> '{targetStringStandard}'. Nodi esplorati: {nodesExplored}, Prof. Max: {maxDepthReached}. Tempo: {stopwatch.ElapsedMilliseconds} ms.");
-            return null; // Nessuna derivazione trovata
+            LoggerInstance?.Log(LogLevel.INFO, $"[BFS] No solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+            return null; // No derivation found
         }
+
+
+        /// <summary>
+        /// Intelligent method to choose and start the derivation search (BFS or DFS)
+        /// based on string length heuristics.
+        /// </summary>
+        /// <param name="searchId">The ID of the current search for persistence.</param>
+        /// <param name="startStringCompressed">The compressed starting string.</param>
+        /// <param name="targetStringCompressed">The compressed target string.</param>
+        /// <returns>The list of PathStepInfo that constitutes the solution, or null if not found.</returns>
+        public static List<PathStepInfo> TrovaDerivazioneAutomatica(long searchId, string startStringCompressed, string targetStringCompressed)
+        {
+            LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Automatic search requested from '{startStringCompressed}' to '{targetStringCompressed}'.");
+
+            string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
+            string targetStringStandard = MIUStringConverter.DeflateMIUString(targetStringCompressed);
+
+            // Heuristic: If the target string is significantly longer than the initial string (e.g., > 1.5 times length), prefer DFS.
+            // Otherwise, prefer BFS for the shortest path.
+            bool useDFS = targetStringStandard.Length > (startStringStandard.Length * 1.5);
+
+            List<PathStepInfo> resultPath = null;
+            string chosenAlgorithm = "";
+
+            if (useDFS)
+            {
+                chosenAlgorithm = "DFS (Automatic)";
+                LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Target string is longer. Chosen algorithm DFS.");
+                resultPath = TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed);
+            }
+            else
+            {
+                chosenAlgorithm = "BFS (Automatic)";
+                LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Target string is not significantly longer. Chosen algorithm BFS.");
+                resultPath = TrovaDerivazioneBFS(searchId, startStringCompressed, targetStringCompressed);
+            }
+
+            // The OnSolutionFound event is already invoked by the BFS/DFS methods,
+            // so we do not invoke it here to avoid duplicates.
+            // However, we can add a log to summarize the choice.
+
+            return resultPath;
+        }
+
     }
 }
