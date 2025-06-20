@@ -1,177 +1,102 @@
-// File: C:\Progetti\EvolutiveSystem_250604\MIU.Core\MIURepository.cs
-// Data di riferimento: 20 giugno 2025
-// Contiene la classe MIURepository per la gestione della persistenza dei dati MIU e delle statistiche.
-// AGGIORNAMENTO: Utilizza il nome di tabella corretto 'Learning_RuleStatistics'
-// e gestisce la colonna 'LastUpdated' come TEXT per i timestamp, leggendo e scrivendo come stringa.
+// File: C:\Progetti\EvolutiveSystem\MIU.Core\MIURepository.cs
+// Data di riferimento: 21 giugno 2025 (Versione definitiva allineata allo schema MIU_Searches)
+// Modifiche per Fase 2.3.2 - Inserimento dati nelle colonne esistenti di MIU_Searches.
+// CORREZIONI: Nome tabella 'MIU_Searches', colonne 'SearchAlgorithm', 'Outcome', 'MaxDepth'.
 
+using EvolutiveSystem.Common; // Per RegolaMIU, RuleStatistics, MIUParameterConfigurator, Search, RuleApplication, MIUState, PathStepInfo
+using EvolutiveSystem.SQL.Core; // Per IMIUDataManager
+using MasterLog; // Per Logger
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Globalization; // Necessario per CultureInfo.InvariantCulture e DateTimeStyles
 using System.Linq;
-using EvolutiveSystem.SQL.Core; // Assicurati che questo riferimento sia corretto per la tua libreria SQL
-using MasterLog; // Necessario per il Logger
+using System.Text;
+using System.Threading.Tasks;
 
 namespace MIU.Core
 {
+    /// <summary>
+    /// Repository class for managing MIU-related data persistence.
+    /// Interacts with the IMIUDataManager to perform CRUD operations on the SQLite database.
+    /// </summary>
     public class MIURepository
     {
         private readonly IMIUDataManager _dataManager;
         private readonly Logger _logger;
 
+        /// <summary>
+        /// Constructor for MIURepository.
+        /// </summary>
+        /// <param name="dataManager">An implementation of IMIUDataManager for database access.</param>
+        /// <param name="logger">An instance of the Logger for logging messages.</param>
         public MIURepository(IMIUDataManager dataManager, Logger logger)
         {
-            _dataManager = dataManager ?? throw new ArgumentNullException(nameof(dataManager));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _dataManager = dataManager;
+            _logger = logger;
             _logger.Log(LogLevel.DEBUG, "[Repository DEBUG] MIURepository istanziato con IMIUDataManager.");
         }
 
-        #region Regole MIU
-
         /// <summary>
-        /// Carica tutte le regole MIU dal database.
+        /// Loads MIU rules from the database.
         /// </summary>
-        /// <returns>Una lista di oggetti RegolaMIU.</returns>
+        /// <returns>A list of RegolaMIU objects.</returns>
         public List<RegolaMIU> LoadRegoleMIU()
         {
-            _logger.Log(LogLevel.DEBUG, "[Repository DEBUG] Richiesta caricamento RegoleMIU.");
+            _logger.Log(LogLevel.DEBUG, "[Repository DEBUG] Richiesta LoadRegoleMIU.");
             List<RegolaMIU> regole = new List<RegolaMIU>();
             try
             {
-                // Assumiamo che la tabella si chiami 'RegoleMIU' e contenga le colonne specificate
-                DataTable dt = _dataManager.ExecuteSelect("SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU;");
-
-                if (dt != null && dt.Rows.Count > 0)
+                List<string> rawData = _dataManager.SQLiteSelect("SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU;");
+                foreach (string row in rawData)
                 {
-                    foreach (DataRow row in dt.Rows)
+                    string[] fields = row.Split(';');
+                    if (fields.Length >= 5)
                     {
-                        long id = Convert.ToInt64(row["ID"]);
-                        string nome = row["Nome"].ToString();
-                        string pattern = row["Pattern"].ToString();
-                        string sostituzione = row["Sostituzione"].ToString();
-                        string descrizione = row["Descrizione"].ToString();
-                        regole.Add(new RegolaMIU(id, nome, descrizione, pattern, sostituzione));
+                        regole.Add(new RegolaMIU(
+                            Convert.ToInt64(fields[0]),
+                            fields[1],
+                            fields[4], // Descrizione
+                            fields[2], // Pattern
+                            fields[3]  // Sostituzione
+                        ));
                     }
-                    _logger.Log(LogLevel.DEBUG, "RegoleMIU caricate dal database.");
                 }
-                else
-                {
-                    _logger.Log(LogLevel.WARNING, "Nessuna regola MIU trovata nel database.");
-                }
+                _logger.Log(LogLevel.DEBUG, "RegoleMIU caricate dal database.");
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.ERROR, $"Errore nel caricamento delle regole MIU: {ex.Message}");
+                _logger.Log(LogLevel.ERROR, $"Errore nel caricamento delle RegoleMIU: {ex.Message}");
             }
             return regole;
         }
 
-        #endregion
-
-        #region Stati MIU
-
         /// <summary>
-        /// Inserisce o aggiorna uno stato MIU nel database.
+        /// Loads RuleStatistics from the database.
         /// </summary>
-        /// <param name="miuStringStandard">La stringa MIU standard.</param>
-        /// <returns>L'ID dello stato inserito/aggiornato.</returns>
-        public long UpsertMIUState(string miuStringStandard)
-        {
-            _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta Upsert MIU State: {miuStringStandard}");
-            long stateId;
-            try
-            {
-                // Controlla se lo stato esiste già
-                DataTable dt = _dataManager.ExecuteSelect($"SELECT StateID FROM MIU_States WHERE CurrentString = '{miuStringStandard.Replace("'", "''")}';");
-
-                if (dt != null && dt.Rows.Count > 0)
-                {
-                    // Stato esistente, aggiorna l'UsageCount
-                    stateId = Convert.ToInt64(dt.Rows[0]["StateID"]);
-                    _dataManager.ExecuteNonQuery($"UPDATE MIU_States SET UsageCount = UsageCount + 1 WHERE StateID = {stateId};");
-                    _logger.Log(LogLevel.DEBUG, $"MIUState '{miuStringStandard}' aggiornato. ID: {stateId}");
-                }
-                else
-                {
-                    // Nuovo stato, inserisci
-                    long hash = miuStringStandard.GetHashCode(); // GetHashCode su stringa è un int, non un long. Se la colonna Hash è TEXT, va bene.
-                                                                  // Se Hash fosse INTEGER/BIGINT, sarebbe meglio usare un algoritmo hash più robusto o un convert.
-                    int stringLength = miuStringStandard.Length;
-                    DateTime discoveryTime = DateTime.Now;
-                    long discoveryTimeInt = new DateTimeOffset(discoveryTime).ToUnixTimeSeconds();
-                    string discoveryTimeText = discoveryTime.ToString("yyyy-MM-dd HH:mm:ss");
-
-                    _dataManager.ExecuteNonQuery($"INSERT INTO MIU_States (CurrentString, StringLength, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount) VALUES ('{miuStringStandard.Replace("'", "''")}', {stringLength}, '{hash}', {discoveryTimeInt}, '{discoveryTimeText}', 1);");
-
-                    // Recupera l'ID appena inserito
-                    stateId = _dataManager.ExecuteScalar<long>("SELECT last_insert_rowid();");
-                    _logger.Log(LogLevel.DEBUG, $"MIUState '{miuStringStandard}' inserito. ID: {stateId}");
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Log(LogLevel.ERROR, $"Errore nell'Upsert di MIU State '{miuStringStandard}': {ex.Message}");
-                throw; // Rilancia l'eccezione per gestione a monte
-            }
-            return stateId;
-        }
-
-        #endregion
-
-        #region Statistiche Regole (Learning Strategy)
-
-        /// <summary>
-        /// Carica le statistiche di tutte le regole dal database.
-        /// Se una regola non ha statistiche, ne crea una nuova con valori predefiniti.
-        /// </summary>
-        /// <returns>Un dizionario di RuleStatistics, con RuleID come chiave.</returns>
+        /// <returns>A dictionary of RuleStatistics, keyed by RuleID.</returns>
         public Dictionary<long, RuleStatistics> LoadRuleStatistics()
         {
-            _logger.Log(LogLevel.DEBUG, "[Repository DEBUG] Richiesta caricamento RuleStatistics.");
+            _logger.Log(LogLevel.DEBUG, "[Repository DEBUG] Richiesta LoadRuleStatistics.");
             Dictionary<long, RuleStatistics> stats = new Dictionary<long, RuleStatistics>();
             try
             {
-                // UTILIZZIAMO IL NOME DI TABELLA CORRETTO: Learning_RuleStatistics
-                // Colonne: RuleID (PK), ApplicationCount, SuccessfulCount, EffectivenessScore, LastUpdated (TEXT)
-                DataTable dt = _dataManager.ExecuteSelect("SELECT RuleID, ApplicationCount, SuccessfulCount, EffectivenessScore, LastUpdated FROM Learning_RuleStatistics;");
-
-                if (dt != null && dt.Rows.Count > 0)
+                List<string> rawData = _dataManager.SQLiteSelect("SELECT RuleID, ApplicationCount, SuccessfulCount, EffectivenessScore, LastApplicationTimestamp FROM RuleStatistics;");
+                foreach (string row in rawData)
                 {
-                    foreach (DataRow row in dt.Rows)
+                    string[] fields = row.Split(';');
+                    if (fields.Length >= 5)
                     {
-                        long ruleId = Convert.ToInt64(row["RuleID"]);
-                        int appCount = Convert.ToInt32(row["ApplicationCount"]);
-                        int succCount = Convert.ToInt32(row["SuccessfulCount"]);
-                        // Utilizza CultureInfo.InvariantCulture per la conversione robusta di double
-                        double effectiveness = Convert.ToDouble(row["EffectivenessScore"], CultureInfo.InvariantCulture);
-                        string lastUpdatedText = row["LastUpdated"].ToString();
-                        
-                        DateTime lastAppDateTime;
-                        // Prova a parsare la stringa nel formato atteso.
-                        // DateTimeStyles.None è sufficiente per il formato esatto, ma potresti considerare altre opzioni
-                        // come DateTimeStyles.AssumeLocal o DateTimeStyles.AdjustToUniversal se la gestione del fuso orario fosse critica.
-                        if (!DateTime.TryParseExact(lastUpdatedText, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out lastAppDateTime))
-                        {
-                            // Fallback se il parsing fallisce (es. formato non standard o dati corrotti)
-                            lastAppDateTime = DateTime.MinValue; 
-                            _logger.Log(LogLevel.WARNING, $"[Repository WARNING] Impossibile parsare LastUpdated '{lastUpdatedText}' per RuleID {ruleId}. Impostato a DateTime.MinValue.");
-                        }
-
+                        long ruleId = Convert.ToInt64(fields[0]);
                         stats[ruleId] = new RuleStatistics
                         {
                             RuleID = ruleId,
-                            ApplicationCount = appCount,
-                            SuccessfulCount = succCount,
-                            EffectivenessScore = effectiveness,
-                            LastApplicationTimestamp = lastAppDateTime
+                            ApplicationCount = Convert.ToInt64(fields[1]),
+                            SuccessfulCount = Convert.ToInt64(fields[2]),
+                            EffectivenessScore = Convert.ToDouble(fields[3], System.Globalization.CultureInfo.InvariantCulture), // Ensure correct double parsing
+                            LastApplicationTimestamp = DateTime.Parse(fields[4])
                         };
                     }
-                    _logger.Log(LogLevel.DEBUG, "RuleStatistics caricate dal database.");
                 }
-                else
-                {
-                    _logger.Log(LogLevel.WARNING, "Nessuna RuleStatistics trovata nel database. Verranno create nuove entry all'occorrenza.");
-                }
+                _logger.Log(LogLevel.DEBUG, "RuleStatistics caricate dal database.");
             }
             catch (Exception ex)
             {
@@ -181,90 +106,110 @@ namespace MIU.Core
         }
 
         /// <summary>
-        /// Salva le statistiche di tutte le regole nel database.
+        /// Saves or updates RuleStatistics in the database.
         /// </summary>
-        /// <param name="ruleStats">Il dizionario di RuleStatistics da salvare.</param>
-        public void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats)
+        /// <param name="stats">Dictionary of RuleStatistics to save.</param>
+        public void SaveRuleStatistics(Dictionary<long, RuleStatistics> stats)
         {
-            _logger.Log(LogLevel.DEBUG, "[Repository DEBUG] Richiesta salvataggio RuleStatistics.");
-            if (ruleStats == null)
-            {
-                _logger.Log(LogLevel.WARNING, "Tentativo di salvare RuleStatistics nullo.");
-                return;
-            }
-
+            _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta SaveRuleStatistics per {stats.Count} statistiche.");
             try
             {
-                // Inizia una transazione per assicurare l'atomicità
-                _dataManager.ExecuteNonQuery("BEGIN TRANSACTION;");
-
-                foreach (var entry in ruleStats)
+                foreach (var entry in stats)
                 {
-                    RuleStatistics rs = entry.Value;
-                    // Converte DateTime in stringa nel formato 'yyyy-MM-dd HH:mm:ss' per la colonna TEXT LastUpdated
-                    string lastApplicationTimestampText = rs.LastApplicationTimestamp.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-
-                    // UTILIZZIAMO IL NOME DI TABELLA CORRETTO: Learning_RuleStatistics
-                    DataTable dt = _dataManager.ExecuteSelect($"SELECT RuleID FROM Learning_RuleStatistics WHERE RuleID = {rs.RuleID};");
-
-                    if (dt != null && dt.Rows.Count > 0)
-                    {
-                        // Aggiorna
-                        _dataManager.ExecuteNonQuery($@"
-                            UPDATE Learning_RuleStatistics SET
-                                ApplicationCount = {rs.ApplicationCount},
-                                SuccessfulCount = {rs.SuccessfulCount},
-                                EffectivenessScore = {rs.EffectivenessScore.ToString(CultureInfo.InvariantCulture)}, -- Usa InvariantCulture per i double
-                                LastUpdated = '{lastApplicationTimestampText}'
-                            WHERE RuleID = {rs.RuleID};"
-                        );
-                    }
-                    else
-                    {
-                        // Inserisci
-                        _dataManager.ExecuteNonQuery($@"
-                            INSERT INTO Learning_RuleStatistics (RuleID, ApplicationCount, SuccessfulCount, EffectivenessScore, LastUpdated)
-                            VALUES ({rs.RuleID}, {rs.ApplicationCount}, {rs.SuccessfulCount}, {rs.EffectivenessScore.ToString(CultureInfo.InvariantCulture)}, '{lastApplicationTimestampText}');"
-                        );
-                    }
+                    RuleStatistics ruleStats = entry.Value;
+                    string query = $@"
+                        INSERT OR REPLACE INTO RuleStatistics (
+                            RuleID, ApplicationCount, SuccessfulCount, EffectivenessScore, LastApplicationTimestamp
+                        ) VALUES (
+                            {ruleStats.RuleID}, {ruleStats.ApplicationCount}, {ruleStats.SuccessfulCount},
+                            {ruleStats.EffectivenessScore.ToString(System.Globalization.CultureInfo.InvariantCulture)},
+                            '{ruleStats.LastApplicationTimestamp.ToString("yyyy-MM-dd HH:mm:ss")}'
+                        );";
+                    _dataManager.SQLiteQuery(query);
                 }
-                _dataManager.ExecuteNonQuery("COMMIT;");
-                _logger.Log(LogLevel.DEBUG, $"RuleStatistics salvate nel database. Numero di entry: {ruleStats.Count}");
+                _logger.Log(LogLevel.DEBUG, $"Salvate {stats.Count} RuleStatistics nel database.");
             }
             catch (Exception ex)
             {
-                _dataManager.ExecuteNonQuery("ROLLBACK;"); // Esegue il rollback in caso di errore
                 _logger.Log(LogLevel.ERROR, $"Errore nel salvataggio delle RuleStatistics: {ex.Message}");
             }
         }
 
-        #endregion
-
-        #region Ricerche (Search)
+        /// <summary>
+        /// Loads MIU parameter configurator settings from the database.
+        /// </summary>
+        /// <returns>A dictionary of parameter names and their values.</returns>
+        public Dictionary<string, string> LoadMIUParameterConfigurator()
+        {
+            _logger.Log(LogLevel.DEBUG, "[Repository DEBUG] Richiesta LoadMIUParameterConfigurator.");
+            Dictionary<string, string> parameters = new Dictionary<string, string>();
+            try
+            {
+                List<string> rawData = _dataManager.SQLiteSelect("SELECT Name, Value FROM MIUParameterConfigurator;");
+                foreach (string row in rawData)
+                {
+                    string[] fields = row.Split(';');
+                    if (fields.Length >= 2)
+                    {
+                        parameters[fields[0]] = fields[1];
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, "Parametri da MIUParameterConfigurator caricati.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore nel caricamento dei parametri di configurazione: {ex.Message}");
+            }
+            return parameters;
+        }
 
         /// <summary>
-        /// Inserisce una nuova entry di ricerca nel database.
+        /// Inserts a new search record into the database.
+        /// Uses the MIU_Searches table.
         /// </summary>
-        /// <param name="initialString">La stringa iniziale della ricerca (standard).</param>
-        /// <param name="targetString">La stringa target della ricerca (standard).</param>
-        /// <param name="algorithm">L'algoritmo usato (BFS/DFS).</param>
-        /// <returns>L'ID della ricerca appena inserita.</returns>
-        public long InsertSearch(string initialString, string targetString, string algorithm)
+        /// <param name="initialString">The initial string of the search (standard format).</param>
+        /// <param name="targetString">The target string of the search (standard format).</param>
+        /// <param name="algoUsed">The algorithm used for the search (e.g., 'BFS', 'DFS', 'AUTO').</param>
+        /// <param name="initialStringLength">Length of the initial string.</param>
+        /// <param name="targetStringLength">Length of the target string.</param>
+        /// <param name="initialIcount">Count of 'I' in the initial string.</param>
+        /// <param name="initialUcount">Count of 'U' in the initial string.</param>
+        /// <param name="targetIcount">Count of 'I' in the target string.</param>
+        /// <param name="targetUcount">Count of 'U' in the target string.</param>
+        /// <returns>The ID of the newly inserted search record.</returns>
+        // MODIFIED: Corrected table name to MIU_Searches and included all characteristic parameters.
+        public long InsertSearch(
+            string initialString,
+            string targetString,
+            string algoUsed, // Corrisponde a SearchAlgorithm
+            int initialStringLength,
+            int targetStringLength,
+            int initialIcount,
+            int initialUcount,
+            int targetIcount,
+            int targetUcount
+            )
         {
             _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta inserimento Search: {initialString} -> {targetString}");
             long searchId = -1;
             try
             {
-                DateTime startTime = DateTime.Now;
-                long startTimeInt = new DateTimeOffset(startTime).ToUnixTimeSeconds();
-                string startTimeText = startTime.ToString("yyyy-MM-dd HH:mm:ss");
+                // Corretto nome tabella a MIU_Searches e nomi colonne
+                string query = $@"
+                    INSERT INTO MIU_Searches (
+                        InitialString, TargetString, SearchAlgorithm, StartTime,
+                        InitialStringLength, TargetStringLength, InitialIcount, InitialUcount, TargetIcount, TargetUcount
+                    ) VALUES (
+                        '{_dataManager.SanitizeString(initialString)}',
+                        '{_dataManager.SanitizeString(targetString)}',
+                        '{_dataManager.SanitizeString(algoUsed)}', -- Mappato a SearchAlgorithm
+                        '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}',
+                        {initialStringLength}, {targetStringLength}, {initialIcount}, {initialUcount}, {targetIcount}, {targetUcount}
+                    );
+                    SELECT last_insert_rowid();"; // Ottiene l'ID dell'ultima riga inserita
 
-                _dataManager.ExecuteNonQuery($@"
-                    INSERT INTO Searches (InitialString, TargetString, Algorithm, StartTime_Int, StartTime_Text, Success, ElapsedMilliseconds, StepsTaken, NodesExplored, MaxDepthReached)
-                    VALUES ('{initialString.Replace("'", "''")}', '{targetString.Replace("'", "''")}', '{algorithm}', {startTimeInt}, '{startTimeText}', 0, 0, 0, 0, 0);"
-                );
-                searchId = _dataManager.ExecuteScalar<long>("SELECT last_insert_rowid();");
-                _logger.Log(LogLevel.DEBUG, $"Search inserita: Initial='{initialString}', Target='{targetString}', Algo='{algorithm}'. ID: {searchId}.");
+                searchId = _dataManager.SQLiteQuery(query);
+                _logger.Log(LogLevel.DEBUG, $"Search inserita: Initial='{initialString}', Target='{targetString}', Algo='{algoUsed}'. ID: {searchId}.");
             }
             catch (Exception ex)
             {
@@ -274,23 +219,33 @@ namespace MIU.Core
         }
 
         /// <summary>
-        /// Aggiorna i dettagli di una ricerca esistente.
+        /// Updates an existing search record with results.
+        /// Uses the MIU_Searches table.
         /// </summary>
+        /// <param name="searchId">The ID of the search record to update.</param>
+        /// <param name="success">Whether the search was successful.</param>
+        /// <param name="elapsedMilliseconds">Time taken for the search in milliseconds.</param>
+        /// <param name="stepsTaken">Number of steps in the solution path.</param>
+        /// <param name="nodesExplored">Number of nodes explored during the search.</param>
+        /// <param name="maxDepthReached">Maximum depth reached during the search.</param>
         public void UpdateSearch(long searchId, bool success, long elapsedMilliseconds, int stepsTaken, int nodesExplored, int maxDepthReached)
         {
             _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta aggiornamento Search ID: {searchId}");
             try
             {
-                _dataManager.ExecuteNonQuery($@"
-                    UPDATE Searches SET
-                        Success = {(success ? 1 : 0)},
+                // Corretto nome tabella a MIU_Searches e nomi colonne
+                string query = $@"
+                    UPDATE MIU_Searches SET
+                        Outcome = '{ (success ? "Success" : "Failure") }', -- Mappato 'success' boolean a 'Outcome' text
                         ElapsedMilliseconds = {elapsedMilliseconds},
                         StepsTaken = {stepsTaken},
                         NodesExplored = {nodesExplored},
-                        MaxDepthReached = {maxDepthReached}
-                    WHERE SearchID = {searchId};"
-                );
-                _logger.Log(LogLevel.DEBUG, $"Search ID {searchId} aggiornata. Successo: {success}, Tempo: {elapsedMilliseconds}ms.");
+                        MaxDepth = {maxDepthReached}, -- Mappato 'MaxDepthReached' a 'MaxDepth'
+                        EndTime = '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}' -- Aggiunto EndTime
+                    WHERE SearchID = {searchId};"; // Usare SearchID per la clausola WHERE
+
+                _dataManager.SQLiteQuery(query);
+                _logger.Log(LogLevel.DEBUG, $"Search '{searchId}' aggiornata: Success={success}, ElapsedMilliseconds={elapsedMilliseconds}.");
             }
             catch (Exception ex)
             {
@@ -298,61 +253,125 @@ namespace MIU.Core
             }
         }
 
-        #endregion
-
-        #region Applicazioni Regole (Rule Applications)
 
         /// <summary>
-        /// Inserisce un'applicazione di regola nel database.
+        /// Inserts or updates an MIU state in the MIU_States table.
         /// </summary>
-        public void InsertRuleApplication(long searchId, long parentStateId, long newStateId, long appliedRuleId, int depth)
+        /// <param name="stateString">The standard (decompressed) MIU string.</param>
+        /// <returns>The ID of the MIU state.</returns>
+        public long UpsertMIUState(string stateString)
         {
-            _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta inserimento Rule Application: SearchID={searchId}, Parent={parentStateId}, New={newStateId}, Rule={appliedRuleId}.");
+            _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta UpsertMIUState per '{stateString}'.");
+            long stateId = -1;
+            string compressedString = MIUStringConverter.InflateMIUString(stateString); // Questa variabile non è usata dopo la compressione
+            string stringHash = MIUStringConverter.CalculateHash(stateString);
+
             try
             {
-                DateTime applicationTime = DateTime.Now;
-                long applicationTimeInt = new DateTimeOffset(applicationTime).ToUnixTimeSeconds();
-                string applicationTimeText = applicationTime.ToString("yyyy-MM-dd HH:mm:ss");
+                // Prima, prova a trovare lo stato
+                List<string> existing = _dataManager.SQLiteSelect($"SELECT StateID, CurrentString, UsageCount FROM MIU_States WHERE Hash = '{stringHash}';");
 
-                _dataManager.ExecuteNonQuery($@"
-                    INSERT INTO RuleApplications (SearchID, ParentStateID, NewStateID, AppliedRuleID, ApplicationTime_Int, ApplicationTime_Text, Depth)
-                    VALUES ({searchId}, {parentStateId}, {newStateId}, {appliedRuleId}, {applicationTimeInt}, '{applicationTimeText}', {depth});"
-                );
-                _logger.Log(LogLevel.DEBUG, $"Applicazione Regola inserita: SearchID={searchId}, Parent={parentStateId}, New={newStateId}, Rule={appliedRuleId}.");
+                if (existing != null && existing.Any())
+                {
+                    // Lo stato esiste, aggiorna UsageCount
+                    string[] fields = existing[0].Split(';');
+                    stateId = Convert.ToInt64(fields[0]);
+                    long usageCount = Convert.ToInt64(fields[2]) + 1;
+                    string updateQuery = $"UPDATE MIU_States SET UsageCount = {usageCount} WHERE StateID = {stateId};";
+                    _dataManager.SQLiteQuery(updateQuery);
+                    _logger.Log(LogLevel.DEBUG, $"MIUState '{stateString}' aggiornato. ID: {stateId}");
+                }
+                else
+                {
+                    // Lo stato non esiste, inserisci nuovo
+                    string insertQuery = $@"
+                        INSERT INTO MIU_States (
+                            CurrentString, StringLength, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount
+                        ) VALUES (
+                            '{_dataManager.SanitizeString(stateString)}',
+                            {stateString.Length},
+                            '{stringHash}',
+                            {new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds()},
+                            '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}',
+                            1
+                        );
+                        SELECT last_insert_rowid();"; // Ottiene l'ID della riga appena inserita
+                    stateId = _dataManager.SQLiteQuery(insertQuery);
+                    _logger.Log(LogLevel.DEBUG, $"MIUState '{stateString}' inserito. ID: {stateId}");
+                }
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.ERROR, $"Errore nell'inserimento dell'applicazione regola per SearchID {searchId}: {ex.Message}");
+                _logger.Log(LogLevel.ERROR, $"Errore nell'upsert di MIUState '{stateString}': {ex.Message}");
             }
+            return stateId;
         }
 
-        #endregion
-
-        #region Passi del Percorso della Soluzione (Solution Path Steps)
-
         /// <summary>
-        /// Inserisce un passo nel percorso di una soluzione trovata.
+        /// Inserts a record of a rule application during a search.
         /// </summary>
-        public void InsertSolutionPathStep(long searchId, int stepNumber, long currentStateId, long? parentStateId, long? appliedRuleId, bool isTarget, bool isSuccess, int depth)
+        /// <param name="searchId">The ID of the current search.</param>
+        /// <param name="parentStateId">The ID of the state before the rule was applied.</param>
+        /// <param name="newStateId">The ID of the state after the rule was applied.</param>
+        /// <param name="ruleId">The ID of the rule that was applied.</param>
+        /// <param name="depth">The depth of the application in the search tree.</param>
+        public void InsertRuleApplication(long searchId, long parentStateId, long newStateId, long ruleId, int depth)
         {
-            _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta inserimento Solution Path Step: SearchID={searchId}, Step={stepNumber}, StateID={currentStateId}.");
+            _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta InsertRuleApplication per SearchID={searchId}, RuleID={ruleId}.");
             try
             {
-                string parentStateIdValue = parentStateId.HasValue ? parentStateId.Value.ToString() : "NULL";
-                string appliedRuleIdValue = appliedRuleId.HasValue ? appliedRuleId.Value.ToString() : "NULL";
-
-                _dataManager.ExecuteNonQuery($@"
-                    INSERT INTO SolutionPathSteps (SearchID, StepNumber, CurrentStateID, ParentStateID, AppliedRuleID, IsTarget, IsSuccess, Depth)
-                    VALUES ({searchId}, {stepNumber}, {currentStateId}, {parentStateIdValue}, {appliedRuleIdValue}, {(isTarget ? 1 : 0)}, {(isSuccess ? 1 : 0)}, {depth});"
-                );
-                _logger.Log(LogLevel.DEBUG, $"Passo del percorso della soluzione inserito: SearchID={searchId}, Step={stepNumber}.");
+                string query = $@"
+                    INSERT INTO RuleApplications (
+                        SearchID, RuleID, ParentStateID, NewStateID, ApplicationTime, Depth
+                    ) VALUES (
+                        {searchId}, {ruleId}, {parentStateId}, {newStateId},
+                        '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}', {depth}
+                    );";
+                _dataManager.SQLiteQuery(query);
+                _logger.Log(LogLevel.DEBUG, $"Applicazione Regola inserita: SearchID={searchId}, Parent={parentStateId}, New={newStateId}, Rule={ruleId}.");
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.ERROR, $"Errore nell'inserimento del passo del percorso della soluzione per SearchID {searchId}, Step {stepNumber}: {ex.Message}");
+                _logger.Log(LogLevel.ERROR, $"Errore nell'inserimento dell'applicazione della regola per SearchID {searchId}, RuleID {ruleId}: {ex.Message}");
             }
         }
 
-        #endregion
+        /// <summary>
+        /// Inserts a step into the solution path for a given search.
+        /// Uses the SolutionPaths table.
+        /// </summary>
+        /// <param name="searchId">The ID of the search.</param>
+        /// <param name="stepNumber">The sequential number of the step in the path.</param>
+        /// <param name="stateId">The ID of the MIU state at this step.</param>
+        /// <param name="parentStateId">The ID of the parent MIU state (can be null for initial step).</param>
+        /// <param name="appliedRuleId">The ID of the rule applied to reach this state (can be null for initial step).</param>
+        /// <param name="isTarget">Indicates if this state is the target string.</param>
+        /// <param name="solutionFound">Indicates if a solution was found for this search.</param>
+        /// <param name="depth">The depth of this state in the search tree.</param>
+        public void InsertSolutionPathStep(long searchId, int stepNumber, long stateId, long? parentStateId, long? appliedRuleId, bool isTarget, bool solutionFound, int depth)
+        {
+            _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta InsertSolutionPathStep per SearchID={searchId}, Step={stepNumber}.");
+            try
+            {
+                string parentIdValue = parentStateId.HasValue ? parentStateId.Value.ToString() : "NULL";
+                string ruleIdValue = appliedRuleId.HasValue ? appliedRuleId.Value.ToString() : "NULL";
+
+                string query = $@"
+                    INSERT INTO SolutionPaths (
+                        SearchID, StepNumber, StateID, ParentStateID, AppliedRuleID,
+                        IsTarget, SolutionFound, Depth, Timestamp
+                    ) VALUES (
+                        {searchId}, {stepNumber}, {stateId}, {parentIdValue}, {ruleIdValue},
+                        {Convert.ToInt32(isTarget)}, {Convert.ToInt32(solutionFound)}, {depth},
+                        '{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")}'
+                    );";
+                _dataManager.SQLiteQuery(query);
+                _logger.Log(LogLevel.DEBUG, $"Passo Path soluzione inserito: SearchID={searchId}, Step={stepNumber}, StateID={stateId}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore nell'inserimento del passo della soluzione per SearchID {searchId}, Step {stepNumber}: {ex.Message}");
+            }
+        }
     }
 }

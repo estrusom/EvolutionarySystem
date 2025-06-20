@@ -179,7 +179,7 @@ namespace MIU.Core.tester
                         string StringIn = "M2U3I4MI";
                         RegoleMIUManager.CaricaRegoleDaOggettoSQLite(regole);
 
-                        string currentTestString = MIUStringConverter.DeflateMIUString(StringIn);
+                        string currentTestString = MIUStringConverter.InflateMIUString(StringIn);
                         string regola0Output = string.Empty;
                         bool response0 = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == 0)?.TryApply(currentTestString, out regola0Output) ?? false;
                         Console.WriteLine($"String in: {currentTestString} Regola 0: {regola0Output} response: {response0}");
@@ -384,7 +384,7 @@ namespace MIU.Core.tester
                         parentStateId = _repository.UpsertMIUState(currentStep.ParentStateStringStandard);
                     }
 
-                    bool isTarget = (currentStep.StateStringStandard == MIUStringConverter.DeflateMIUString(e.TargetString));
+                    bool isTarget = (currentStep.StateStringStandard == MIUStringConverter.InflateMIUString(e.TargetString));
 
                     _repository.InsertSolutionPathStep(
                         e.SearchID,

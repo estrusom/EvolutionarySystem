@@ -212,8 +212,8 @@ namespace MIU.Core
         public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed)
         {
             // Decompress initial and target strings for internal search
-            string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
-            string targetStringStandard = MIUStringConverter.DeflateMIUString(targetStringCompressed);
+            string startStringStandard = MIUStringConverter.InflateMIUString(startStringCompressed);
+            string targetStringStandard = MIUStringConverter.InflateMIUString(targetStringCompressed);
 
             // Stack for DFS: (current standard state, list of PathStepInfo up to here)
             System.Collections.Generic.Stack<(string currentStandard, System.Collections.Generic.List<PathStepInfo> currentPath)> stack = new System.Collections.Generic.Stack<(string, System.Collections.Generic.List<PathStepInfo>)>();
@@ -352,8 +352,8 @@ namespace MIU.Core
         public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed)
         {
             // Decompress initial and target strings for internal search
-            string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
-            string targetStringStandard = MIUStringConverter.DeflateMIUString(targetStringCompressed);
+            string startStringStandard = MIUStringConverter.InflateMIUString(startStringCompressed);
+            string targetStringStandard = MIUStringConverter.InflateMIUString(targetStringCompressed);
 
             // Queue for BFS: (current standard state, list of PathStepInfo up to here)
             System.Collections.Generic.Queue<(string currentStandard, System.Collections.Generic.List<PathStepInfo> currentPath)> queue = new System.Collections.Generic.Queue<(string, System.Collections.Generic.List<PathStepInfo>)>();
@@ -502,8 +502,8 @@ namespace MIU.Core
         {
             LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Automatic search requested from '{startStringCompressed}' to '{targetStringCompressed}'.");
 
-            string startStringStandard = MIUStringConverter.DeflateMIUString(startStringCompressed);
-            string targetStringStandard = MIUStringConverter.DeflateMIUString(targetStringCompressed);
+            string startStringStandard = MIUStringConverter.InflateMIUString(startStringCompressed);
+            string targetStringStandard = MIUStringConverter.InflateMIUString(targetStringCompressed);
 
             // Heuristic: If the target string is significantly longer than the initial string (e.g., > 1.5 times length), prefer DFS.
             // Otherwise, prefer BFS for the shortest path.

@@ -17,13 +17,13 @@ namespace MIU.Core
     public static class MIUStringConverter
     {
         /// <summary>
-        /// Comprime una stringa MIU standard (es. "MIIU") nella notazione "conteggio-lettera" (es. "M2IU").
+        /// Decomprime  una stringa MIU standard (es. "MIIU") nella notazione "conteggio-lettera" (es. "M2IU").
         /// La regola è: il numero che indica la ripetizione precede la lettera.
         /// Il numero '1' è omesso se è seguito da un'altra lettera.
         /// </summary>
         /// <param name="input">La stringa MIU standard da comprimere.</param>
         /// <returns>La stringa MIU compressa.</returns>
-        public static string InflateMIUString(string input)
+        public static string DeflateMIUString(string input)
         {
             if (string.IsNullOrEmpty(input))
             {
@@ -82,7 +82,7 @@ namespace MIU.Core
         /// </summary>
         /// <param name="compressedInput">La stringa MIU compressa da decomprimere.</param>
         /// <returns>La stringa MIU standard decompressa.</returns>
-        public static string DeflateMIUString(string compressedInput)
+        public static string InflateMIUString(string compressedInput)
         {
             if (string.IsNullOrEmpty(compressedInput))
             {

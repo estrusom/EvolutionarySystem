@@ -196,7 +196,7 @@ namespace EvolutiveSystem.SQL.Core
                             {
                                 insertCommand.Parameters.AddWithValue("@currentString", miuString);
                                 insertCommand.Parameters.AddWithValue("@stringLength", stringLength);
-                                insertCommand.Parameters.AddWithValue("@deflateString", MIUStringConverter.InflateMIUString(miuString)); // Store compressed version
+                                insertCommand.Parameters.AddWithValue("@deflateString", MIUStringConverter.DeflateMIUString(miuString)); // Store compressed version
                                 insertCommand.Parameters.AddWithValue("@hash", miuString.GetHashCode().ToString()); // Simple hash for now
                                 insertCommand.Parameters.AddWithValue("@timeInt", discoveryTimeInt);
                                 insertCommand.Parameters.AddWithValue("@timeText", discoveryTimeText);
@@ -520,7 +520,7 @@ namespace EvolutiveSystem.SQL.Core
                 _logger.Log(LogLevel.ERROR, $"Errore salvataggio RuleStatistics: {ex.Message}");
             }
         }
-
+        //QUI
         /// <summary>
         /// Carica le statistiche di transizione di apprendimento dal database.
         /// </summary>
