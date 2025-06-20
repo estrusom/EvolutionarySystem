@@ -2,6 +2,7 @@
 // AGGIORNAMENTO 21.6.25: Ricostruzione completa del file MIUDatabaseManager.cs
 // per implementare correttamente tutti i membri dell'interfaccia IMIUDataManager
 // e risolvere gli errori di compilazione causati da frammentazioni precedenti.
+// AGGIORNATO 20.06.2025: Implementazione del metodo GetTransitionProbabilities per l'aggregazione delle statistiche.
 
 using System;
 using System.Collections.Generic;
@@ -196,7 +197,7 @@ namespace EvolutiveSystem.SQL.Core
                             {
                                 insertCommand.Parameters.AddWithValue("@currentString", miuString);
                                 insertCommand.Parameters.AddWithValue("@stringLength", stringLength);
-                                insertCommand.Parameters.AddWithValue("@deflateString", MIUStringConverter.DeflateMIUString(miuString)); // Store compressed version
+                                insertCommand.Parameters.AddWithValue("@deflateString", MIUStringConverter.DeflateMIUString(miuString)); // Modificato: Ora chiama DeflateMIUString
                                 insertCommand.Parameters.AddWithValue("@hash", miuString.GetHashCode().ToString()); // Simple hash for now
                                 insertCommand.Parameters.AddWithValue("@timeInt", discoveryTimeInt);
                                 insertCommand.Parameters.AddWithValue("@timeText", discoveryTimeText);
@@ -402,8 +403,7 @@ namespace EvolutiveSystem.SQL.Core
         }
 
         /// <summary>
-        /// Salva (upsert) i parametri di configurazione nel database.
-        /// Utilizza una transazione per garantire l'atomicità dell'operazione.
+        /// Salva i parametri di configurazione. Delega al data manager.
         /// </summary>
         public void SaveMIUParameterConfigurator(Dictionary<string, string> config)
         {
@@ -485,7 +485,6 @@ namespace EvolutiveSystem.SQL.Core
 
         /// <summary>
         /// Salva (upsert) le statistiche delle regole di apprendimento nel database.
-        /// Utilizza una transazione per garantire l'atomicità dell'operazione.
         /// </summary>
         public void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats)
         {
@@ -520,7 +519,7 @@ namespace EvolutiveSystem.SQL.Core
                 _logger.Log(LogLevel.ERROR, $"Errore salvataggio RuleStatistics: {ex.Message}");
             }
         }
-        //QUI
+
         /// <summary>
         /// Carica le statistiche di transizione di apprendimento dal database.
         /// </summary>
@@ -593,6 +592,7 @@ namespace EvolutiveSystem.SQL.Core
                                 command.Parameters.AddWithValue("@appliedRuleId", stats.AppliedRuleID);
                                 command.Parameters.AddWithValue("@appCount", stats.ApplicationCount);
                                 command.Parameters.AddWithValue("@succCount", stats.SuccessfulCount);
+                                command.Parameters.AddWithValue("@effScore", stats.SuccessRate.ToString(CultureInfo.InvariantCulture)); // Usa SuccessRate
                                 command.Parameters.AddWithValue("@lastUpdated", stats.LastUpdated.ToString("yyyy/MM/dd HH:mm:ss"));
                                 command.ExecuteNonQuery();
                             }
@@ -607,5 +607,74 @@ namespace EvolutiveSystem.SQL.Core
                 _logger.Log(LogLevel.ERROR, $"Errore salvataggio TransitionStatistics: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// NUOVO METODO: Carica le statistiche di transizione aggregate (conteggi totali e di successo)
+        /// dal database, calcolando la probabilità di successo per ogni transizione.
+        /// Questo metodo esegue una query SQL complessa che aggrega i dati delle applicazioni di regole
+        /// e dei risultati delle ricerche per fornire una "topografia pesata e dinamica"
+        /// basata su dati storici reali.
+        /// </summary>
+        /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
+        public Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> GetTransitionProbabilities()
+        {
+            var transitionProbabilities = new Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = @"
+                        SELECT
+                            MS.DeflateString AS ParentStringCompressed,
+                            AR.AppliedRuleID,
+                            COUNT(AR.ApplicationID) AS TotalApplications,
+                            SUM(CASE WHEN S.Outcome = 'Success' THEN 1 ELSE 0 END) AS SuccessfulApplications
+                        FROM
+                            MIU_RuleApplications AS AR
+                        JOIN
+                            MIU_Searches AS S ON AR.SearchID = S.SearchID
+                        JOIN
+                            MIU_States AS MS ON AR.ParentStateID = MS.StateID
+                        GROUP BY
+                            MS.DeflateString,
+                            AR.AppliedRuleID;";
+
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string parentStringCompressed = reader.GetString(reader.GetOrdinal("ParentStringCompressed"));
+                            long appliedRuleId = reader.GetInt64(reader.GetOrdinal("AppliedRuleID"));
+                            int totalApplications = reader.GetInt32(reader.GetOrdinal("TotalApplications"));
+                            int successfulApplications = reader.GetInt32(reader.GetOrdinal("SuccessfulApplications"));
+
+                            var key = Tuple.Create(parentStringCompressed, appliedRuleId);
+
+                            transitionProbabilities[key] = new EvolutiveSystem.Common.TransitionStatistics
+                            {
+                                ParentStringCompressed = parentStringCompressed,
+                                AppliedRuleID = appliedRuleId,
+                                ApplicationCount = totalApplications,
+                                SuccessfulCount = successfulApplications,
+                                LastUpdated = DateTime.Now // Imposta la data dell'ultima aggregazione
+                            };
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.INFO, $"[MIUDatabaseManager] Caricate {transitionProbabilities.Count} statistiche di transizione aggregate.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager] Errore durante il caricamento delle probabilità di transizione: {ex.Message}. Restituisco dizionario vuoto.");
+                return new Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics>();
+            }
+            return transitionProbabilities;
+        }
+
+        // Il metodo GetConnectionString è stato rimosso in quanto non necessario per la rifattorizzazione.
+        // Se un'altra parte del codice dovesse aver bisogno della ConnectionString,
+        // _schemaLoader.ConnectionString è accessibile tramite l'istanza di MIUDatabaseManager.
     }
 }
