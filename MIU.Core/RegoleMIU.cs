@@ -81,8 +81,12 @@ namespace MIU.Core
         /// Explicit qualification for RuleStatistics.
         /// </summary>
         public static System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> CurrentRuleStatistics { get; set; }
-
-
+        /// <summary>
+        /// 2025.06.20 15.27
+        /// Reference to the current TransitionStatistics dictionary, loaded from Program.cs.
+        /// Used for sorting rules based on specific transition effectiveness.
+        /// </summary>
+        public static System.Collections.Generic.Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> CurrentTransitionStatistics { get; set; }
         // Static collection of all available MIU rules.
         // Explicit qualification for RegolaMIU
         public static System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> Regole { get; private set; } = new System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU>();
@@ -203,6 +207,7 @@ namespace MIU.Core
             LoggerInstance?.Log(LogLevel.INFO, $"Final result after {step} steps: {currentStringStandard}");
         }
 
+
         /// <summary>
         /// Implementation of Depth-First Search (DFS) to find a derivation.
         /// Operates on STANDARD strings internally, but accepts/returns COMPRESSED strings.
@@ -265,24 +270,48 @@ namespace MIU.Core
 
                 if (currentPath.Count - 1 >= MaxProfonditaRicerca) continue; // Maximum depth reached
 
-                // MODIFICATION: Sort rules before applying them
+                // MODIFICA CRUCIALE: Ordina le regole prima di applicarle,
+                // dando priorità alle statistiche di transizione specifiche,
+                // poi alle statistiche generali della regola.
                 var orderedRules = Regole.OrderByDescending(rule =>
                 {
-                    // Explicit qualification for RuleStatistics
-                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
+                    double score = 0.0; // Inizializza il punteggio per questa regola
+
+                    // 1. Priorità massima: SuccessRate della transizione specifica (currentStandard -> rule)
+                    if (CurrentTransitionStatistics != null)
                     {
-                        return stats.EffectivenessScore;
+                        // La chiave per le TransitionStatistics richiede la stringa genitore COMPRESSA
+                        var transitionKey = Tuple.Create(MIUStringConverter.DeflateMIUString(currentStandard), rule.ID);
+                        if (CurrentTransitionStatistics.TryGetValue(transitionKey, out EvolutiveSystem.Common.TransitionStatistics transitionStats))
+                        {
+                            // Assegna un punteggio elevato basato su SuccessRate e ApplicationCount della transizione.
+                            // Moltiplichiamo il SuccessRate per un fattore alto (es. 1000) per assicurare che abbia la precedenza.
+                            // Aggiungiamo ApplicationCount per dare preferenza a statistiche più "solide".
+                            score = transitionStats.SuccessRate * 1000.0 + transitionStats.ApplicationCount;
+                            // LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS-Sort] Rule {rule.ID} ({rule.Nome}) from '{MIUStringConverter.DeflateMIUString(currentStandard)}': Transition Score = {score:F4}");
+                        }
                     }
-                    return 0.0; // Default score for rules without statistics
+
+                    // 2. Seconda priorità: EffectivenessScore della regola generale (se la transizione specifica non ha dato un punteggio elevato)
+                    // Questo viene considerato solo se la score della transizione specifica è ancora 0 o non presente
+                    if (score == 0.0 && CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics ruleStats))
+                    {
+                        score = ruleStats.EffectivenessScore;
+                        // LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS-Sort] Rule {rule.ID} ({rule.Nome}): General Rule Score = {score:F4}");
+                    }
+
+                    return score; // Restituisce il punteggio calcolato
                 })
                 .ThenByDescending(rule =>
                 {
-                    // Explicit qualification for RuleStatistics
-                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
+                    // Come terzo criterio di ordinamento, in caso di parità nei punteggi precedenti,
+                    // usiamo il conteggio delle applicazioni della regola generale.
+                    // Questo aiuta a rompere i legami in modo deterministico e favorire regole più usate.
+                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics ruleStats))
                     {
-                        return stats.ApplicationCount;
+                        return ruleStats.ApplicationCount;
                     }
-                    return 0; // Default count for rules without statistics
+                    return 0; // Valore predefinito se le statistiche non sono disponibili
                 })
                 .ToList();
 
@@ -312,7 +341,7 @@ namespace MIU.Core
                             };
                             System.Collections.Generic.List<PathStepInfo> newPath = new System.Collections.Generic.List<PathStepInfo>(currentPath) { newPathStep };
                             stack.Push((newStringStandard, newPath));
-                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{(rule.Nome)}'). Depth: {currentPath.Count}. Queue: {stack.Count}");
+                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{(rule.Nome)}'). Depth: {currentPath.Count}. Stack: {stack.Count}");
                         }
                         else
                         {
@@ -338,7 +367,7 @@ namespace MIU.Core
                 MaxDepthReached = maxDepthReached,
                 SearchAlgorithmUsed = "DFS" // Specify the algorithm used
             });
-            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] No solution found: '{startStringCompressed}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] No solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.");
             return null; // No derivation found
         }
 
@@ -411,24 +440,48 @@ namespace MIU.Core
                     continue; // Maximum depth reached
                 }
 
-                // MODIFICATION: Sort rules before applying them
+                // MODIFICA CRUCIALE: Ordina le regole prima di applicarle,
+                // dando priorità alle statistiche di transizione specifiche,
+                // poi alle statistiche generali della regola.
                 var orderedRules = Regole.OrderByDescending(rule =>
                 {
-                    // Explicit qualification for RuleStatistics
-                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
+                    double score = 0.0; // Inizializza il punteggio per questa regola
+
+                    // 1. Priorità massima: SuccessRate della transizione specifica (currentStandard -> rule)
+                    if (CurrentTransitionStatistics != null)
                     {
-                        return stats.EffectivenessScore;
+                        // La chiave per le TransitionStatistics richiede la stringa genitore COMPRESSA
+                        var transitionKey = Tuple.Create(MIUStringConverter.DeflateMIUString(currentStandard), rule.ID);
+                        if (CurrentTransitionStatistics.TryGetValue(transitionKey, out EvolutiveSystem.Common.TransitionStatistics transitionStats))
+                        {
+                            // Assegna un punteggio elevato basato su SuccessRate e ApplicationCount della transizione.
+                            // Moltiplichiamo il SuccessRate per un fattore alto (es. 1000) per assicurare che abbia la precedenza.
+                            // Aggiungiamo ApplicationCount per dare preferenza a statistiche più "solide".
+                            score = transitionStats.SuccessRate * 1000.0 + transitionStats.ApplicationCount;
+                            // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS-Sort] Rule {rule.ID} ({rule.Nome}) from '{MIUStringConverter.DeflateMIUString(currentStandard)}': Transition Score = {score:F4}");
+                        }
                     }
-                    return 0.0; // Default score for rules without statistics
+
+                    // 2. Seconda priorità: EffectivenessScore della regola generale (se la transizione specifica non ha dato un punteggio elevato)
+                    // Questo viene considerato solo se la score della transizione specifica è ancora 0 o non presente
+                    if (score == 0.0 && CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics ruleStats))
+                    {
+                        score = ruleStats.EffectivenessScore;
+                        // LoggerInstance?.Log(LogLevel.DEBUG, $"[BFS-Sort] Rule {rule.ID} ({rule.Nome}): General Rule Score = {score:F4}");
+                    }
+
+                    return score; // Restituisce il punteggio calcolato
                 })
                 .ThenByDescending(rule =>
                 {
-                    // Explicit qualification for RuleStatistics
-                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics stats))
+                    // Come terzo criterio di ordinamento, in caso di parità nei punteggi precedenti,
+                    // usiamo il conteggio delle applicazioni della regola generale.
+                    // Questo aiuta a rompere i legami in modo deterministico e favorire regole più usate.
+                    if (CurrentRuleStatistics != null && CurrentRuleStatistics.TryGetValue(rule.ID, out EvolutiveSystem.Common.RuleStatistics ruleStats))
                     {
-                        return stats.ApplicationCount;
+                        return ruleStats.ApplicationCount;
                     }
-                    return 0; // Default count for rules without statistics
+                    return 0; // Valore predefinito se le statistiche non sono disponibili
                 })
                 .ToList();
 
@@ -488,7 +541,6 @@ namespace MIU.Core
             LoggerInstance?.Log(LogLevel.INFO, $"[BFS] No solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.");
             return null; // No derivation found
         }
-
 
         /// <summary>
         /// Intelligent method to choose and start the derivation search (BFS or DFS)
