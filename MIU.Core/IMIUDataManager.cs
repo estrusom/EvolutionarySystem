@@ -74,5 +74,11 @@ namespace MIU.Core
         void SaveRuleStatistics(System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> ruleStats);// 19.6.2025 23.48
         System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> LoadTransitionStatistics();// 19.6.2025 23.48
         void SaveTransitionStatistics(System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> transitionStats);// 19.6.2025 23.48
+        /// <summary>
+        /// NUOVO METODO: Carica le statistiche di transizione aggregate (conteggi totali e di successo)
+        /// per il calcolo delle probabilità.
+        /// </summary>
+        /// <returns></returns>
+        System.Collections.Generic.Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> GetTransitionProbabilities();
     }
 }
