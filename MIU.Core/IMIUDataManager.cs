@@ -15,6 +15,7 @@
 // AGGIORNATO 20.06.2025: Aggiunta firma per il metodo GetTransitionProbabilities per l'aggregazione delle statistiche.
 // AGGIORNATO 20.06.2025: Reintegrate le firme dei metodi Load/Save delle statistiche di apprendimento,
 // necessarie per la delega da LearningStatisticsManager.
+// AGGIORNATO 21.06.2025: Aggiunta firma per SetJournalMode per incapsulare PRAGMA in MIUDatabaseManager.
 
 using System;
 using System.Collections.Generic;
@@ -50,9 +51,6 @@ namespace MIU.Core
             int stepsTaken,
             int nodesExplored,
             int maxDepthReached
-        // N.B.: Non aggiungiamo qui i parametri di lunghezza/conteggio perché UpdateSearch li aggiorna solo se la ricerca ha successo,
-        // e quei valori sono già stati forniti all'inserimento e non cambiano.
-        // Se in futuro ci fosse necessità di aggiornare queste statistiche, andrebbe valutato un metodo separato.
         );
 
         // Operazioni per MIU_States (INVARIATE)
@@ -65,27 +63,31 @@ namespace MIU.Core
         void InsertSolutionPathStep(long searchId, int stepNumber, long stateId, long? parentStateId, long? appliedRuleID, bool isTarget, bool isSuccess, int depth);
 
         // Operazioni per RegoleMIU (INVARIATE)
-        System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> LoadRegoleMIU(); // 19.6.2025 23.48
-        void UpsertRegoleMIU(System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> regole);// 19.6.2025 23.48
+        System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> LoadRegoleMIU();
+        void UpsertRegoleMIU(System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> regole);
 
         // Operazioni per MIUParameterConfigurator (INVARIATE)
         Dictionary<string, string> LoadMIUParameterConfigurator();
         void SaveMIUParameterConfigurator(Dictionary<string, string> config);
 
         // Metodi per le statistiche di apprendimento:
-        // Queste firme sono state re-integrate qui per permettere a LearningStatisticsManager di delegare
-        // l'accesso al database tramite IMIUDataManager, mantenendo MIUDatabaseManager come unico punto
-        // di accesso diretto al DB.
         System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> LoadRuleStatistics();
         void SaveRuleStatistics(System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> ruleStats);
         System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> LoadTransitionStatistics();
         void SaveTransitionStatistics(System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> transitionStats);
 
         /// <summary>
-        /// NUOVO METODO: Carica le statistiche di transizione aggregate (conteggi totali e di successo)
+        /// Carica le statistiche di transizione aggregate (conteggi totali e di successo)
         /// dal database, per il calcolo delle probabilità.
         /// </summary>
         /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
         System.Collections.Generic.Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> GetTransitionProbabilities();
+
+        /// <summary>
+        /// NUOVO METODO: Imposta la modalità di journaling del database (es. WAL).
+        /// Questo metodo incapsula l'esecuzione del comando PRAGMA.
+        /// </summary>
+        /// <param name="mode">La modalità di journaling da impostare (es. "WAL", "DELETE", "TRUNCATE").</param>
+        void SetJournalMode(string mode);
     }
 }
