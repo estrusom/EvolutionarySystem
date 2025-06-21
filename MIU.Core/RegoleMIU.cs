@@ -5,6 +5,9 @@
 // e qualifica correttamente tutti i riferimenti a RegolaMIU e RuleStatistics da EvolutiveSystem.Common.
 // Data di riferimento: 20 giugno 2025 (Aggiornamento per scelta automatica BFS/DFS)
 // Aggiunto il metodo TrovaDerivazioneAutomatica per la selezione intelligente dell'algoritmo.
+// AGGIORNATO 20.06.2025: Estesa la classe PathStepInfo con proprietà per la persistenza e le statistiche di ricerca,
+// e inizializzate correttamente in TrovaDerivazioneDFS e TrovaDerivazioneBFS.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,6 +30,38 @@ namespace MIU.Core
         public string StateStringStandard { get; set; } // The standard (decompressed) MIU string for this state
         public long? AppliedRuleID { get; set; } // The ID of the rule applied to reach this state (null for initial state)
         public string ParentStateStringStandard { get; set; } // The standard (decompressed) MIU string of the parent (null for initial state)
+
+        // NUOVE PROPRIETÀ AGGIUNTE PER PERSISTENZA E STATISTICHE
+        /// <summary>
+        /// L'ID dello stato corrente nel database MIU_States.
+        /// </summary>
+        public long StateID { get; set; }
+
+        /// <summary>
+        /// L'ID dello stato genitore nel database MIU_States. Null per il passo iniziale.
+        /// </summary>
+        public long? ParentStateID { get; set; }
+
+        /// <summary>
+        /// La profondità (numero di passi dal punto di partenza) di questo stato nella ricerca.
+        /// </summary>
+        public int Depth { get; set; }
+
+        /// <summary>
+        /// Il tempo trascorso (in millisecondi) dall'inizio della ricerca fino al raggiungimento di questo stato.
+        /// Questo viene calcolato nel momento della creazione del PathStepInfo.
+        /// </summary>
+        public double ElapsedMilliseconds { get; set; }
+
+        /// <summary>
+        /// Il numero di nodi esplorati dall'algoritmo di ricerca fino al raggiungimento di questo stato.
+        /// </summary>
+        public int NodesExplored { get; set; }
+
+        /// <summary>
+        /// La massima profondità raggiunta dall'algoritmo di ricerca fino al raggiungimento di questo stato.
+        /// </summary>
+        public int MaxDepthReached { get; set; }
     }
 
     // EventArgs for the OnSolutionFound event
@@ -193,7 +228,7 @@ namespace MIU.Core
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
                             OriginalString = currentStringStandard, // STANDARD string
-                            NewString = newStringStandard,
+                            NewString = newStringStandard,    // STANDARD string
                             CurrentDepth = step
                         });
                         currentStringStandard = newStringStandard;
@@ -231,7 +266,14 @@ namespace MIU.Core
             {
                 StateStringStandard = startStringStandard,
                 AppliedRuleID = null, // No rule applied for initial state
-                ParentStateStringStandard = null // No parent for initial state
+                ParentStateStringStandard = null, // No parent for initial state
+                // Inizializzazione delle nuove proprietà per il passo iniziale
+                StateID = -1, // Verrà aggiornato dal repository
+                ParentStateID = null, // Verrà aggiornato dal repository
+                Depth = 0,
+                ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                NodesExplored = 0,
+                MaxDepthReached = 0
             };
             stack.Push((startStringStandard, new System.Collections.Generic.List<PathStepInfo> { initialPathStep }));
             visitedStandard.Add(startStringStandard);
@@ -337,7 +379,14 @@ namespace MIU.Core
                             {
                                 StateStringStandard = newStringStandard,
                                 AppliedRuleID = rule.ID,
-                                ParentStateStringStandard = currentStandard
+                                ParentStateStringStandard = currentStandard,
+                                // Inizializzazione delle nuove proprietà per ogni nuovo passo
+                                StateID = -1, // Verrà aggiornato dal repository
+                                ParentStateID = (currentPath.LastOrDefault()?.StateID), // Inizializza con l'ID dello stato genitore se PathStepInfo ha ElapsedMilliseconds
+                                Depth = currentPath.Count, // La profondità è la dimensione del percorso (0-indexed)
+                                ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                                NodesExplored = nodesExplored,
+                                MaxDepthReached = maxDepthReached
                             };
                             System.Collections.Generic.List<PathStepInfo> newPath = new System.Collections.Generic.List<PathStepInfo>(currentPath) { newPathStep };
                             stack.Push((newStringStandard, newPath));
@@ -395,7 +444,14 @@ namespace MIU.Core
             {
                 StateStringStandard = startStringStandard,
                 AppliedRuleID = null, // No rule applied for initial state
-                ParentStateStringStandard = null // No parent for initial state
+                ParentStateStringStandard = null, // No parent for initial state
+                // Inizializzazione delle nuove proprietà per il passo iniziale
+                StateID = -1, // Verrà aggiornato dal repository
+                ParentStateID = null, // Verrà aggiornato dal repository
+                Depth = 0,
+                ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                NodesExplored = 0,
+                MaxDepthReached = 0
             };
             queue.Enqueue((startStringStandard, new System.Collections.Generic.List<PathStepInfo> { initialPathStep }));
             visitedStandard.Add(startStringStandard);
@@ -430,7 +486,7 @@ namespace MIU.Core
                         MaxDepthReached = maxDepthReached,
                         SearchAlgorithmUsed = "BFS" // Specify the algorithm used
                     });
-                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS] Solution found: '{startStringStandard}' -> '{targetStringStandard}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS] Solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}. Time: {stopwatch.ElapsedMilliseconds} ms.");
                     return currentPath; // Returns path in PathStepInfo
                 }
 
@@ -508,7 +564,14 @@ namespace MIU.Core
                             {
                                 StateStringStandard = newStringStandard,
                                 AppliedRuleID = rule.ID,
-                                ParentStateStringStandard = currentStandard
+                                ParentStateStringStandard = currentStandard,
+                                // Inizializzazione delle nuove proprietà per ogni nuovo passo
+                                StateID = -1, // Verrà aggiornato dal repository
+                                ParentStateID = (currentPath.LastOrDefault()?.StateID), // Inizializza con l'ID dello stato genitore
+                                Depth = currentPath.Count, // La profondità è la dimensione del percorso (0-indexed)
+                                ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                                NodesExplored = nodesExplored,
+                                MaxDepthReached = maxDepthReached
                             };
                             System.Collections.Generic.List<PathStepInfo> newPath = new System.Collections.Generic.List<PathStepInfo>(currentPath) { newPathStep };
                             queue.Enqueue((newStringStandard, newPath));

@@ -1,7 +1,10 @@
-﻿// creato 5.6.2025 0.59
+﻿// File: C:\Progetti\EvolutiveSystem\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.cs
+// creato 5.6.2025 0.59
 // Data di riferimento: 20 giugno 2025 (Aggiornato: costruttore con Logger, logging, fix CS1061)
 // Questo file è basato sulla versione fornita dall'utente e modificato MINIMAMENTE
 // per risolvere gli errori di compilazione e integrare il logger.
+// AGGIORNATO 20.06.2025: Rimosse le istruzioni CREATE TABLE IF NOT EXISTS dal metodo InitializeDatabase()
+//                       per consentire la creazione manuale delle tabelle da parte dell'utente.
 
 using System;
 using System.Collections.Generic;
@@ -10,6 +13,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MasterLog; // AGGIUNTO: Necessario per la tua classe Logger
+using System.IO; // AGGIUNTO: Necessario per File.Exists
 
 namespace EvolutiveSystem.SQL.Core
 {
@@ -94,6 +98,7 @@ namespace EvolutiveSystem.SQL.Core
 
         private readonly string _connectionString;
         private readonly Logger _logger; // AGGIUNTO: Campo per l'istanza del logger
+        private readonly string _databaseFilePath; // NUOVO: per il controllo esistenza file
 
         /// <summary>
         /// Costruttore.
@@ -102,6 +107,7 @@ namespace EvolutiveSystem.SQL.Core
         /// <param name="logger">L'istanza del logger per la registrazione degli eventi.</param>
         public SQLiteSchemaLoader(string databaseFilePath, Logger logger) // MODIFICATO: Accetta ora il Logger
         {
+            _databaseFilePath = databaseFilePath; // Salva il percorso del file
             _connectionString = $"Data Source={databaseFilePath};Version=3;";
             _logger = logger ?? throw new ArgumentNullException(nameof(logger), "Logger non può essere nullo."); // Inizializza il logger
             _logger.Log(LogLevel.DEBUG, $"[SQLiteSchemaLoader DEBUG] Costruttore chiamato. ConnectionString: {_connectionString}"); // Aggiunto log
@@ -109,6 +115,42 @@ namespace EvolutiveSystem.SQL.Core
             // Rimuoviamo la logica di creazione delle tabelle da qui,
             // poiché l'utente preferisce crearle manualmente tramite SQLiteStudio.
         }
+
+        /// <summary>
+        /// Inizializza il database SQLite, creando il file del database se non esiste.
+        /// Non crea le tabelle, la loro gestione è demandata all'utente.
+        /// Questo metodo deve essere chiamato all'avvio dell'applicazione.
+        /// </summary>
+        public void InitializeDatabase()
+        {
+            _logger.Log(LogLevel.INFO, "[SQLiteSchemaLoader INFO] Inizializzazione del database...");
+
+            try
+            {
+                // Se il file del database non esiste, lo crea.
+                if (!File.Exists(_databaseFilePath))
+                {
+                    SQLiteConnection.CreateFile(_databaseFilePath);
+                    _logger.Log(LogLevel.INFO, $"[SQLiteSchemaLoader INFO] Database file creato: {_databaseFilePath}");
+                }
+
+                // Apre e chiude la connessione per assicurarsi che il file sia accessibile.
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    connection.Open();
+                    _logger.Log(LogLevel.DEBUG, "[SQLiteSchemaLoader DEBUG] Connessione database aperta e chiusa per InitializeDatabase (solo verifica accesso).");
+                    // Nessuna creazione di tabelle qui.
+                }
+                _logger.Log(LogLevel.INFO, "[SQLiteSchemaLoader INFO] Inizializzazione del database completata. Le tabelle devono essere create manualmente.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[SQLiteSchemaLoader ERROR] Errore durante l'inizializzazione del database: {ex.Message}");
+                // Rilancia l'eccezione, poiché un errore qui impedirebbe il funzionamento dell'applicazione.
+                throw;
+            }
+        }
+
 
         public Database LoadSchema()
         {

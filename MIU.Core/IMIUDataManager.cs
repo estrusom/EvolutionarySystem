@@ -12,6 +12,9 @@
 // Data di riferimento: 20 giugno 2025 (Correzione definitiva tipi Dictionary a long)
 // Questa interfaccia definisce il contratto per la gestione dei dati MIU.
 // NUOVA MODIFICA 21.6.25: Aggiunti nuovi parametri per le caratteristiche delle stringhe ai metodi InsertSearch e UpdateSearch esistenti.
+// AGGIORNATO 20.06.2025: Aggiunta firma per il metodo GetTransitionProbabilities per l'aggregazione delle statistiche.
+// AGGIORNATO 20.06.2025: Reintegrate le firme dei metodi Load/Save delle statistiche di apprendimento,
+// necessarie per la delega da LearningStatisticsManager.
 
 using System;
 using System.Collections.Generic;
@@ -60,7 +63,7 @@ namespace MIU.Core
 
         // Operazioni per MIU_Paths (INVARIATE)
         void InsertSolutionPathStep(long searchId, int stepNumber, long stateId, long? parentStateId, long? appliedRuleID, bool isTarget, bool isSuccess, int depth);
-        
+
         // Operazioni per RegoleMIU (INVARIATE)
         System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> LoadRegoleMIU(); // 19.6.2025 23.48
         void UpsertRegoleMIU(System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> regole);// 19.6.2025 23.48
@@ -69,16 +72,20 @@ namespace MIU.Core
         Dictionary<string, string> LoadMIUParameterConfigurator();
         void SaveMIUParameterConfigurator(Dictionary<string, string> config);
 
-        // Metodi per le statistiche di apprendimento (Chiave Dictionary ora 'long' e Tuple.Item2 a 'long') (INVARIATE)
-        System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> LoadRuleStatistics();// 19.6.2025 23.48
-        void SaveRuleStatistics(System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> ruleStats);// 19.6.2025 23.48
-        System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> LoadTransitionStatistics();// 19.6.2025 23.48
-        void SaveTransitionStatistics(System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> transitionStats);// 19.6.2025 23.48
+        // Metodi per le statistiche di apprendimento:
+        // Queste firme sono state re-integrate qui per permettere a LearningStatisticsManager di delegare
+        // l'accesso al database tramite IMIUDataManager, mantenendo MIUDatabaseManager come unico punto
+        // di accesso diretto al DB.
+        System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> LoadRuleStatistics();
+        void SaveRuleStatistics(System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> ruleStats);
+        System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> LoadTransitionStatistics();
+        void SaveTransitionStatistics(System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> transitionStats);
+
         /// <summary>
         /// NUOVO METODO: Carica le statistiche di transizione aggregate (conteggi totali e di successo)
-        /// per il calcolo delle probabilità.
+        /// dal database, per il calcolo delle probabilità.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
         System.Collections.Generic.Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> GetTransitionProbabilities();
     }
 }

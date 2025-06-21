@@ -1,10 +1,13 @@
 ﻿// File: C:\Progetti\EvolutiveSystem\MIU.Core.tester\Program.cs
 // Data di riferimento: 20 giugno 2025 (Aggiornamento Finale)
 // CORREZIONE 20.6.25: Posizione corretta di PathStepInfo (in MIU.Core, non in Common).
-//                     Reintroduzione di configParams.
-//                     Qualificazione precisa di tutti i tipi.
+//                    Reintroduzione di configParams.
+//                    Qualificazione precisa di tutti i tipi.
 // NUOVA CORREZIONE 20.6.25: Correzione delle firme degli event handler per SolutionFoundEventArgs
-//                           e RuleAppliedEventArgs (non sono annidati in RegoleMIUManager).
+//                        e RuleAppliedEventArgs (non sono annidati in RegoleMIUManager).
+// AGGIORNATO 20.06.2025: Integrazione di LearningStatisticsManager per le TransitionStatistics
+//                        e gestione degli aggiornamenti delle statistiche in caso di successo.
+//                        Corretti i problemi di metodi di estensione (.Last()) e accesso alle proprietà di PathStepInfo.
 
 // Data di riferimento: 20 giugno 2025
 // Questo file contiene la logica principale per testare il sistema MIU,
@@ -17,14 +20,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
+using System.Linq; // NECESSARIO per i metodi di estensione LINQ come .Last() e .Any()
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using MIU.Core; // Per MIURepository, IMIUDataManager, MIUStringConverter, RegoleMIUManager, SolutionFoundEventArgs, RuleAppliedEventArgs, PathStepInfo
 using MasterLog; // Necessario per la tua classe Logger
 using EvolutiveSystem.Common; // Per RegolaMIU, RuleStatistics, TransitionStatistics
-
+using EvolutiveSystem.Learning; // NUOVO: Per LearningStatisticsManager
 
 namespace MIU.Core.tester
 {
@@ -40,23 +43,30 @@ namespace MIU.Core.tester
         private static Logger _logger; // Istanza del logger
         private static MIURepository _repository; // Repository per la persistenza (reso statico per gli eventi)
         private static long _currentSearchId; // ID della ricerca corrente per correlare eventi (reso statico)
+
         // DICHIARAZIONE AGGIORNATA E QUALIFICATA (RuleStatistics è in Common)
         private static System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> _ruleStatistics; // Statistiche delle regole (RuleID è long)
+        // NUOVO: Statistiche delle transizioni per la topografia dinamica
+        private static System.Collections.Generic.Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> _transitionStatistics;
 
         // Campi per i parametri di configurazione caricati dal DB, con valori predefiniti
         private static long _configuredMaxDepth = 10; // Valore predefinito per ProfonditaDiRicerca
         private static long _configuredMaxSteps = 10; // Valore predefinito per MassimoPassiRicerca
 
+        // NUOVO: Istanza di LearningStatisticsManager per gestire le statistiche di apprendimento
+        private static LearningStatisticsManager _learningStatsManager;
+
+
         static void Main(string[] args)
         {
-            // Inizializzazione del Logger
+            // Inizializzazione del Logger (mantengo la tua implementazione originale)
             string logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
             _logger = new Logger(logDirectory, "MIULog", 7); // Conserva gli ultimi 7 giorni di log
             _logger.SwLogLevel = _logger.LOG_INFO | _logger.LOG_DEBUG | _logger.LOG_ERROR | _logger.LOG_WARNING; // Imposta i livelli di log attivi
 
             // Propaga il logger a RegoleMIUManager (che è statico)
             RegoleMIUManager.LoggerInstance = _logger;
-
+            _logger.Log(LogLevel.INFO, "Applicazione avviata."); // Messaggio di log iniziale
 
             string[,] arrayString =
             {
@@ -70,9 +80,18 @@ namespace MIU.Core.tester
 
             // Inizializzazione comune del repository e caricamento delle statistiche
             SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath, _logger);
+            // Assicurati che SQLiteSchemaLoader contenga un metodo pubblico InitializeDatabase()
+            _schemaLoader.InitializeDatabase(); // <- errore cs1061
+            _logger.Log(LogLevel.INFO, "Database inizializzato tramite SQLiteSchemaLoader.");
+
             MIUDatabaseManager _dbManager = new MIUDatabaseManager(_schemaLoader, _logger);
-            IMIUDataManager _dataManager = (IMIUDataManager)_dbManager;
+            IMIUDataManager _dataManager = _dbManager;
             _repository = new MIURepository(_dataManager, _logger); // Assegna al campo statico
+            _logger.Log(LogLevel.INFO, "MIUDatabaseManager e MIURepository istanziati.");
+
+            // NUOVO: Inizializzazione di LearningStatisticsManager
+            _learningStatsManager = new LearningStatisticsManager(_dataManager, _logger);
+            _logger.Log(LogLevel.INFO, "LearningStatisticsManager istanziato.");
 
             // Carica i parametri di configurazione dal database
             System.Collections.Generic.Dictionary<string, string> configParams = _repository.LoadMIUParameterConfigurator();
@@ -105,7 +124,7 @@ namespace MIU.Core.tester
             _logger.Log(LogLevel.INFO, $"[Program INFO] RegoleMIUManager impostato con MaxProfonditaRicerca: {RegoleMIUManager.MaxProfonditaRicerca} e MassimoPassiRicerca: {RegoleMIUManager.MassimoPassiRicerca}");
 
 
-            // Carica le statistiche delle regole all'avvio dell'applicazione
+            // Carica le statistiche delle regole all'avvio dell'applicazione (tramite _repository, che userà dataManager)
             _ruleStatistics = _repository.LoadRuleStatistics();
             if (_ruleStatistics == null)
             {
@@ -113,7 +132,17 @@ namespace MIU.Core.tester
             }
             _logger.Log(LogLevel.INFO, $"[Program INFO] Caricate {_ruleStatistics.Count} RuleStatistics all'avvio.");
 
+            // Carica le statistiche di transizione aggregate tramite LearningStatisticsManager
+            _transitionStatistics = _learningStatsManager.GetTransitionProbabilities();
+            if (_transitionStatistics == null)
+            {
+                _transitionStatistics = new System.Collections.Generic.Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics>();
+            }
+            _logger.Log(LogLevel.INFO, $"[Program INFO] Caricate {_transitionStatistics.Count} TransitionStatistics all'avvio.");
+
+            // Imposta le proprietà statiche in RegoleMIUManager
             RegoleMIUManager.CurrentRuleStatistics = _ruleStatistics;
+            RegoleMIUManager.CurrentTransitionStatistics = _transitionStatistics;
 
 
             // Collega gli handler degli eventi
@@ -152,15 +181,15 @@ namespace MIU.Core.tester
                                     "AUTO-RANDOM", // Changed search type for tracking
                                     currentInitialStringCase3.Length,
                                     currentTargetStringCase3.Length,
-                                    MIUStringConverter.CountChar(currentInitialStringCase3, 'I'),
-                                    MIUStringConverter.CountChar(currentInitialStringCase3, 'U'),
-                                    MIUStringConverter.CountChar(currentTargetStringCase3, 'I'),
-                                    MIUStringConverter.CountChar(currentTargetStringCase3, 'U')
+                                    MIUStringConverter.CountChar(currentInitialStringCase3, 'I'), // Usa CountChar
+                                    MIUStringConverter.CountChar(currentInitialStringCase3, 'U'), // Usa CountChar
+                                    MIUStringConverter.CountChar(currentTargetStringCase3, 'I'), // Usa CountChar
+                                    MIUStringConverter.CountChar(currentTargetStringCase3, 'U')  // Usa CountChar
                                 );
 
                                 // Le stringhe da passare a TrovaDerivazione devono essere compresse
-                                string compressedSource = MIUStringConverter.InflateMIUString(MIUstringsSource[1]);
-                                string compressedTarget = MIUStringConverter.InflateMIUString(MIUstringDestination[1]);
+                                string compressedSource = MIUStringConverter.DeflateMIUString(MIUstringsSource[1]);
+                                string compressedTarget = MIUStringConverter.DeflateMIUString(MIUstringDestination[1]);
 
                                 // CHIAMA IL METODO INTELLIGENTE
                                 System.Collections.Generic.List<MIU.Core.PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneAutomatica(_currentSearchId, compressedSource, compressedTarget);
@@ -226,15 +255,15 @@ namespace MIU.Core.tester
                                     "AUTO-ARRAY", // Changed search type for tracking
                                     currentInitialStringCase5.Length,
                                     currentTargetStringCase5.Length,
-                                    MIUStringConverter.CountChar(currentInitialStringCase5, 'I'),
-                                    MIUStringConverter.CountChar(currentInitialStringCase5, 'U'),
-                                    MIUStringConverter.CountChar(currentTargetStringCase5, 'I'),
-                                    MIUStringConverter.CountChar(currentTargetStringCase5, 'U')
+                                    MIUStringConverter.CountChar(currentInitialStringCase5, 'I'), // Usa CountChar
+                                    MIUStringConverter.CountChar(currentInitialStringCase5, 'U'), // Usa CountChar
+                                    MIUStringConverter.CountChar(currentTargetStringCase5, 'I'), // Usa CountChar
+                                    MIUStringConverter.CountChar(currentTargetStringCase5, 'U')  // Usa CountChar
                                 );
 
                                 // Compressed strings to pass to the intelligent derivation method
-                                string compressedStart = MIUStringConverter.InflateMIUString(arrayString[0, y]);
-                                string compressedTarget = MIUStringConverter.InflateMIUString(arrayString[1, y]);
+                                string compressedStart = MIUStringConverter.DeflateMIUString(arrayString[0, y]);
+                                string compressedTarget = MIUStringConverter.DeflateMIUString(arrayString[1, y]);
 
                                 // CHIAMA IL METODO INTELLIGENTE
                                 System.Collections.Generic.List<MIU.Core.PathStepInfo> miu = RegoleMIUManager.TrovaDerivazioneAutomatica(_currentSearchId, compressedStart, compressedTarget);
@@ -273,22 +302,22 @@ namespace MIU.Core.tester
                             "AUTO-SPECIFIC", // Changed search type for tracking
                             testStartStringStandard.Length,
                             testTargetStringStandard.Length,
-                            MIUStringConverter.CountChar(testStartStringStandard, 'I'),
-                            MIUStringConverter.CountChar(testStartStringStandard, 'U'),
-                            MIUStringConverter.CountChar(testTargetStringStandard, 'I'),
-                            MIUStringConverter.CountChar(testTargetStringStandard, 'U')
+                            MIUStringConverter.CountChar(testStartStringStandard, 'I'), // Usa CountChar
+                            MIUStringConverter.CountChar(testStartStringStandard, 'U'), // Usa CountChar
+                            MIUStringConverter.CountChar(testTargetStringStandard, 'I'), // Usa CountChar
+                            MIUStringConverter.CountChar(testTargetStringStandard, 'U')  // Usa CountChar
                         );
 
                         _logger.Log(LogLevel.INFO, $"--- Starting Specific Derivation Test (Automatic choice) with persistence: {testStartStringStandard} -> {testTargetStringStandard} ---");
 
                         // Compressed strings to pass to the intelligent derivation method
-                        string compressedSource = MIUStringConverter.InflateMIUString(testStartStringStandard);
-                        string compressedTarget = MIUStringConverter.InflateMIUString(testTargetStringStandard);
+                        string compressedSource = MIUStringConverter.DeflateMIUString(testStartStringStandard);
+                        string compressedTarget = MIUStringConverter.DeflateMIUString(testTargetStringStandard);
 
                         // CALL THE INTELLIGENT METHOD
                         System.Collections.Generic.List<MIU.Core.PathStepInfo> miuPath = RegoleMIUManager.TrovaDerivazioneAutomatica(_currentSearchId, compressedSource, compressedTarget);
 
-                        if (miuPath != null)
+                        if (miuPath != null && miuPath.Any()) // Correzione per .Any() e Last()
                         {
                             _logger.Log(LogLevel.INFO, $"\n--- Path found for '{testStartStringStandard}' -> '{testTargetStringStandard}': ---");
                             foreach (MIU.Core.PathStepInfo step in miuPath)
@@ -306,10 +335,68 @@ namespace MIU.Core.tester
                                 }
                                 _logger.Log(LogLevel.INFO, logMessage);
                             }
+                            // Aggiorna la ricerca nel DB solo se miuPath non è nullo e non è vuoto
+                            _repository.UpdateSearch(_currentSearchId, true,
+                                miuPath.Last().ElapsedMilliseconds, // <- errore cs1061 Assicurati che PathStepInfo abbia ElapsedMilliseconds
+                                miuPath.Count - 1,
+                                miuPath.Last().NodesExplored, // <- errore cs1061 Assicurati che PathStepInfo abbia NodesExplored
+                                miuPath.Last().MaxDepthReached); // <- errore cs1061 Assicurati che PathStepInfo abbia MaxDepthReached
+
+                            // AGGIORNAMENTO DELLE STATISTICHE DI APPRENDIMENTO DOPO IL SUCCESSO
+                            foreach (MIU.Core.PathStepInfo step in miuPath)
+                            {
+                                if (step.AppliedRuleID.HasValue && step.ParentStateStringStandard != null)
+                                {
+                                    // Aggiorna RuleStatistics (il campo _ruleStatistics, che poi verrà salvato da _repository)
+                                    if (_ruleStatistics.TryGetValue(step.AppliedRuleID.Value, out RuleStatistics ruleStats))
+                                    {
+                                        ruleStats.ApplicationCount++;
+                                        ruleStats.SuccessfulCount++;
+                                        ruleStats.LastApplicationTimestamp = DateTime.Now;
+                                        ruleStats.RecalculateEffectiveness(); // Assicurati che RecalculateEffectiveness() sia pubblico
+                                    }
+                                    else
+                                    {
+                                        _ruleStatistics[step.AppliedRuleID.Value] = new EvolutiveSystem.Common.RuleStatistics
+                                        {
+                                            RuleID = step.AppliedRuleID.Value,
+                                            ApplicationCount = 1,
+                                            SuccessfulCount = 1,
+                                            LastApplicationTimestamp = DateTime.Now
+                                        };
+                                        _ruleStatistics[step.AppliedRuleID.Value].RecalculateEffectiveness();
+                                    }
+
+                                    // Aggiorna TransitionStatistics (il campo _transitionStatistics)
+                                    var parentCompressed = MIUStringConverter.DeflateMIUString(step.ParentStateStringStandard);
+                                    var transitionKey = Tuple.Create(parentCompressed, step.AppliedRuleID.Value);
+
+                                    if (_transitionStatistics.TryGetValue(transitionKey, out TransitionStatistics transitionStats))
+                                    {
+                                        transitionStats.ApplicationCount++;
+                                        transitionStats.SuccessfulCount++;
+                                        transitionStats.LastUpdated = DateTime.Now;
+                                        // SuccessRate viene ricalcolato automaticamente dalla proprietà get
+                                    }
+                                    else
+                                    {
+                                        _transitionStatistics[transitionKey] = new EvolutiveSystem.Common.TransitionStatistics
+                                        {
+                                            ParentStringCompressed = parentCompressed,
+                                            AppliedRuleID = step.AppliedRuleID.Value,
+                                            ApplicationCount = 1,
+                                            SuccessfulCount = 1,
+                                            LastUpdated = DateTime.Now
+                                        };
+                                    }
+                                }
+                            }
                         }
                         else
                         {
                             _logger.Log(LogLevel.INFO, $"\n--- No path found for '{testStartStringStandard}' -> '{testTargetStringStandard}' ---");
+                            // Aggiorna la ricerca nel DB come fallita
+                            _repository.UpdateSearch(_currentSearchId, false, 0, -1, 0, 0); // Valori default per fallimento
                         }
                         _logger.Log(LogLevel.INFO, "--- End Specific Derivation Test ---");
                     }
@@ -318,11 +405,17 @@ namespace MIU.Core.tester
             Console.WriteLine("press any key");
             Console.ReadKey();
 
-            // Save rule statistics at application shutdown
+            // Salva le RuleStatistics tramite il repository (che gestisce _ruleStatistics)
             if (_ruleStatistics != null)
             {
                 _repository.SaveRuleStatistics(_ruleStatistics);
                 _logger.Log(LogLevel.INFO, $"[Program INFO] Saved {_ruleStatistics.Count} RuleStatistics at shutdown.");
+            }
+            // Salva le TransitionStatistics tramite LearningStatisticsManager
+            if (_transitionStatistics != null)
+            {
+                _learningStatsManager.SaveTransitionStatistics(_transitionStatistics);
+                _logger.Log(LogLevel.INFO, $"[Program INFO] Saved {_transitionStatistics.Count} TransitionStatistics at shutdown.");
             }
         }
 
@@ -338,21 +431,25 @@ namespace MIU.Core.tester
             Console.WriteLine(message);
             _logger.Log(e.Success ? LogLevel.INFO : LogLevel.WARNING, message);
 
-            _repository.UpdateSearch(e.SearchID, e.Success, e.ElapsedMilliseconds, e.StepsTaken, e.NodesExplored, e.MaxDepthReached);
+            // _repository.UpdateSearch(e.SearchID, e.Success, e.ElapsedMilliseconds, e.StepsTaken, e.NodesExplored, e.MaxDepthReached);
+            // Questo update è stato spostato nel Main per una gestione centralizzata dopo la ricerca completa.
+            // Se lo lasci qui, lo farai due volte.
 
             if (e.Success && e.SolutionPathSteps != null)
             {
                 foreach (MIU.Core.PathStepInfo step in e.SolutionPathSteps)
                 {
+                    // Aggiornamento RuleStatistics per ogni regola applicata nel percorso di successo
                     if (step.AppliedRuleID.HasValue)
                     {
                         long ruleId = step.AppliedRuleID.Value;
-                        if (_ruleStatistics.ContainsKey(ruleId))
+                        if (_ruleStatistics.TryGetValue(ruleId, out RuleStatistics ruleStats))
                         {
-                            _ruleStatistics[ruleId].SuccessfulCount++;
-                            _ruleStatistics[ruleId].RecalculateEffectiveness();
-                            _ruleStatistics[ruleId].LastApplicationTimestamp = DateTime.Now;
-                            _logger.Log(LogLevel.DEBUG, $"[Learning] Rule {ruleId} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == ruleId)?.Nome ?? "Unknown"}) SuccessfulCount incremented to {_ruleStatistics[ruleId].SuccessfulCount}. Effectiveness: {_ruleStatistics[ruleId].EffectivenessScore:F4}");
+                            ruleStats.SuccessfulCount++;
+                            ruleStats.ApplicationCount++; // Incrementa anche qui, se OnRuleApplied non è sufficiente
+                            ruleStats.RecalculateEffectiveness();
+                            ruleStats.LastApplicationTimestamp = DateTime.Now;
+                            _logger.Log(LogLevel.DEBUG, $"[Learning] Rule {ruleId} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == ruleId)?.Nome ?? "Unknown"}) SuccessfulCount incremented to {ruleStats.SuccessfulCount}. Effectiveness: {ruleStats.EffectivenessScore:F4}");
                         }
                         else
                         {
@@ -360,42 +457,39 @@ namespace MIU.Core.tester
                             _ruleStatistics[ruleId] = new EvolutiveSystem.Common.RuleStatistics
                             {
                                 RuleID = ruleId,
-                                ApplicationCount = 0,
+                                ApplicationCount = 1, // È stata applicata per trovare la soluzione
                                 SuccessfulCount = 1,
                                 LastApplicationTimestamp = DateTime.Now
                             };
                             _ruleStatistics[ruleId].RecalculateEffectiveness();
                         }
+
+                        // Aggiornamento TransitionStatistics per ogni transizione nel percorso di successo
+                        if (step.ParentStateStringStandard != null)
+                        {
+                            var parentCompressed = MIUStringConverter.DeflateMIUString(step.ParentStateStringStandard);
+                            var transitionKey = Tuple.Create(parentCompressed, step.AppliedRuleID.Value);
+
+                            if (_transitionStatistics.TryGetValue(transitionKey, out TransitionStatistics transitionStats))
+                            {
+                                transitionStats.SuccessfulCount++;
+                                transitionStats.ApplicationCount++; // Incrementa anche qui, se OnRuleApplied non è sufficiente
+                                transitionStats.LastUpdated = DateTime.Now;
+                                // SuccessRate viene ricalcolato automaticamente dalla proprietà get
+                            }
+                            else
+                            {
+                                _transitionStatistics[transitionKey] = new EvolutiveSystem.Common.TransitionStatistics
+                                {
+                                    ParentStringCompressed = parentCompressed,
+                                    AppliedRuleID = step.AppliedRuleID.Value,
+                                    ApplicationCount = 1,
+                                    SuccessfulCount = 1,
+                                    LastUpdated = DateTime.Now
+                                };
+                            }
+                        }
                     }
-                }
-            }
-
-            if (e.Success && e.SolutionPathSteps != null)
-            {
-                for (int i = 0; i < e.SolutionPathSteps.Count; i++)
-                {
-                    MIU.Core.PathStepInfo currentStep = e.SolutionPathSteps[i];
-
-                    long currentStateId = _repository.UpsertMIUState(currentStep.StateStringStandard);
-
-                    long? parentStateId = null;
-                    if (currentStep.ParentStateStringStandard != null)
-                    {
-                        parentStateId = _repository.UpsertMIUState(currentStep.ParentStateStringStandard);
-                    }
-
-                    bool isTarget = (currentStep.StateStringStandard == MIUStringConverter.InflateMIUString(e.TargetString));
-
-                    _repository.InsertSolutionPathStep(
-                        e.SearchID,
-                        i + 1,
-                        currentStateId,
-                        parentStateId,
-                        currentStep.AppliedRuleID,
-                        isTarget,
-                        e.Success,
-                        i
-                    );
                 }
             }
         }
@@ -420,16 +514,41 @@ namespace MIU.Core.tester
             long ruleId = e.AppliedRuleID;
             if (!_ruleStatistics.ContainsKey(ruleId))
             {
-                _logger.Log(LogLevel.WARNING, $"[Learning] Rule {ruleId} found in _ruleStatistics but not in _ruleStatistics. Creating new entry.");
+                _logger.Log(LogLevel.WARNING, $"[Learning] Rule {ruleId} not found in _ruleStatistics. Creating new entry.");
                 _ruleStatistics[ruleId] = new EvolutiveSystem.Common.RuleStatistics { RuleID = ruleId };
                 _logger.Log(LogLevel.DEBUG, $"[Learning] Created new RuleStatistics entry for rule {ruleId}.");
             }
-            _ruleStatistics[ruleId].ApplicationCount++;
+            _ruleStatistics[ruleId].ApplicationCount++; // Incrementa il conteggio di applicazioni ogni volta che la regola viene tentata
             _ruleStatistics[ruleId].LastApplicationTimestamp = DateTime.Now;
+            _ruleStatistics[ruleId].RecalculateEffectiveness(); // Ricalcola anche qui se vuoi un valore aggiornato in tempo reale
             _logger.Log(LogLevel.DEBUG, $"[Learning] Rule {ruleId} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == ruleId)?.Nome ?? "Unknown"}) ApplicationCount incremented to {_ruleStatistics[ruleId].ApplicationCount}.");
+
+            // Aggiornamento TransitionStatistics in OnRuleApplied (per tutte le applicazioni, anche quelle fallite)
+            if (e.OriginalString != null) // OriginalString è lo stato genitore
+            {
+                var parentCompressed = MIUStringConverter.DeflateMIUString(e.OriginalString);
+                var transitionKey = Tuple.Create(parentCompressed, e.AppliedRuleID);
+
+                if (_transitionStatistics.TryGetValue(transitionKey, out TransitionStatistics transitionStats))
+                {
+                    transitionStats.ApplicationCount++;
+                    transitionStats.LastUpdated = DateTime.Now;
+                }
+                else
+                {
+                    _transitionStatistics[transitionKey] = new EvolutiveSystem.Common.TransitionStatistics
+                    {
+                        ParentStringCompressed = parentCompressed,
+                        AppliedRuleID = e.AppliedRuleID,
+                        ApplicationCount = 1,
+                        SuccessfulCount = 0, // Inizialmente 0, incrementato solo in OnSolutionFound
+                        LastUpdated = DateTime.Now
+                    };
+                }
+            }
         }
 
-        // Method for DFS search (existing, not modified for statistics in this step)
+        // Metodo per DFS search (existing, not modified for statistics in this step)
         // This method is now effectively a wrapper to allow direct calls if needed,
         // but the main entry point will be TrovaDerivazioneAutomatica.
         private static void RicercaDiDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed)

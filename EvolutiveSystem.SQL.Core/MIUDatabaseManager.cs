@@ -3,8 +3,8 @@
 // per implementare correttamente tutti i membri dell'interfaccia IMIUDataManager
 // e risolvere gli errori di compilazione causati da frammentazioni precedenti.
 // AGGIORNATO 20.06.2025: Implementazione del metodo GetTransitionProbabilities per l'aggregazione delle statistiche.
-// AGGIORNATO 20.06.2025: Rimosse le implementazioni dei metodi di caricamento/salvataggio delle statistiche di apprendimento,
-// che sono state spostate in LearningStatisticsManager per una migliore separazione delle responsabilità.
+// AGGIORNATO 20.06.2025: Reintegrate le implementazioni complete dei metodi di caricamento/salvataggio delle statistiche di apprendimento,
+// in linea con la responsabilità di MIUDatabaseManager come unico punto di accesso diretto al database.
 
 using System;
 using System.Collections.Generic;
@@ -405,7 +405,7 @@ namespace EvolutiveSystem.SQL.Core
         }
 
         /// <summary>
-        /// Salva i parametri di configurazione. Delega al data manager.
+        /// Salva i parametri di configurazione.
         /// </summary>
         public void SaveMIUParameterConfigurator(Dictionary<string, string> config)
         {
@@ -437,17 +437,183 @@ namespace EvolutiveSystem.SQL.Core
             }
         }
 
-        // I seguenti metodi per le statistiche di apprendimento sono stati spostati
-        // in LearningStatisticsManager per una migliore separazione delle responsabilità.
-        /*
-        public Dictionary<long, RuleStatistics> LoadRuleStatistics() { ... }
-        public void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats) { ... }
-        public Dictionary<Tuple<string, long>, TransitionStatistics> LoadTransitionStatistics() { ... }
-        public void SaveTransitionStatistics(Dictionary<Tuple<string, long>, TransitionStatistics> transitionStats) { ... }
-        */
+        /// <summary>
+        /// Carica le statistiche di apprendimento delle regole dal database.
+        /// Implementazione necessaria per IMIUDataManager.
+        /// </summary>
+        /// <returns>Un dizionario di RuleStatistics, con chiave=RuleID.</returns>
+        public Dictionary<long, RuleStatistics> LoadRuleStatistics()
+        {
+            var ruleStats = new Dictionary<long, RuleStatistics>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT RuleID, ApplicationCount, SuccessfulCount, EffectivenessScore, LastUpdated FROM Learning_RuleStatistics";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            long ruleId = reader.GetInt64(reader.GetOrdinal("RuleID"));
+                            int appCount = reader.GetInt32(reader.GetOrdinal("ApplicationCount"));
+                            int succCount = reader.GetInt32(reader.GetOrdinal("SuccessfulCount"));
+                            double effScore = reader.GetDouble(reader.GetOrdinal("EffectivenessScore"));
+
+                            DateTime lastUpdated = DateTime.MinValue;
+                            if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
+                            {
+                                ruleStats[ruleId] = new RuleStatistics
+                                {
+                                    RuleID = ruleId,
+                                    ApplicationCount = appCount,
+                                    SuccessfulCount = succCount,
+                                    EffectivenessScore = effScore,
+                                    LastApplicationTimestamp = lastUpdated
+                                };
+                            }
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, "RuleStatistics caricate dal database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore caricamento RuleStatistics: {ex.Message}. Restituisco dizionario vuoto.");
+                return new Dictionary<long, RuleStatistics>();
+            }
+            return ruleStats;
+        }
 
         /// <summary>
-        /// NUOVO METODO: Carica le statistiche di transizione aggregate (conteggi totali e di successo)
+        /// Salva (upsert) le statistiche delle regole di apprendimento nel database.
+        /// Implementazione necessaria per IMIUDataManager.
+        /// </summary>
+        public void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        foreach (var entry in ruleStats)
+                        {
+                            var stats = entry.Value;
+                            string sql = "INSERT OR REPLACE INTO Learning_RuleStatistics (RuleID, ApplicationCount, SuccessfulCount, EffectivenessScore, LastUpdated) VALUES (@ruleId, @appCount, @succCount, @effScore, @lastUpdated)";
+                            using (var command = new SQLiteCommand(sql, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@ruleId", stats.RuleID);
+                                command.Parameters.AddWithValue("@appCount", stats.ApplicationCount);
+                                command.Parameters.AddWithValue("@succCount", stats.SuccessfulCount);
+                                command.Parameters.AddWithValue("@effScore", stats.EffectivenessScore.ToString(CultureInfo.InvariantCulture));
+                                command.Parameters.AddWithValue("@lastUpdated", stats.LastApplicationTimestamp.ToString("yyyy/MM/dd HH:mm:ss"));
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Salvate {ruleStats.Count} RuleStatistics nel database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore salvataggio RuleStatistics: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Carica le statistiche di transizione di apprendimento dal database.
+        /// Implementazione necessaria per IMIUDataManager.
+        /// </summary>
+        /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
+        public Dictionary<Tuple<string, long>, TransitionStatistics> LoadTransitionStatistics()
+        {
+            var transitionStats = new Dictionary<Tuple<string, long>, TransitionStatistics>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT ParentStringCompressed, AppliedRuleID, ApplicationCount, SuccessfulCount, LastUpdated FROM Learning_TransitionStatistics";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string parentString = reader.GetString(reader.GetOrdinal("ParentStringCompressed"));
+                            long appliedRuleId = reader.GetInt64(reader.GetOrdinal("AppliedRuleID"));
+                            int appCount = reader.GetInt32(reader.GetOrdinal("ApplicationCount"));
+                            int succCount = reader.GetInt32(reader.GetOrdinal("SuccessfulCount"));
+
+                            DateTime lastUpdated = DateTime.MinValue;
+                            if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
+                            {
+                                var key = Tuple.Create(parentString, appliedRuleId);
+                                transitionStats[key] = new TransitionStatistics
+                                {
+                                    ParentStringCompressed = parentString,
+                                    AppliedRuleID = appliedRuleId,
+                                    ApplicationCount = appCount,
+                                    SuccessfulCount = succCount,
+                                    LastUpdated = lastUpdated
+                                };
+                            }
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, "TransitionStatistics caricate dal database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore caricamento TransitionStatistics: {ex.Message}. Restituisco dizionario vuoto.");
+                return new Dictionary<Tuple<string, long>, TransitionStatistics>();
+            }
+            return transitionStats;
+        }
+
+        /// <summary>
+        /// Salva (upsert) le statistiche di transizione di apprendimento nel database.
+        /// Implementazione necessaria per IMIUDataManager.
+        /// </summary>
+        public void SaveTransitionStatistics(Dictionary<Tuple<string, long>, TransitionStatistics> transitionStats)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        foreach (var entry in transitionStats)
+                        {
+                            var stats = entry.Value;
+                            string sql = "INSERT OR REPLACE INTO Learning_TransitionStatistics (ParentStringCompressed, AppliedRuleID, ApplicationCount, SuccessfulCount, LastUpdated) VALUES (@parentStringCompressed, @appliedRuleId, @appCount, @succCount, @lastUpdated)";
+                            using (var command = new SQLiteCommand(sql, connection, transaction))
+                            {
+                                command.Parameters.AddWithValue("@parentStringCompressed", stats.ParentStringCompressed);
+                                command.Parameters.AddWithValue("@appliedRuleId", stats.AppliedRuleID);
+                                command.Parameters.AddWithValue("@appCount", stats.ApplicationCount);
+                                command.Parameters.AddWithValue("@succCount", stats.SuccessfulCount);
+                                command.Parameters.AddWithValue("@lastUpdated", stats.LastUpdated.ToString("yyyy/MM/dd HH:mm:ss")); // Non c'è più @effScore qui
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        transaction.Commit();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Salvate {transitionStats.Count} TransitionStatistics nel database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore salvataggio TransitionStatistics: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Carica le statistiche di transizione aggregate (conteggi totali e di successo)
         /// dal database, calcolando la probabilità di successo per ogni transizione.
         /// Questo metodo esegue una query SQL complessa che aggrega i dati delle applicazioni di regole
         /// e dei risultati delle ricerche per fornire una "topografia pesata e dinamica"
@@ -510,9 +676,5 @@ namespace EvolutiveSystem.SQL.Core
             }
             return transitionProbabilities;
         }
-
-        // Il metodo GetConnectionString è stato rimosso in quanto non necessario per la rifattorizzazione.
-        // Se un'altra parte del codice dovesse aver bisogno della ConnectionString,
-        // _schemaLoader.ConnectionString è accessibile tramite l'istanza di MIUDatabaseManager.
     }
 }

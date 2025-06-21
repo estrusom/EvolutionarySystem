@@ -4,17 +4,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D7E9A321-39E6-488A-A539-F2030F7B0B1E}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>MIU.Core.tester</RootNamespace>
-    <AssemblyName>MIU.Core.tester</AssemblyName>
+    <ProjectGuid>{65834756-C570-4269-AFEC-759B174FC02E}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>EvolutiveSystem.Learning</RootNamespace>
+    <AssemblyName>EvolutiveSystem.Learning</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -24,16 +23,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject>MIU.Core.tester.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -46,24 +41,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="LearningStatisticsManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EvolutiveSystem.Common\EvolutiveSystem.Common.csproj">
       <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
       <Name>EvolutiveSystem.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\EvolutiveSystem.Learning\EvolutiveSystem.Learning.csproj">
-      <Project>{65834756-c570-4269-afec-759b174fc02e}</Project>
-      <Name>EvolutiveSystem.Learning</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
-      <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
-      <Name>EvolutiveSystem.SQL.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
@@ -73,11 +57,6 @@
       <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
       <Name>MIU.Core</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="System.Data.SQLite">
-      <Version>1.0.119</Version>
-    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
