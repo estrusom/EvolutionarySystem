@@ -43,6 +43,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Common", "E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Learning", "EvolutiveSystem.Learning\EvolutiveSystem.Learning.csproj", "{65834756-C570-4269-AFEC-759B174FC02E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiuSystemWorker", "MiuSystemWorker\MiuSystemWorker.csproj", "{84F2986B-2CAD-4580-950C-FF7B8F0B598B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -211,6 +213,14 @@ Global
 		{65834756-C570-4269-AFEC-759B174FC02E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{65834756-C570-4269-AFEC-759B174FC02E}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{65834756-C570-4269-AFEC-759B174FC02E}.Release|ARM64.Build.0 = Release|Any CPU
+		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

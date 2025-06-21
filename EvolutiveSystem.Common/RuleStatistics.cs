@@ -1,63 +1,55 @@
-﻿// creato il 15.6.2025 1.56
-// File: C:\Progetti\EvolutiveSystem_250604\MIU.Core\RuleStatistics.cs
-// Questo file definisce la classe RuleStatistics, un modello di dati
-// per memorizzare le statistiche di applicazione e efficacia delle regole MIU.
-// Data: 20 giugno 2025
-// Descrizione: Classe per la memorizzazione delle statistiche di apprendimento per ciascuna regola MIU.
+﻿// File: EvolutiveSystem.Common/RuleStatistics.cs
+// Data di riferimento: 21 giugno 2025
+// Descrizione: Classe modello per le statistiche di apprendimento delle regole MIU.
+
 using System;
 
 namespace EvolutiveSystem.Common
 {
     /// <summary>
-    /// Rappresenta le statistiche di apprendimento per una singola regola MIU.
-    /// Utilizzata per calcolare l'efficacia delle regole.
+    /// Rappresenta le statistiche di apprendimento per una specifica regola MIU.
+    /// Utilizzato per calcolare l'efficacia delle regole.
     /// </summary>
     public class RuleStatistics
     {
         /// <summary>
-        /// L'ID univoco della regola a cui si riferiscono queste statistiche.
-        /// Corrisponde all'ID della classe RegolaMIU.
-        /// Nota: Utilizziamo 'long' per allineare al tipo di ID di RegolaMIU.
+        /// L'ID univoco della regola MIU.
         /// </summary>
         public long RuleID { get; set; }
 
         /// <summary>
-        /// Il numero totale di volte in cui questa regola è stata applicata.
+        /// Il numero totale di volte che questa regola è stata applicata (tentata).
         /// </summary>
         public int ApplicationCount { get; set; }
 
         /// <summary>
-        /// Il numero di volte in cui questa regola è stata applicata come parte
-        /// di un percorso di derivazione che ha portato a una soluzione di successo.
+        /// Il numero di volte che l'applicazione di questa regola ha portato a una soluzione.
         /// </summary>
         public int SuccessfulCount { get; set; }
 
         /// <summary>
-        /// Il punteggio di efficacia della regola, calcolato come SuccessfulCount / ApplicationCount.
-        /// Un valore più alto indica una regola più efficace nelle derivazioni di successo.
+        /// Il punteggio di efficacia della regola, calcolato come SuccessRatio.
+        /// Un valore più alto indica una regola più efficace.
         /// </summary>
-        public double EffectivenessScore { get; set; }
+        public double EffectivenessScore { get; private set; } // Calcolato automaticamente
 
         /// <summary>
-        /// Timestamp dell'ultima volta in cui queste statistiche sono state aggiornate o la regola è stata applicata.
+        /// Il timestamp dell'ultima applicazione o aggiornamento di questa statistica.
         /// </summary>
         public DateTime LastApplicationTimestamp { get; set; }
 
-        /// <summary>
-        /// Costruttore predefinito.
-        /// Inizializza i contatori a zero e il punteggio a 0.0.
-        /// </summary>
         public RuleStatistics()
         {
+            // Inizializza i conteggi a zero
             ApplicationCount = 0;
             SuccessfulCount = 0;
             EffectivenessScore = 0.0;
-            LastApplicationTimestamp = DateTime.MinValue; // Valore predefinito
+            LastApplicationTimestamp = DateTime.MinValue; // O DateTime.UtcNow
         }
 
         /// <summary>
-        /// Ricalcola l'EffectivenessScore basandosi sugli ApplicationCount e SuccessfulCount attuali.
-        /// Da chiamare ogni volta che SuccessfulCount o ApplicationCount vengono modificati.
+        /// Ricalcola l'EffectivenessScore basandosi sui conteggi correnti.
+        /// Questo metodo dovrebbe essere chiamato ogni volta che ApplicationCount o SuccessfulCount cambiano.
         /// </summary>
         public void RecalculateEffectiveness()
         {
@@ -67,7 +59,7 @@ namespace EvolutiveSystem.Common
             }
             else
             {
-                EffectivenessScore = 0.0; // Evita divisione per zero
+                EffectivenessScore = 0.0; // Evita divisione per zero se la regola non è mai stata applicata
             }
         }
     }

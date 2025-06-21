@@ -32,17 +32,17 @@ namespace MIU.Core
     /// </summary>
     public interface IMIUDataManager
     {
-        // Operazioni per MIU_Searches - MODIFICATI PER INCLUDERE NUOVI PARAMETRI
+        // Operazioni per MIU_Searches
         long InsertSearch(
             string initialString,
             string targetString,
             string searchAlgorithm,
-            int initialStringLength,    // NUOVO PARAMETRO
-            int targetStringLength,     // NUOVO PARAMETRO
-            int initialIcount,          // NUOVO PARAMETRO
-            int initialUcount,          // NUOVO PARAMETRO
-            int targetIcount,           // NUOVO PARAMETRO
-            int targetUcount            // NUOVO PARAMETRO
+            int initialStringLength,
+            int targetStringLength,
+            int initialIcount,
+            int initialUcount,
+            int targetIcount,
+            int targetUcount
         );
         void UpdateSearch(
             long searchId,
@@ -53,20 +53,23 @@ namespace MIU.Core
             int maxDepthReached
         );
 
-        // Operazioni per MIU_States (INVARIATE)
+        // Operazioni per MIU_States
         long UpsertMIUState(string miuString);
+        System.Collections.Generic.List<EvolutiveSystem.Common.MiuStateInfo> LoadMIUStates();
+        bool SearchExists(string initialString, string targetString);
 
-        // Operazioni per MIU_RuleApplications (INVARIATE)
+
+        // Operazioni per MIU_RuleApplications
         void InsertRuleApplication(long searchId, long parentStateId, long newStateId, long appliedRuleID, int currentDepth);
 
-        // Operazioni per MIU_Paths (INVARIATE)
+        // Operazioni per MIU_Paths
         void InsertSolutionPathStep(long searchId, int stepNumber, long stateId, long? parentStateId, long? appliedRuleID, bool isTarget, bool isSuccess, int depth);
 
-        // Operazioni per RegoleMIU (INVARIATE)
+        // Operazioni per RegoleMIU
         System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> LoadRegoleMIU();
         void UpsertRegoleMIU(System.Collections.Generic.List<EvolutiveSystem.Common.RegolaMIU> regole);
 
-        // Operazioni per MIUParameterConfigurator (INVARIATE)
+        // Operazioni per MIUParameterConfigurator
         Dictionary<string, string> LoadMIUParameterConfigurator();
         void SaveMIUParameterConfigurator(Dictionary<string, string> config);
 
@@ -75,19 +78,19 @@ namespace MIU.Core
         void SaveRuleStatistics(System.Collections.Generic.Dictionary<long, EvolutiveSystem.Common.RuleStatistics> ruleStats);
         System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> LoadTransitionStatistics();
         void SaveTransitionStatistics(System.Collections.Generic.Dictionary<System.Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> transitionStats);
-
-        /// <summary>
-        /// Carica le statistiche di transizione aggregate (conteggi totali e di successo)
-        /// dal database, per il calcolo delle probabilità.
-        /// </summary>
-        /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
         System.Collections.Generic.Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> GetTransitionProbabilities();
 
+        // --- NUOVI METODI PER LA GESTIONE DEL CURSORE DI ESPLORAZIONE ---
         /// <summary>
-        /// NUOVO METODO: Imposta la modalità di journaling del database (es. WAL).
-        /// Questo metodo incapsula l'esecuzione del comando PRAGMA.
+        /// Carica lo stato del cursore di esplorazione dal database.
         /// </summary>
-        /// <param name="mode">La modalità di journaling da impostare (es. "WAL", "DELETE", "TRUNCATE").</param>
-        void SetJournalMode(string mode);
+        /// <returns>Un oggetto MIUExplorerCursor se i parametri esistono, altrimenti un nuovo oggetto con valori di default.</returns>
+        EvolutiveSystem.Common.MIUExplorerCursor LoadExplorerCursor();
+
+        /// <summary>
+        /// Salva lo stato corrente del cursore di esplorazione nel database.
+        /// </summary>
+        /// <param name="cursor">L'oggetto MIUExplorerCursor da salvare.</param>
+        void SaveExplorerCursor(EvolutiveSystem.Common.MIUExplorerCursor cursor);
     }
 }

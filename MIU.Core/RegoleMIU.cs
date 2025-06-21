@@ -84,6 +84,7 @@ namespace MIU.Core
     // EventArgs for the OnRuleApplied event
     public class RuleAppliedEventArgs : EventArgs
     {
+        public long SearchID { get; set; } // Questa è la proprietà mancante!
         public long AppliedRuleID { get; set; }
         public string AppliedRuleName { get; set; }
         public string OriginalString { get; set; } // This will be the STANDARD string

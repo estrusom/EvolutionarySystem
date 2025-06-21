@@ -51,6 +51,7 @@
     <Compile Include="InflateDeflateMIUstring.cs" />
     <Compile Include="MIURepository.cs" />
     <Compile Include="MIUStringGenerator.cs" />
+    <Compile Include="MIUStringHelper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegoleMIU.cs" />
   </ItemGroup>

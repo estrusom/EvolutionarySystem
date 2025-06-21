@@ -5,6 +5,7 @@
 // AGGIORNATO 20.06.2025: Implementazione del metodo GetTransitionProbabilities per l'aggregazione delle statistiche.
 // AGGIORNATO 20.06.2025: Reintegrate le implementazioni complete dei metodi di caricamento/salvataggio delle statistiche di apprendimento,
 // in linea con la responsabilità di MIUDatabaseManager come unico punto di accesso diretto al database.
+// AGGIORNATO 21.06.2025: Aggiunta l'implementazione del metodo SetJournalMode per incapsulare il comando PRAGMA.
 
 using System;
 using System.Collections.Generic;
@@ -675,6 +676,202 @@ namespace EvolutiveSystem.SQL.Core
                 return new Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics>();
             }
             return transitionProbabilities;
+        }
+
+        /// <summary>
+        /// Imposta la modalità di journaling del database (es. WAL, DELETE, TRUNCATE).
+        /// Questo metodo incapsula l'esecuzione del comando PRAGMA, garantendo che
+        /// tutte le interazioni SQL dirette avvengano all'interno di MIUDatabaseManager.
+        /// </summary>
+        /// <param name="mode">La modalità di journaling da impostare (es. "WAL").</param>
+        public void SetJournalMode(string mode)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = $"PRAGMA journal_mode={mode};";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.ExecuteNonQuery();
+                        _logger.Log(LogLevel.INFO, $"[MIUDatabaseManager] Modalità WAL impostata a '{mode}' per il database.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore nell'impostazione della modalità WAL a '{mode}': {ex.Message}");
+                throw; // Rilancia l'eccezione per gestione a livello superiore
+            }
+        }
+
+        /// <summary>
+        /// Carica tutti gli stati MIU dal database.
+        /// </summary>
+        /// <returns>Una lista di oggetti MiuStateInfo.</returns>
+        public List<EvolutiveSystem.Common.MiuStateInfo> LoadMIUStates()
+        {
+            var states = new List<EvolutiveSystem.Common.MiuStateInfo>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT StateID, CurrentString, StringLength, DeflateString, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount FROM MIU_States";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            states.Add(new EvolutiveSystem.Common.MiuStateInfo
+                            {
+                                StateID = reader.GetInt64(reader.GetOrdinal("StateID")),
+                                CurrentString = reader.GetString(reader.GetOrdinal("CurrentString")),
+                                StringLength = reader.GetInt32(reader.GetOrdinal("StringLength")),
+                                DeflateString = reader.GetString(reader.GetOrdinal("DeflateString")),
+                                Hash = reader.GetString(reader.GetOrdinal("Hash")),
+                                DiscoveryTime_Int = reader.GetInt64(reader.GetOrdinal("DiscoveryTime_Int")),
+                                DiscoveryTime_Text = reader.GetString(reader.GetOrdinal("DiscoveryTime_Text")),
+                                UsageCount = reader.GetInt32(reader.GetOrdinal("UsageCount"))
+                            });
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Caricati {states.Count} stati MIU dal database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore caricamento MIU_States: {ex.Message}. Restituisco lista vuota.");
+                return new List<EvolutiveSystem.Common.MiuStateInfo>();
+            }
+            return states;
+        }
+
+        /// <summary>
+        /// Verifica se una ricerca con una specifica coppia (initial, target) esiste già nel database
+        /// e ha un esito non "Pending".
+        /// </summary>
+        /// <param name="initialString">La stringa iniziale standard (decompressa).</param>
+        /// <param name="targetString">La stringa target standard (decompressa).</param>
+        /// <returns>True se la ricerca esiste e non è in stato "Pending", False altrimenti.</returns>
+        public bool SearchExists(string initialString, string targetString)
+        {
+            bool exists = false;
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT COUNT(*) FROM MIU_Searches WHERE InitialString = @initialString AND TargetString = @targetString AND Outcome != 'Pending'";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@initialString", initialString);
+                        command.Parameters.AddWithValue("@targetString", targetString);
+                        long count = (long)command.ExecuteScalar();
+                        exists = count > 0;
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Verifica SearchExists per '{initialString}'->'{targetString}': {exists}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore in SearchExists per '{initialString}'->'{targetString}': {ex.Message}. Restituisco false.");
+            }
+            return exists;
+        }
+
+        /// <summary>
+        /// Carica lo stato del cursore di esplorazione dal database (tabella MIUParameterConfigurator).
+        /// </summary>
+        /// <returns>Un oggetto MIUExplorerCursor con i valori caricati, o un nuovo oggetto con valori di default se non trovati.</returns>
+        public EvolutiveSystem.Common.MIUExplorerCursor LoadExplorerCursor()
+        {
+            _logger.Log(LogLevel.DEBUG, "[MIUDatabaseManager] Caricamento cursore esplorazione...");
+            var cursor = new EvolutiveSystem.Common.MIUExplorerCursor(); // Inizializza con i valori di default
+
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT NomeParametro, ValoreParametro FROM MIUParameterConfigurator WHERE NomeParametro IN ('Explorer_CurrentSourceIndex', 'Explorer_CurrentTargetIndex', 'Explorer_LastExplorationTimestamp')";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        var parameters = new Dictionary<string, string>();
+                        while (reader.Read())
+                        {
+                            parameters[reader.GetString(0)] = reader.GetString(1);
+                        }
+
+                        if (parameters.TryGetValue("Explorer_CurrentSourceIndex", out string sourceIndexStr) && int.TryParse(sourceIndexStr, out int sourceIndex))
+                        {
+                            cursor.CurrentSourceIndex = sourceIndex;
+                        }
+                        if (parameters.TryGetValue("Explorer_CurrentTargetIndex", out string targetIndexStr) && int.TryParse(targetIndexStr, out int targetIndex))
+                        {
+                            cursor.CurrentTargetIndex = targetIndex;
+                        }
+                        if (parameters.TryGetValue("Explorer_LastExplorationTimestamp", out string timestampStr) && DateTime.TryParse(timestampStr, out DateTime timestamp))
+                        {
+                            cursor.LastExplorationTimestamp = timestamp;
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Cursore esplorazione caricato: Source={cursor.CurrentSourceIndex}, Target={cursor.CurrentTargetIndex}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il caricamento del cursore di esplorazione: {ex.Message}. Utilizzo valori di default.");
+                // In caso di errore, restituisce il cursore con i valori di default (0, 0, DateTime.UtcNow)
+            }
+            return cursor;
+        }
+
+        /// <summary>
+        /// Salva lo stato corrente del cursore di esplorazione nel database (tabella MIUParameterConfigurator).
+        /// </summary>
+        /// <param name="cursor">L'oggetto MIUExplorerCursor da salvare.</param>
+        public void SaveExplorerCursor(EvolutiveSystem.Common.MIUExplorerCursor cursor)
+        {
+            _logger.Log(LogLevel.DEBUG, "[MIUDatabaseManager] Salvataggio cursore esplorazione...");
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        // Inserisce o aggiorna ogni parametro del cursore
+                        string sql = "INSERT OR REPLACE INTO MIUParameterConfigurator (NomeParametro, ValoreParametro) VALUES (@nomeParametro, @valoreParametro)";
+
+                        using (var command = new SQLiteCommand(sql, connection, transaction))
+                        {
+                            command.Parameters.Add(new SQLiteParameter("@nomeParametro", "Explorer_CurrentSourceIndex"));
+                            command.Parameters.Add(new SQLiteParameter("@valoreParametro", cursor.CurrentSourceIndex.ToString()));
+                            command.ExecuteNonQuery();
+
+                            command.Parameters.Clear();
+                            command.Parameters.Add(new SQLiteParameter("@nomeParametro", "Explorer_CurrentTargetIndex"));
+                            command.Parameters.Add(new SQLiteParameter("@valoreParametro", cursor.CurrentTargetIndex.ToString()));
+                            command.ExecuteNonQuery();
+
+                            command.Parameters.Clear();
+                            command.Parameters.Add(new SQLiteParameter("@nomeParametro", "Explorer_LastExplorationTimestamp"));
+                            command.Parameters.Add(new SQLiteParameter("@valoreParametro", cursor.LastExplorationTimestamp.ToString("yyyy-MM-dd HH:mm:ss.ffffff")));
+                            command.ExecuteNonQuery();
+                        }
+                        transaction.Commit();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Cursore esplorazione salvato: Source={cursor.CurrentSourceIndex}, Target={cursor.CurrentTargetIndex}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il salvataggio del cursore di esplorazione: {ex.Message}");
+                // In caso di errore, la transazione verrà automaticamente annullata se non commessa.
+            }
         }
     }
 }
