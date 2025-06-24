@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ClsCustomBinder.cs" />
+    <Compile Include="MiuExplorationDataManager.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -119,6 +120,10 @@
       <Project>{78F37CCC-727B-4FDF-BC20-8F51F2DFAE88}</Project>
       <Name>CommandHandlers</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.Common\EvolutiveSystem.Common.csproj">
+      <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
+      <Name>EvolutiveSystem.Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.Core\EvolutiveSystem.Core.csproj">
       <Project>{A193E8C9-5AFA-4D49-ADFA-F25891B1A8EB}</Project>
       <Name>EvolutiveSystem.Core</Name>
@@ -130,6 +135,10 @@
     <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj">
       <Project>{c4be31ba-71ec-420f-ad75-58c661011b5a}</Project>
       <Name>MessaggiErrore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
+      <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
+      <Name>MIU.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\SocketManagerInfo\SocketManagerInfo.csproj">
       <Project>{86479dbc-394f-4ee6-b833-4241dc4543f9}</Project>

@@ -45,6 +45,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Learning", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiuSystemWorker", "MiuSystemWorker\MiuSystemWorker.csproj", "{84F2986B-2CAD-4580-950C-FF7B8F0B598B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiuSystemExplorerTestApp", "MiuSystemExplorerTestApp\MiuSystemExplorerTestApp.csproj", "{4CB94A22-4FAF-498F-B418-3AC71A48559A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormalSystem.Worker", "FormalSystem.Worker\FormalSystem.Worker.csproj", "{A2AB32C2-867F-4118-A2F8-887CF5A38856}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -221,6 +225,22 @@ Global
 		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{84F2986B-2CAD-4580-950C-FF7B8F0B598B}.Release|ARM64.Build.0 = Release|Any CPU
+		{4CB94A22-4FAF-498F-B418-3AC71A48559A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CB94A22-4FAF-498F-B418-3AC71A48559A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CB94A22-4FAF-498F-B418-3AC71A48559A}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{4CB94A22-4FAF-498F-B418-3AC71A48559A}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{4CB94A22-4FAF-498F-B418-3AC71A48559A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CB94A22-4FAF-498F-B418-3AC71A48559A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CB94A22-4FAF-498F-B418-3AC71A48559A}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{4CB94A22-4FAF-498F-B418-3AC71A48559A}.Release|ARM64.Build.0 = Release|Any CPU
+		{A2AB32C2-867F-4118-A2F8-887CF5A38856}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2AB32C2-867F-4118-A2F8-887CF5A38856}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2AB32C2-867F-4118-A2F8-887CF5A38856}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{A2AB32C2-867F-4118-A2F8-887CF5A38856}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{A2AB32C2-867F-4118-A2F8-887CF5A38856}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2AB32C2-867F-4118-A2F8-887CF5A38856}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2AB32C2-867F-4118-A2F8-887CF5A38856}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{A2AB32C2-867F-4118-A2F8-887CF5A38856}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

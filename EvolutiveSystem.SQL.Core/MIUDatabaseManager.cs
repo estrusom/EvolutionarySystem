@@ -16,6 +16,7 @@ using MasterLog;
 using System.Globalization;
 using System.Text; // Necessario per StringBuilder in LoadRegoleMIU o altri metodi di utilità
 using EvolutiveSystem.Common; // Aggiunto per le classi modello spostate
+using System.Threading.Tasks; // NECESSARIO PER I METODI ASINCRONI
 
 namespace EvolutiveSystem.SQL.Core
 {
@@ -27,7 +28,7 @@ namespace EvolutiveSystem.SQL.Core
     /// garantendo il controllo delle transazioni e l'uso di query parametrizzate.
     /// Implementa l'interfaccia IMIUDataManager.
     /// </summary>
-    public class MIUDatabaseManager : IMIUDataManager
+    public class MIUDatabaseManager : IMIUDataManager  // 
     {
         private readonly SQLiteSchemaLoader _schemaLoader;
         private readonly Logger _logger;
@@ -460,7 +461,12 @@ namespace EvolutiveSystem.SQL.Core
                             long ruleId = reader.GetInt64(reader.GetOrdinal("RuleID"));
                             int appCount = reader.GetInt32(reader.GetOrdinal("ApplicationCount"));
                             int succCount = reader.GetInt32(reader.GetOrdinal("SuccessfulCount"));
-                            double effScore = reader.GetDouble(reader.GetOrdinal("EffectivenessScore"));
+                            string effScoreString = reader.GetString(reader.GetOrdinal("EffectivenessScore"));
+                            double effScore = 0.0;
+                            if (!double.TryParse(effScoreString, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out effScore))
+                            {
+                                _logger.Log(LogLevel.WARNING, $"[MIUDatabaseManager] Impossibile convertire '{effScoreString}' in double per EffectivenessScore per RuleID {ruleId}. Impostato a 0.0.");
+                            }
 
                             DateTime lastUpdated = DateTime.MinValue;
                             if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
@@ -470,7 +476,7 @@ namespace EvolutiveSystem.SQL.Core
                                     RuleID = ruleId,
                                     ApplicationCount = appCount,
                                     SuccessfulCount = succCount,
-                                    EffectivenessScore = effScore,
+                                    EffectivenessScore = effScore, // <- Error cs0272
                                     LastApplicationTimestamp = lastUpdated
                                 };
                             }
@@ -509,7 +515,8 @@ namespace EvolutiveSystem.SQL.Core
                                 command.Parameters.AddWithValue("@ruleId", stats.RuleID);
                                 command.Parameters.AddWithValue("@appCount", stats.ApplicationCount);
                                 command.Parameters.AddWithValue("@succCount", stats.SuccessfulCount);
-                                command.Parameters.AddWithValue("@effScore", stats.EffectivenessScore.ToString(CultureInfo.InvariantCulture));
+                                // Converte il double in stringa usando CultureInfo.InvariantCulture per evitare problemi di formattazione decimale
+                                command.Parameters.AddWithValue("@effScore", stats.EffectivenessScore.ToString(System.Globalization.CultureInfo.InvariantCulture));
                                 command.Parameters.AddWithValue("@lastUpdated", stats.LastApplicationTimestamp.ToString("yyyy/MM/dd HH:mm:ss"));
                                 command.ExecuteNonQuery();
                             }
@@ -524,7 +531,6 @@ namespace EvolutiveSystem.SQL.Core
                 _logger.Log(LogLevel.ERROR, $"Errore salvataggio RuleStatistics: {ex.Message}");
             }
         }
-
         /// <summary>
         /// Carica le statistiche di transizione di apprendimento dal database.
         /// Implementazione necessaria per IMIUDataManager.
@@ -707,22 +713,23 @@ namespace EvolutiveSystem.SQL.Core
         }
 
         /// <summary>
-        /// Carica tutti gli stati MIU dal database.
+        /// Carica tutti gli stati MIU dal database in modo asincrono.
+        /// Implementazione di IMIUDataManager.LoadMIUStatesAsync().
         /// </summary>
-        /// <returns>Una lista di oggetti MiuStateInfo.</returns>
-        public List<EvolutiveSystem.Common.MiuStateInfo> LoadMIUStates()
+        /// <returns>Un oggetto Task che rappresenta l'operazione asincrona, con un risultato di tipo List<MiuStateInfo>.</returns>
+        public async Task<List<EvolutiveSystem.Common.MiuStateInfo>> LoadMIUStatesAsync() // <-- CAMBIATO DA LoadMIUStates()
         {
             var states = new List<EvolutiveSystem.Common.MiuStateInfo>();
             try
             {
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
-                    connection.Open();
+                    await connection.OpenAsync(); // <-- UTILIZZA await OpenAsync()
                     string sql = "SELECT StateID, CurrentString, StringLength, DeflateString, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount FROM MIU_States";
                     using (var command = new SQLiteCommand(sql, connection))
-                    using (var reader = command.ExecuteReader())
+                    using (var reader = await command.ExecuteReaderAsync()) // <-- UTILIZZA await ExecuteReaderAsync()
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync()) // <-- UTILIZZA await ReadAsync()
                         {
                             states.Add(new EvolutiveSystem.Common.MiuStateInfo
                             {
@@ -738,11 +745,11 @@ namespace EvolutiveSystem.SQL.Core
                         }
                     }
                 }
-                _logger.Log(LogLevel.DEBUG, $"Caricati {states.Count} stati MIU dal database.");
+                _logger.Log(LogLevel.DEBUG, $"Caricati {states.Count} stati MIU dal database in modo asincrono."); // <-- AGGIUNTO "in modo asincrono."
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.ERROR, $"Errore caricamento MIU_States: {ex.Message}. Restituisco lista vuota.");
+                _logger.Log(LogLevel.ERROR, $"Errore caricamento MIU_States asincrono: {ex.Message}. Restituisco lista vuota."); // <-- AGGIUNTO "asincrono:"
                 return new List<EvolutiveSystem.Common.MiuStateInfo>();
             }
             return states;
@@ -780,36 +787,36 @@ namespace EvolutiveSystem.SQL.Core
             }
             return exists;
         }
-
         /// <summary>
-        /// Carica lo stato del cursore di esplorazione dal database (tabella MIUParameterConfigurator).
+        /// Carica lo stato del cursore di esplorazione dal database (tabella MIUParameterConfigurator) in modo asincrono.
+        /// Implementazione di IMIUDataManager.LoadExplorerCursorAsync().
         /// </summary>
-        /// <returns>Un oggetto MIUExplorerCursor con i valori caricati, o un nuovo oggetto con valori di default se non trovati.</returns>
-        public EvolutiveSystem.Common.MIUExplorerCursor LoadExplorerCursor()
+        /// <returns>Un oggetto Task che rappresenta l'operazione asincrona, con un risultato di tipo MIUExplorerCursor.</returns>
+        public async Task<EvolutiveSystem.Common.MIUExplorerCursor> LoadExplorerCursorAsync() // <-- MODIFICATO FIRMA A ASYNC TASK
         {
-            _logger.Log(LogLevel.DEBUG, "[MIUDatabaseManager] Caricamento cursore esplorazione...");
+            _logger.Log(LogLevel.DEBUG, "[MIUDatabaseManager] Caricamento cursore esplorazione asincrono..."); // <-- AGGIUNTO "asincrono"
             var cursor = new EvolutiveSystem.Common.MIUExplorerCursor(); // Inizializza con i valori di default
 
             try
             {
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
-                    connection.Open();
+                    await connection.OpenAsync(); // <-- UTILIZZA await OpenAsync()
                     string sql = "SELECT NomeParametro, ValoreParametro FROM MIUParameterConfigurator WHERE NomeParametro IN ('Explorer_CurrentSourceIndex', 'Explorer_CurrentTargetIndex', 'Explorer_LastExplorationTimestamp')";
                     using (var command = new SQLiteCommand(sql, connection))
-                    using (var reader = command.ExecuteReader())
+                    using (var reader = await command.ExecuteReaderAsync()) // <-- UTILIZZA await ExecuteReaderAsync()
                     {
                         var parameters = new Dictionary<string, string>();
-                        while (reader.Read())
+                        while (await reader.ReadAsync()) // <-- UTILIZZA await ReadAsync()
                         {
                             parameters[reader.GetString(0)] = reader.GetString(1);
                         }
 
-                        if (parameters.TryGetValue("Explorer_CurrentSourceIndex", out string sourceIndexStr) && int.TryParse(sourceIndexStr, out int sourceIndex))
+                        if (parameters.TryGetValue("Explorer_CurrentSourceIndex", out string sourceIndexStr) && long.TryParse(sourceIndexStr, out long sourceIndex)) // <-- CAMBIATO A long.TryParse
                         {
                             cursor.CurrentSourceIndex = sourceIndex;
                         }
-                        if (parameters.TryGetValue("Explorer_CurrentTargetIndex", out string targetIndexStr) && int.TryParse(targetIndexStr, out int targetIndex))
+                        if (parameters.TryGetValue("Explorer_CurrentTargetIndex", out string targetIndexStr) && long.TryParse(targetIndexStr, out long targetIndex)) // <-- CAMBIATO A long.TryParse
                         {
                             cursor.CurrentTargetIndex = targetIndex;
                         }
@@ -819,28 +826,29 @@ namespace EvolutiveSystem.SQL.Core
                         }
                     }
                 }
-                _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Cursore esplorazione caricato: Source={cursor.CurrentSourceIndex}, Target={cursor.CurrentTargetIndex}.");
+                _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Cursore esplorazione caricato asincrono: Source={cursor.CurrentSourceIndex}, Target={cursor.CurrentTargetIndex}."); // <-- AGGIUNTO "asincrono"
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il caricamento del cursore di esplorazione: {ex.Message}. Utilizzo valori di default.");
-                // In caso di errore, restituisce il cursore con i valori di default (0, 0, DateTime.UtcNow)
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il caricamento del cursore di esplorazione asincrono: {ex.Message}. Utilizzo valori di default."); // <-- AGGIUNTO "asincrono"
+                                                                                                                                                                                           // In caso di errore, restituisce il cursore con i valori di default (0, 0, DateTime.UtcNow)
             }
             return cursor;
         }
-
         /// <summary>
-        /// Salva lo stato corrente del cursore di esplorazione nel database (tabella MIUParameterConfigurator).
+        /// Salva lo stato corrente del cursore di esplorazione nel database (tabella MIUParameterConfigurator) in modo asincrono.
+        /// Implementazione di IMIUDataManager.SaveExplorerCursorAsync().
         /// </summary>
         /// <param name="cursor">L'oggetto MIUExplorerCursor da salvare.</param>
-        public void SaveExplorerCursor(EvolutiveSystem.Common.MIUExplorerCursor cursor)
+        /// <returns>Un oggetto Task che rappresenta l'operazione asincrona.</returns>
+        public async Task SaveExplorerCursorAsync(EvolutiveSystem.Common.MIUExplorerCursor cursor) // <-- MODIFICATO FIRMA A ASYNC TASK
         {
-            _logger.Log(LogLevel.DEBUG, "[MIUDatabaseManager] Salvataggio cursore esplorazione...");
+            _logger.Log(LogLevel.DEBUG, "[MIUDatabaseManager] Salvataggio cursore esplorazione asincrono..."); // <-- AGGIUNTO "asincrono"
             try
             {
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
-                    connection.Open();
+                    await connection.OpenAsync(); // <-- UTILIZZA await OpenAsync()
                     using (var transaction = connection.BeginTransaction())
                     {
                         // Inserisce o aggiorna ogni parametro del cursore
@@ -850,27 +858,27 @@ namespace EvolutiveSystem.SQL.Core
                         {
                             command.Parameters.Add(new SQLiteParameter("@nomeParametro", "Explorer_CurrentSourceIndex"));
                             command.Parameters.Add(new SQLiteParameter("@valoreParametro", cursor.CurrentSourceIndex.ToString()));
-                            command.ExecuteNonQuery();
+                            await command.ExecuteNonQueryAsync(); // <-- UTILIZZA await ExecuteNonQueryAsync()
 
                             command.Parameters.Clear();
                             command.Parameters.Add(new SQLiteParameter("@nomeParametro", "Explorer_CurrentTargetIndex"));
                             command.Parameters.Add(new SQLiteParameter("@valoreParametro", cursor.CurrentTargetIndex.ToString()));
-                            command.ExecuteNonQuery();
+                            await command.ExecuteNonQueryAsync(); // <-- UTILIZZA await ExecuteNonQueryAsync()
 
                             command.Parameters.Clear();
                             command.Parameters.Add(new SQLiteParameter("@nomeParametro", "Explorer_LastExplorationTimestamp"));
                             command.Parameters.Add(new SQLiteParameter("@valoreParametro", cursor.LastExplorationTimestamp.ToString("yyyy-MM-dd HH:mm:ss.ffffff")));
-                            command.ExecuteNonQuery();
+                            await command.ExecuteNonQueryAsync(); // <-- UTILIZZA await ExecuteNonQueryAsync()
                         }
                         transaction.Commit();
                     }
                 }
-                _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Cursore esplorazione salvato: Source={cursor.CurrentSourceIndex}, Target={cursor.CurrentTargetIndex}.");
+                _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Cursore esplorazione salvato asincrono: Source={cursor.CurrentSourceIndex}, Target={cursor.CurrentTargetIndex}."); // <-- AGGIUNTO "asincrono"
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il salvataggio del cursore di esplorazione: {ex.Message}");
-                // In caso di errore, la transazione verrà automaticamente annullata se non commessa.
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il salvataggio del cursore di esplorazione asincrono: {ex.Message}"); // <-- AGGIUNTO "asincrono"
+                                                                                                                                                              // In caso di errore, la transazione verrà automaticamente annullata se non commessa.
             }
         }
     }

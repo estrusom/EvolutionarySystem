@@ -1,7 +1,9 @@
-﻿// File: MiuSystemWorker/MiuSystemManager.cs
-// Nuovo progetto: MiuSystemWorker.csproj
+﻿// File: FormalSystem.Worker/FormalSystemManager.cs
+// Nuovo progetto: FormalSystem.Worker.csproj
 // Questo progetto avrà i riferimenti a MIU.Core.csproj, EvolutiveSystem.Learning.csproj,
 // EvolutiveSystem.SQL.Core.csproj, EvolutiveSystem.Common.csproj, MasterLog.csproj.
+// Data di riferimento: 23 giugno 2025
+// Descrizione: Classe di gestione generica per un sistema formale, ora con nomi neutrali rispetto a MIU.
 
 using System;
 using System.Collections.Generic;
@@ -11,20 +13,21 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using MasterLog; // Per il logging
-using MIU.Core; // Per RegoleMIUManager, MIUStringConverter, PathStepInfo, SolutionFoundEventArgs, RuleAppliedEventArgs
-using EvolutiveSystem.Common; // Per RegolaMIU, RuleStatistics, TransitionStatistics
+// Riferimenti ai moduli specifici MIU che questo manager utilizzerà
+using MIU.Core; // Per RegoleMIUManager, MIUStringConverter, PathStepInfo, SolutionFoundEventArgs, RuleAppliedEventArgs, MIUStringHelper
+using EvolutiveSystem.Common; // Per RegolaMIU, RuleStatistics, TransitionStatistics, MiuNotificationEventArgs
 using EvolutiveSystem.Learning; // Per LearningStatisticsManager
 using EvolutiveSystem.SQL.Core; // Per SQLiteSchemaLoader, MIUDatabaseManager, MIURepository
-// System.Data.SQLite non è più usato direttamente qui per comandi SQL, ma le classi restano per i tipi.
 
-namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
+namespace FormalSystem.Worker // Nuovo namespace per il progetto wrapper generico
 {
     /// <summary>
-    /// Gestisce l'intera logica del sistema MIU, inclusa l'interazione con il database
+    /// Gestisce l'intera logica di un sistema formale, inclusa l'interazione con il database
     /// e l'esecuzione delle ricerche. È incapsulato in un progetto separato per
-    /// mantenere il servizio SemanticProcessor leggero e disaccoppiato.
+    /// mantenere i servizi chiamanti (es. SemanticProcessor) leggeri e disaccoppiati.
+    /// Questa classe è pensata per essere generica ma utilizza internamente componenti MIU-specifici.
     /// </summary>
-    public class MiuSystemManager
+    public class FormalSystemManager // Rinomina da MiuSystemManager
     {
         private Logger _logger;
         private string _databaseFilePath;
@@ -36,28 +39,29 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
         private readonly object _statsLock = new object(); // Lock per l'accesso thread-safe alle statistiche
 
         /// <summary>
-        /// Evento per notificare il servizio SemanticProcessor riguardo eventi importanti
-        /// come il successo di una ricerca o la scoperta di una nuova regola (futuro).
+        /// Evento per notificare il servizio chiamante (es. SemanticProcessor) riguardo eventi importanti
+        /// come il successo di una ricerca o la scoperta di una nuova regola.
         /// </summary>
-        public event EventHandler<MiuNotificationEventArgs> OnMiuSystemNotification;
+        public event EventHandler<MiuNotificationEventArgs> OnFormalSystemNotification; // Rinomina da OnMiuSystemNotification, ma usa MiuNotificationEventArgs
+
 
         /// <summary>
-        /// Costruttore di MiuSystemManager.
+        /// Costruttore di FormalSystemManager.
         /// </summary>
-        /// <param name="logger">L'istanza del logger fornita dal servizio SemanticProcessor.</param>
-        public MiuSystemManager(Logger logger)
+        /// <param name="logger">L'istanza del logger fornita dal servizio chiamante.</param>
+        public FormalSystemManager(Logger logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _logger.Log(LogLevel.DEBUG, "[MiuSystemManager] MiuSystemManager istanziato.");
+            _logger.Log(LogLevel.DEBUG, "[FormalSystemManager] FormalSystemManager istanziato.");
         }
 
         /// <summary>
-        /// Inizializza il sistema MIU, stabilendo la connessione al database
+        /// Inizializza il sistema formale, stabilendo la connessione al database
         /// e caricando le statistiche iniziali. Questo metodo è chiamato dal servizio
-        /// SemanticProcessor quando la UI ne dà il comando.
+        /// SemanticProcessor o da un'altra applicazione client.
         /// </summary>
         /// <param name="databaseFilePath">Il percorso UNC al file del database SQLite.</param>
-        public void InitializeMiuSystem(string databaseFilePath)
+        public void InitializeFormalSystem(string databaseFilePath) // Rinomina da InitializeMiuSystem
         {
             if (string.IsNullOrEmpty(databaseFilePath))
             {
@@ -65,7 +69,7 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
             }
             _databaseFilePath = databaseFilePath;
 
-            _logger.Log(LogLevel.INFO, $"[MiuSystemManager] Inizializzazione sistema MIU con database: {_databaseFilePath}");
+            _logger.Log(LogLevel.INFO, $"[FormalSystemManager] Inizializzazione sistema formale con database: {_databaseFilePath}");
 
             // Creazione di istanze locali per l'inizializzazione.
             SQLiteSchemaLoader initSchemaLoader = null;
@@ -80,10 +84,8 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
 
                 initDataManager = new MIUDatabaseManager(initSchemaLoader, _logger);
 
-                // *** NUOVO: Delega l'impostazione della modalità WAL al data manager ***
-                // Questo garantisce che MIUDatabaseManager sia l'unica entità a eseguire direttamente comandi PRAGMA.
+                // Delega l'impostazione della modalità WAL al data manager
                 initDataManager.SetJournalMode("WAL");
-                // *** FINE NUOVO ***
 
                 initRepository = new MIURepository(initDataManager, _logger);
                 initLearningStatsManager = new LearningStatisticsManager(initDataManager, _logger);
@@ -92,7 +94,7 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
                 RegoleMIUManager.CaricaRegoleDaOggettoRepository(initRepository.LoadRegoleMIU());
 
                 // Carica le statistiche iniziali e le assegna alle proprietà statiche di RegoleMIUManager
-                // Le statistiche interne a MiuSystemManager (_internalRuleStatistics, _internalTransitionStatistics)
+                // Le statistiche interne a FormalSystemManager (_internalRuleStatistics, _internalTransitionStatistics)
                 // fungono da "cache" e fonte di verità per le proprietà statiche di RegoleMIUManager.
                 _internalRuleStatistics = initLearningStatsManager.LoadRuleStatistics() ?? new Dictionary<long, RuleStatistics>();
                 _internalTransitionStatistics = initLearningStatsManager.GetTransitionProbabilities() ?? new Dictionary<Tuple<string, long>, TransitionStatistics>();
@@ -122,22 +124,22 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
                 }
                 else { RegoleMIUManager.MassimoPassiRicerca = 10; } // Valore predefinito
 
-                _logger.Log(LogLevel.INFO, "[MiuSystemManager] Sistema MIU inizializzato con successo.");
+                _logger.Log(LogLevel.INFO, "[FormalSystemManager] Sistema formale inizializzato con successo.");
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.ERROR, $"[MiuSystemManager ERROR] Errore durante l'inizializzazione del sistema MIU: {ex.Message}");
+                _logger.Log(LogLevel.ERROR, $"[FormalSystemManager ERROR] Errore durante l'inizializzazione del sistema formale: {ex.Message}");
                 throw; // Rilancia l'eccezione per informare il servizio chiamante
             }
         }
 
         /// <summary>
-        /// Spegne il sistema MIU, salvando le statistiche finali e rilasciando le risorse.
-        /// Questo metodo è chiamato dal servizio SemanticProcessor quando la UI ne dà il comando.
+        /// Spegne il sistema formale, salvando le statistiche finali e rilasciando le risorse.
+        /// Questo metodo è chiamato dal servizio SemanticProcessor o da un'altra applicazione client.
         /// </summary>
-        public void ShutdownMiuSystem()
+        public void ShutdownFormalSystem() // Rinomina da ShutdownMiuSystem
         {
-            _logger.Log(LogLevel.INFO, "[MiuSystemManager] Spegnimento sistema MIU.");
+            _logger.Log(LogLevel.INFO, "[FormalSystemManager] Spegnimento sistema formale.");
             // Creazione di istanze locali per lo spegnimento per salvare le statistiche.
             SQLiteSchemaLoader shutdownSchemaLoader = null;
             MIUDatabaseManager shutdownDataManager = null;
@@ -162,11 +164,11 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
                 {
                     shutdownLearningStatsManager.SaveTransitionStatistics(_internalTransitionStatistics);
                 }
-                _logger.Log(LogLevel.INFO, "[MiuSystemManager] Statistiche finali salvate.");
+                _logger.Log(LogLevel.INFO, "[FormalSystemManager] Statistiche finali salvate.");
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.ERROR, $"[MiuSystemManager ERROR] Errore durante lo spegnimento del sistema MIU: {ex.Message}");
+                _logger.Log(LogLevel.ERROR, $"[FormalSystemManager ERROR] Errore durante lo spegnimento del sistema formale: {ex.Message}");
             }
             finally
             {
@@ -179,18 +181,18 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
                 }
                 RegoleMIUManager.LoggerInstance = null;
             }
-            _logger.Log(LogLevel.INFO, "[MiuSystemManager] Sistema MIU spento con successo.");
+            _logger.Log(LogLevel.INFO, "[FormalSystemManager] Sistema formale spento con successo.");
         }
 
         /// <summary>
-        /// Esegue una ricerca MIU in un task in background.
-        /// Questo metodo incapsula la logica di ricerca effettiva per il servizio,
+        /// Esegue una ricerca nel sistema formale in un task in background.
+        /// Questo metodo incapsula la logica di ricerca effettiva,
         /// creando le proprie istanze di data access per ogni esecuzione.
         /// </summary>
         /// <param name="startCompressed">La stringa di partenza compressa.</param>
         /// <param name="targetCompressed">La stringa target compressa.</param>
         /// <param name="token">Token di cancellazione per consentire l'interruzione della ricerca.</param>
-        public async Task PerformMiuSearchTask(string startCompressed, string targetCompressed, CancellationToken token)
+        public async Task PerformFormalSystemSearchTask(string startCompressed, string targetCompressed, CancellationToken token) // Rinomina da PerformMiuSearchTask
         {
             // Creazione di istanze locali per il repository e il data manager specifici per questo Task.
             // Questo garantisce isolamento delle connessioni DB per le operazioni di INSERT/UPDATE.
@@ -215,14 +217,16 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
                 searchId = taskRepository.InsertSearch(
                     startStandard, targetStandard, "SERVICE_AUTO",
                     startStandard.Length, targetStandard.Length,
-                    MIUStringHelper.CountI(startStandard), MIUStringHelper.CountU(startStandard),
-                    MIUStringHelper.CountI(targetStandard), MIUStringHelper.CountU(targetStandard)
+                    MIUStringHelper.CountI(startStandard), // Usa MIUStringHelper
+                    MIUStringHelper.CountU(startStandard), // Usa MIUStringHelper
+                    MIUStringHelper.CountI(targetStandard), // Usa MIUStringHelper
+                    MIUStringHelper.CountU(targetStandard)  // Usa MIUStringHelper
                 );
-                _logger.Log(LogLevel.INFO, $"[MiuSystemManager] Avvio ricerca MIU SearchID: {searchId} per '{startCompressed}' -> '{targetCompressed}'.");
+                _logger.Log(LogLevel.INFO, $"[FormalSystemManager] Avvio ricerca sistema formale SearchID: {searchId} per '{startCompressed}' -> '{targetCompressed}'.");
 
                 // Passa l'ID della ricerca al metodo di ricerca statico.
                 // RegoleMIUManager userà i suoi eventi (OnRuleApplied, OnSolutionFound) per notificare
-                // il MiuSystemManager di questo Task che gestirà l'aggiornamento delle statistiche in memoria
+                // il FormalSystemManager di questo Task che gestirà l'aggiornamento delle statistiche in memoria
                 // e la persistenza sul DB tramite il suo taskRepository.
                 List<PathStepInfo> resultPath = RegoleMIUManager.TrovaDerivazioneAutomatica(searchId, startCompressed, targetCompressed);
 
@@ -230,30 +234,30 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
 
                 if (resultPath != null)
                 {
-                    _logger.Log(LogLevel.INFO, $"[MiuSystemManager] Ricerca MIU SearchID: {searchId} completata con successo.");
-                    OnMiuSystemNotification?.Invoke(this, new MiuNotificationEventArgs("MIU_SEARCH_SUCCESS", $"Ricerca '{startCompressed}' -> '{targetCompressed}' completata con successo."));
+                    _logger.Log(LogLevel.INFO, $"[FormalSystemManager] Ricerca sistema formale SearchID: {searchId} completata con successo.");
+                    OnFormalSystemNotification?.Invoke(this, new MiuNotificationEventArgs("FORMAL_SYSTEM_SEARCH_SUCCESS", $"Ricerca '{startCompressed}' -> '{targetCompressed}' completata con successo."));
                 }
                 else
                 {
-                    _logger.Log(LogLevel.WARNING, $"[MiuSystemManager] Ricerca MIU SearchID: {searchId} non trovata.");
-                    OnMiuSystemNotification?.Invoke(this, new MiuNotificationEventArgs("MIU_SEARCH_FAILED", $"Ricerca '{startCompressed}' -> '{targetCompressed}' non trovata."));
+                    _logger.Log(LogLevel.WARNING, $"[FormalSystemManager] Ricerca sistema formale SearchID: {searchId} non trovata.");
+                    OnFormalSystemNotification?.Invoke(this, new MiuNotificationEventArgs("FORMAL_SYSTEM_SEARCH_FAILED", $"Ricerca '{startCompressed}' -> '{targetCompressed}' non trovata."));
                 }
             }
             catch (OperationCanceledException)
             {
-                _logger.Log(LogLevel.WARNING, $"[MiuSystemManager] Ricerca MIU SearchID: {searchId} annullata.");
+                _logger.Log(LogLevel.WARNING, $"[FormalSystemManager] Ricerca sistema formale SearchID: {searchId} annullata.");
                 // Aggiorna lo stato della ricerca a "Cancelled" nel DB tramite il repository locale
                 if (taskRepository != null && searchId != -1) // Assicurati che taskRepository sia stato inizializzato
                     taskRepository.UpdateSearch(searchId, false, 0, -1, 0, 0);
-                OnMiuSystemNotification?.Invoke(this, new MiuNotificationEventArgs("MIU_SEARCH_CANCELLED", $"Ricerca '{startCompressed}' -> '{targetCompressed}' annullata."));
+                OnFormalSystemNotification?.Invoke(this, new MiuNotificationEventArgs("FORMAL_SYSTEM_SEARCH_CANCELLED", $"Ricerca '{startCompressed}' -> '{targetCompressed}' annullata."));
             }
             catch (Exception ex)
             {
-                _logger.Log(LogLevel.ERROR, $"[MiuSystemManager ERROR] Errore nel thread di ricerca MIU SearchID: {searchId}: {ex.Message}");
+                _logger.Log(LogLevel.ERROR, $"[FormalSystemManager ERROR] Errore nel thread di ricerca sistema formale SearchID: {searchId}: {ex.Message}");
                 // Aggiorna lo stato della ricerca a "Failed" nel DB tramite il repository locale
                 if (taskRepository != null && searchId != -1) // Assicurati che taskRepository sia stato inizializzato
                     taskRepository.UpdateSearch(searchId, false, 0, -1, 0, 0);
-                OnMiuSystemNotification?.Invoke(this, new MiuNotificationEventArgs("MIU_SEARCH_ERROR", $"Errore durante la ricerca '{startCompressed}' -> '{targetCompressed}': {ex.Message}"));
+                OnFormalSystemNotification?.Invoke(this, new MiuNotificationEventArgs("FORMAL_SYSTEM_SEARCH_ERROR", $"Errore durante la ricerca '{startCompressed}' -> '{targetCompressed}': {ex.Message}"));
             }
             finally
             {
@@ -314,7 +318,7 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
                 long newStateId = eventRepository.UpsertMIUState(e.NewString);
 
                 eventRepository.InsertRuleApplication(
-                    e.SearchID, // <- errore 1061
+                    e.SearchID, // Utilizza la nuova proprietà SearchID da RuleAppliedEventArgs
                     parentStateId,
                     newStateId,
                     e.AppliedRuleID,
@@ -366,14 +370,14 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
                 // 2. Aggiorna il record della ricerca nel database con i risultati finali
                 eventRepository.UpdateSearch(e.SearchID, e.Success, e.ElapsedMilliseconds, e.StepsTaken, e.NodesExplored, e.MaxDepthReached);
 
-                _logger.Log(LogLevel.INFO, $"[MiuSystemManager] Ricerca ID {e.SearchID} completata. Successo: {e.Success}.");
+                _logger.Log(LogLevel.INFO, $"[FormalSystemManager] Ricerca ID {e.SearchID} completata. Successo: {e.Success}.");
             }
 
-            // 3. Notifica il servizio SemanticProcessor
+            // 3. Notifica il servizio chiamante (es. SemanticProcessor)
             string notificationMessage = e.Success
-                ? $"Evviva! Il Sistema MIU ha trovato una derivazione per '{e.InitialString}' -> '{e.TargetString}' in {e.StepsTaken} passi."
+                ? $"Evviva! Il Sistema formale ha trovato una derivazione per '{e.InitialString}' -> '{e.TargetString}' in {e.StepsTaken} passi."
                 : $"Ricerca per '{e.InitialString}' -> '{e.TargetString}' fallita.";
-            OnMiuSystemNotification?.Invoke(this, new MiuNotificationEventArgs(e.Success ? "MIU_SOLUTION_FOUND" : "MIU_NO_SOLUTION", notificationMessage));
+            OnFormalSystemNotification?.Invoke(this, new MiuNotificationEventArgs(e.Success ? "FORMAL_SYSTEM_SOLUTION_FOUND" : "FORMAL_SYSTEM_NO_SOLUTION", notificationMessage));
         }
     }
 }

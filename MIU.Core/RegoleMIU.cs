@@ -365,6 +365,7 @@ namespace MIU.Core
                     {
                         OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs
                         {
+                            SearchID = searchId, // <<-- QUESTA RIGA È DA AGGIUNGERE/CORREGGERE QUI!
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
                             OriginalString = currentStandard, // STANDARD string
@@ -550,6 +551,7 @@ namespace MIU.Core
                     {
                         OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs
                         {
+                            SearchID = searchId, // <<-- QUESTA RIGA È DA AGGIUNGERE/CORREGGERE QUI!
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
                             OriginalString = currentStandard, // STANDARD string

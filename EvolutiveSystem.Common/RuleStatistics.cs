@@ -31,7 +31,7 @@ namespace EvolutiveSystem.Common
         /// Il punteggio di efficacia della regola, calcolato come SuccessRatio.
         /// Un valore più alto indica una regola più efficace.
         /// </summary>
-        public double EffectivenessScore { get; private set; } // Calcolato automaticamente
+        public double EffectivenessScore { get; set; } // Calcolato automaticamente 2025.06.23 set da privato a pubblico
 
         /// <summary>
         /// Il timestamp dell'ultima applicazione o aggiornamento di questa statistica.

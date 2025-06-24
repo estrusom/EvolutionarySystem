@@ -17,13 +17,13 @@ namespace EvolutiveSystem.Common
         /// <summary>
         /// L'indice della stringa di origine corrente nell'elenco di MIU_States.
         /// </summary>
-        public int CurrentSourceIndex { get; set; }
+        public long CurrentSourceIndex { get; set; }
 
         /// <summary>
         /// L'indice della stringa di destinazione corrente nell'elenco di MIU_States,
         /// relativa all'CurrentSourceIndex.
         /// </summary>
-        public int CurrentTargetIndex { get; set; }
+        public long CurrentTargetIndex { get; set; }
 
         /// <summary>
         /// Il timestamp dell'ultima volta che il cursore è stato aggiornato/utilizzato.
