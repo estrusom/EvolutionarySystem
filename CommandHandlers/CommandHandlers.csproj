@@ -60,9 +60,9 @@
       <Project>{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}</Project>
       <Name>AsyncSocketServer</Name>
     </ProjectReference>
-    <ProjectReference Include="..\EvolutiveSystem.Core\EvolutiveSystem.Core.csproj">
-      <Project>{a193e8c9-5afa-4d49-adfa-f25891b1a8eb}</Project>
-      <Name>EvolutiveSystem.Core</Name>
+    <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
+      <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
+      <Name>EvolutiveSystem.SQL.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
@@ -71,6 +71,10 @@
     <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj">
       <Project>{C4BE31BA-71EC-420F-AD75-58C661011B5A}</Project>
       <Name>MessaggiErrore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
+      <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
+      <Name>MIU.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\SocketManagerInfo\SocketManagerInfo.csproj">
       <Project>{86479DBC-394F-4EE6-B833-4241DC4543F9}</Project>

@@ -27,8 +27,8 @@ using SemanticProcessor;
 using System.Xml.Linq;
 using System.Collections.Concurrent;
 using SocketManager;
-using EvolutiveSystem.Core;
 using System.Data.SQLite;
+using EvolutiveSystem.SQL.Core;
 
 namespace SemanticProcessor
 {
@@ -130,6 +130,11 @@ namespace SemanticProcessor
         private ManualResetEvent _pauseEvent = new ManualResetEvent(true); // Inizializzato su 'true' (segnale) per partire non in pausa
         protected DateTime today = DateTime.MinValue;
         private string ServiceVer = "";
+        #region
+        private EvolutiveSystem.SQL.Core.SQLiteSchemaLoader schemaLoader;
+        private MIU.Core.IMIURepository miuRepositoryInstance;// per potere chiamare le interfacce in IMIURepository 
+        private Dictionary<string, string> configParam;
+        #endregion
         private static ClsCommandHandlers commandHandlers;
         #region Instance of the asynchronous socket server class
         private AsyncSocketListener asl;
@@ -950,247 +955,60 @@ namespace SemanticProcessor
                         }
                         else
                         {
-                            myMethod = tyCommandHandlers.GetMethod("CmdOpenDB");
+                            // comando tipo config
+                            myMethod = tyCommandHandlers.GetMethod(
+                                cmdCom.CommandSocket, // Nome del metodo
+                                BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
+                                myCustomBinder, // Usa il tuo binder per la risoluzione
+                                new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener), typeof(MIU.Core.IMIURepository), typeof(Dictionary<string, string>).MakeByRefType() },// Tipi dei parametri (verifica che siano corretti!)
+                                null
+                            );// Modificatori
                             if (myMethod != null)
                             {
                                 metodo = myMethod.Name;
                                 _logger.Log(LogLevel.INFO, "<START COMMAND>");
                                 _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
-                                object[] parameters = new object[] { myO, e.BufferDati, asl, null };
+                                //object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.BufferDati, asl, miuRepositoryInstance });
+                                configParam = null;
+                                object[] parameters = new object[] { myO, e.BufferDati, asl, miuRepositoryInstance, configParam };
                                 myMethod.Invoke(commandHandlers, parameters);
-                                dbConnection = (SQLiteConnection)parameters[3];
+                                configParam = parameters[4] as Dictionary<string, string>;
                             }
                             else
                             {
-                                throw new Exception("Command not found");
-                            }
-                        }
-                    }
-                    /*
-                    Type TyPaxAires8 = typeof(PAXAires8Com);
-                    //ClsCustomBinder myCustomBinder = new ClsCustomBinder();
-                    ClsCustomBinder myCustomBinder = new ClsCustomBinder();
-                    DeviceCommand myO = new DeviceCommand();
-                    erCnt = 3;
-                    myO.LocalEndPoint = Handler.RemoteEndPoint.ToString(); // 03.12.2021
-                    myO.PortAddress = asl.CallerIpAddress; //  ConfigurationManager.AppSettings["SocketAddressClient"]; 20.07.02
-                    myO.SocketPortSrv = asl.SrvPort; // port a cui si deve connettere la libreria //Convert.ToInt32(ConfigurationManager.AppSettings["SocketPortClient"]);
-                    myO.SocketAddressClient = asl.SrvIpAddress;
-                    myO.SocketHandler = Handler;
-                    myO.SocketPortCli = Convert.ToInt32(ConfigurationManager.AppSettings["SocketPortClient"]);
-                    // 12.11.2020 Da oggi devo scegliere la porta da mandare la libreria myO.SocketPortCli = Convert.ToInt32(ConfigurationManager.AppSettings["SocketPortClient"]);
-                    myO.Response = new object();
-                    erCnt = 4;
-                    string metodo;
-                    MethodInfo myMethod = TyPaxAires8.GetMethod(cmdCom.CommandSocket, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string) }, null);
-                    //17.08.2020 modifica per ritornare licenza
-                    if (myMethod != null)
-                    {
-                        metodo = myMethod.Name;
-                        //if ((this.swDebug & _logger.LOG_INFO) == _logger.LOG_INFO) 
-                        _logger.Log(LogLevel.INFO, "<START COMMAND>");
-                        if (logDelay != null)
-                            logDelay.Log(LogLevel.INFO, string.Format("1) COMMAND {0}; STARTED AT; {1}", metodo, DateTime.Now.Ticks.ToString()));
-                        //if ((this.swDebug & _logger.LOG_DEBUG) == _logger.LOG_DEBUG) 
-                        _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", WinTTabRes.logMsgCmdRved, metodo));
-                        erCnt = 5;
-                        // Invoke the overload.
-                        TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data });
-                        // if (myO.CommandCode == myO.CmdSendFormConfiguration) _logger.Log(LogLevel.DEBUG,string.Format( "Sono uscito dal comando {0}", myO.CommandName));
-                    }
-                    else
-                    {
-                        //if ((this.swDebug & _logger.LOG_INFO) == _logger.LOG_INFO) 
-                        myMethod = TyPaxAires8.GetMethod(cmdCom.CommandSocket, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string), typeof(string) }, null);
-                        if (myMethod != null)
-                        {
-                            if (logDelay != null)
-                                logDelay.Log(LogLevel.INFO, string.Format("2) COMMAND {0}; STARTED AT; {1}", myMethod, DateTime.Now.Ticks.ToString()));
-                            metodo = myMethod.Name;
-                            //if ((this.swDebug & _logger.LOG_DEBUG) == _logger.LOG_DEBUG)
-                            _logger.Log(LogLevel.INFO, "<START COMMAND>");
-                            _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string, string", WinTTabRes.logMsgCmdRved, metodo));
-                            erCnt = 51;
-                            // Invoke the overload.
-                            // 20.05.2021 TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data, string.Format("{0}, {1}", License.udid2, License.udid) });
-
-                            // 06.06.2021
-                            string sudid = "";
-                            if (License.udid.GetType() == typeof(System.Xml.XmlNode[]))
-                            {
-                                sudid = ((System.Xml.XmlNode[])License.udid)[0].Value;
-                            }
-                            else
-                            {
-                                sudid = License.udid.ToString();
-                            }
-                            TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data, string.Format("{0}, {1}", License.udid2, sudid) });
-
-                            // 06.06.2021 TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data, string.Format("{0}, {1}", License.udid2, ((System.Xml.XmlCharacterData)((System.Xml.XmlNode[])License.udid)[0]).InnerText) });
-
-                        }
-                        else
-                        {
-                            myMethod = TyPaxAires8.GetMethod(cmdCom.CommandSocket, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string), typeof(bool) }, null);
-                            //13.04.2021 modifica per definire le trasmissioni a pacchetto
-                            metodo = myMethod.Name;
-                            //if ((this.swDebug & _logger.LOG_INFO) == _logger.LOG_INFO) 
-                            _logger.Log(LogLevel.INFO, "<START COMMAND>");
-                            if (logDelay != null)
-                                logDelay.Log(LogLevel.INFO, string.Format("3) COMMAND {0}; STARTED AT; {1}", metodo, DateTime.Now.Ticks.ToString()));
-                            _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", WinTTabRes.logMsgCmdRved, metodo));
-                            erCnt = 5;
-                            // Invoke the overload.
-                            TyPaxAires8.InvokeMember(cmdCom.CommandSocket, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, e.Data, cmdCom.SendingDataPackets });
-                            // if (myO.CommandCode == myO.CmdSendFormConfiguration) _logger.Log(LogLevel.DEBUG,string.Format( "Sono uscito dal comando {0}", myO.CommandName));
-                        }
-                    }
-                    if (logDelay != null)
-                        logDelay.Log(LogLevel.INFO, string.Format("0) COMMAND {0}; EXECUTED AT; {1}", cmdCom.CommandSocket, DateTime.Now.Ticks.ToString()));
-                    //if ((this.swDebug & _logger.LOG_DEBUG) == _logger.LOG_DEBUG)
-                    _logger.Log(LogLevel.INFO, string.Format(WinTTabRes.logMsgCmdExecWait, metodo));
-                    //17.08.2020
-                    erCnt = 6;
-                    Type tymyO = myO.GetType();
-                    // Molto probabilmente non serve controllare il comando dell'evento perché se le cose sono fatte bene in cmdCom dovrebbe essere correttamente assegnato dalla gestione comandi
-                    //2.11.2020
-                    // var getComCmd = this.USBSconnected ? tymyO.GetProperties().Where(CMD => CMD.Name.ToUpper().Equals(cmdCom.CommandSocket.ToUpper())) : tymyO.GetProperties().Where(CMD => CMD.Name.ToUpper().Equals(e.Command.ToUpper()));// I'm looking for the command in the table
-                    var getComCmd = tymyO.GetProperties().Where(CMD => CMD.Name.ToUpper().Equals(cmdCom.CommandSocket.ToUpper()));
-                    erCnt = 7;
-                    if (getComCmd.Any())
-                    {
-                        erCnt = 8;
-                        // Do I need to determine which command was executed? device type or service type from here
-                        var trgt = getComCmd.First().CustomAttributes.First().NamedArguments.Where(A => A.MemberName == "CmdTarget");
-                        erCnt = 9;
-                        if (trgt.Any())
-                        {
-                            if ((Convert.ToInt32(trgt.First().TypedValue.Value) == Convert.ToInt32(CmdTargetID.Service)))
-                            {
-                                erCnt = 10;
-                                string methods = getComCmd.First().CustomAttributes.First().NamedArguments[2].TypedValue.Value.ToString();
-                                //it is only for control, it does not perform any function
-                                MethodInfo myMethodOut;
-                                myMethodOut = TyPaxAires8.GetMethod(methods, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(int), typeof(string), typeof(AsyncSocketListener) }, null);
-                                if (myMethodOut == null)
-                                    myMethodOut = TyPaxAires8.GetMethod(methods, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(string), typeof(string), typeof(AsyncSocketListener) }, null);
-                                if (myMethodOut == null)
-                                    myMethodOut = TyPaxAires8.GetMethod(methods, BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string), typeof(AsyncSocketListener) }, null);
-                                // to here
-                                object ob = myO.Response;
-                                erCnt = 11;
-                                switch (ob.GetType().Name.ToUpper())
+                                // comando tipo db open
+                                //myMethod = tyCommandHandlers.GetMethod(cmdCom.CommandSocket);
+                                myMethod = tyCommandHandlers.GetMethod(
+                                    cmdCom.CommandSocket, // Nome del metodo
+                                    BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
+                                    myCustomBinder, // Usa il tuo binder per la risoluzione
+                                    new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener), typeof(SQLiteConnection).MakeByRefType() },// Tipi dei parametri (verifica che siano corretti!)
+                                    null
+                                );// Modificatori
+                                if (myMethod != null)
                                 {
-                                    case "INT32":
-                                        {
-                                            erCnt = 12;
-                                            int I = (int)myO.Response;
-                                            TyPaxAires8.InvokeMember(methods, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { I, cmdCom.CommandSocket, asl });
-                                            erCnt = 13;
-                                            break;
-                                        }
-                                    case "STRING":
-                                        {
-                                            erCnt = 14;
-                                            if (ob == null)
-                                            {
-                                                //if ((this.swDebug & _logger.LOG_DEBUG) == _logger.LOG_DEBUG)
-                                                _logger.Log(LogLevel.DEBUG, "ob is null");
-                                            }
+                                    metodo = myMethod.Name;
+                                    _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                                    _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
+                                    SQLiteConnection dbConnection = null;
+                                    object[] parameters = new object[] { myO, e.BufferDati, asl, dbConnection };
+                                    myMethod.Invoke(commandHandlers, parameters);
 
-                                            string S = ob.ToString();
-                                            TyPaxAires8.InvokeMember(methods, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { S, cmdCom.CommandSocket, asl });
-                                            erCnt = 15;
-                                            break;
-                                        }
-                                    case "BOOLEAN":
-                                        {
-                                            erCnt = 16;
-                                            bool B = (bool)ob;
-                                            TyPaxAires8.InvokeMember(methods, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { B, cmdCom.CommandSocket, asl });
-                                            erCnt = 17;
-                                            break;
-                                        }
-                                    case "DEVICECOMMAND":
-                                        {
-                                            erCnt = 18;
-                                            TyPaxAires8.InvokeMember(methods, BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, cmdCom.CommandSocket, asl });
-                                            erCnt = 19;
-                                            break;
-                                        }
-                                    default:
-                                        {
-                                            _logger.Log(LogLevel.WARNING, WinTTabRes.logErrNoAnswerProvide);
-                                            break;
-                                        }
+                                    dbConnection = (SQLiteConnection)parameters[3];
+                                    //this.schemaLoader = new EvolutiveSystem.SQL.Core.SQLiteSchemaLoader(((System.Data.SQLite.SQLiteConnection)parameters[3]).FileName, _logger);
+                                    this.schemaLoader = new EvolutiveSystem.SQL.Core.SQLiteSchemaLoader(dbConnection.FileName, _logger);
+                                    this.schemaLoader.InitializeDatabase();
+                                    MIU.Core.IMIUDataManager miuDataManagerInstance = new EvolutiveSystem.SQL.Core.MIUDatabaseManager(schemaLoader, _logger);
+                                    this.miuRepositoryInstance = new MIU.Core.MIURepository(miuDataManagerInstance, _logger);
+                                    
                                 }
-                                if (logDelay != null)
-                                    logDelay.Log(LogLevel.INFO, string.Format("(SERVICES) COMMAND {0}; CLOSED AT; {1}", methods, DateTime.Now.Ticks.ToString()));
-                                _logger.Log(LogLevel.INFO, string.Format("Command:{0} <COMMAND ENDED>", myMethod));
-                                Type tycmdCom = cmdCom.GetType();
-                                var cc = tycmdCom.GetProperties().Where(CC => CC.Name == cmdCom.CommandSocket);
-                                if (cc.Any())
-                                {
-                                    var isr = cc.First().CustomAttributes.First().NamedArguments.Where(ISR => ISR.MemberName == "IsSignatureRequest");
-                                    if (isr.Any())
-                                    {
-                                        if ((byte)isr.First().TypedValue.Value == 0) MainCycleService();
-                                    }
-                                }
-                            }
-                            else
-                            {
-#if DEBUG
-                            _logger.Log(LogLevel.DEBUG, string.Format("Sender={0} Command={1}", sender.GetType(), e.Command));
-                            Console.WriteLine("* * * *  " + trgt.First().TypedValue.Value + "  " + trgt.First().TypedValue.Value.GetType() + "  * * * *");
-                            Console.WriteLine("CommandName: {0} {1}", myO.CommandName, myO.CommandCode);
-#endif
-                                var f = tymyO.GetRuntimeProperties().Where(F => F.Name == myO.CommandName);
-                                if (f.Any())
-                                {
-                                    // fInfo.CustomAttributes.First().NamedArguments.Where(A => A.MemberName == "TypeOfResponse").First()
-                                    PropertyInfo fInfo = f.First();
-                                    var call = fInfo.CustomAttributes.First().NamedArguments.Where(CALL => CALL.MemberName == "TypeOfResponse");
-                                    if (call.Any())
-                                    {
-                                        var NameMethos = call.First().TypedValue.Value;
-                                        myMethod = TyPaxAires8.GetMethod(NameMethos.ToString(), BindingFlags.Public | BindingFlags.Instance, myCustomBinder, new Type[] { typeof(DeviceCommand), typeof(string), typeof(AsyncSocketListener) }, null);
-                                        TyPaxAires8.InvokeMember(NameMethos.ToString(), BindingFlags.InvokeMethod, myCustomBinder, paxAires8, new Object[] { myO, myO.Response.ToString(), asl });
-                                        if (logDelay != null)
-                                            logDelay.Log(LogLevel.INFO, string.Format("(TABLET) COMMAND {0}; CLOSED AT; {1}", NameMethos.ToString(), DateTime.Now.Ticks.ToString()));
-                                        _logger.Log(LogLevel.INFO, string.Format("Command:{0} <COMMAND ENDED>", myMethod));
-                                    }
-                                    // string NameMethos = fInfo.CustomAttributes.First().NamedArguments[2].TypedValue.Value.ToString();
-                                }
-                                if (myO.IsSignCommand == 0 || myO.IsSignCommand == 3)
-                                    MainCycleService(); // after timeout event, i need to restart de duty cycle
                                 else
                                 {
-#if DEBUG
-                                Console.WriteLine("MainCycleService bloccato");
-#endif
-                                    // SchedularWD.Change(Timeout.Infinite, Timeout.Infinite);
-                                    swWatchDog(false);
+                                    throw new Exception("Command not found");
                                 }
-                                erCnt = 20;
                             }
                         }
-                        myO.Dispose();
-                        if (logDelay != null)
-                        {
-                            logDelay.Log(LogLevel.INFO, string.Format("0) COMMAND {0}; DISPOSED AT; {1}", e.Command, DateTime.Now.Ticks.ToString()));
-                            logDelay.Log(LogLevel.DEBUG, "* * * * * * * * * * * * * * * * * * * * * * * * * * * *");
-                        }
                     }
-                    syncCount = 0;
-                    CommandRunning = 2; // alla conclusione di un processo innescato da host spengo la flag di command is running, così torno a gfare il comando 99
-                    //else
-                    //{
-                    //    // 09.06.2021 interlock esecuzione comandi
-                    //    asl.Send(Handler, string.Format(WinTTabRes.msgCmdAlreadyInRun, cmdCom1.CommandSocket, cmdCom.CommandSocket));
-                    //    _logger.Log(LogLevel.WARNING, string.Format(WinTTabRes.msgCmdAlreadyInRun, cmdCom1.CommandSocket, cmdCom.CommandSocket));
-                    //}
-                    */
                 }
                 else
                 {

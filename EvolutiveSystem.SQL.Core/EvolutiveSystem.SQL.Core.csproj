@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DatabaseSerializer.cs" />
     <Compile Include="EvolutiveSystem.SQL.Core.cs" />
     <Compile Include="MIUDatabaseManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

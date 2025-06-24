@@ -81,7 +81,7 @@ namespace MIU.Core.tester
             // Inizializzazione comune del repository e caricamento delle statistiche
             SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath, _logger);
             // Assicurati che SQLiteSchemaLoader contenga un metodo pubblico InitializeDatabase()
-            _schemaLoader.InitializeDatabase(); // <- errore cs1061
+            _schemaLoader.InitializeDatabase(); 
             _logger.Log(LogLevel.INFO, "Database inizializzato tramite SQLiteSchemaLoader.");
 
             MIUDatabaseManager _dbManager = new MIUDatabaseManager(_schemaLoader, _logger);

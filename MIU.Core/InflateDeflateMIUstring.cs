@@ -128,5 +128,28 @@ namespace MIU.Core
             if (string.IsNullOrEmpty(s)) return 0;
             return s.Count(ch => ch == c);
         }
+        // Questo metodo calcola l'hash SHA256 di una stringa.
+        /// <summary>
+        /// Calcola l'hash SHA256 di una stringa.
+        /// </summary>
+        /// <param name="inputString">La stringa di cui calcolare l'hash.</param>
+        /// <returns>La rappresentazione esadecimale dell'hash SHA256.</returns>
+        public static string ComputeHash(string inputString)
+        {
+            using (System.Security.Cryptography.SHA256 sha256Hash = System.Security.Cryptography.SHA256.Create())
+            {
+                // Converti la stringa in un array di byte e calcola l'hash
+                byte[] bytes = sha256Hash.ComputeHash(System.Text.Encoding.UTF8.GetBytes(inputString));
+
+                // Converti l'array di byte in una stringa esadecimale
+                System.Text.StringBuilder builder = new System.Text.StringBuilder();
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    builder.Append(bytes[i].ToString("x2")); // "x2" formatta il byte come due cifre esadecimali
+                }
+                return builder.ToString();
+            }
+        }
+
     }
 }

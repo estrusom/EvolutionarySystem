@@ -411,7 +411,7 @@ namespace SocketManagerInfo
         private string cmd06 = stx + "CmdSaveDB" + etx;
         private string cmd07 = stx + "CmdStructDb" + etx; 
         private string cmd08 = stx + "CmdCloseDB" + etx;
-        private string cmd09 = stx + "CmdSigningProcTermination" + etx;
+        private string cmd09 = stx + "CmdConfig" + etx;
         private string cmd0A = stx + "CmdHideSignatureForm " + etx;
         private string cmd0B = stx + "CmdSendFormConfiguration[{0}]" + etx;
         private string cmd0R = stx + "CmdDeviceReset" + etx;
@@ -457,6 +457,11 @@ namespace SocketManagerInfo
         /// </summary>
         [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "Chiusura del database in uso", TockenManaging = 1, SelectAction = ActionType.DbRequest)]
         public string CmdCloseDB {  get { return this.cmd08; } }
+        /// <summary>
+        /// 2025.06.24 aggiunto comando di lettura dati di configurazione dalla tabella MIUParameterConfigurator
+        /// </summary>
+        [SktProperty (SendingDataPackets = true, AddToCombobox = true, Description = "Lettura parametri di configurazione" , TockenManaging = 1, SelectAction = ActionType.DbRequest)]
+        public string CmdConfig { get  { return this.cmd09; } }
         /*
         /// <summary>
         /// Single signature frame reception CMD = 06

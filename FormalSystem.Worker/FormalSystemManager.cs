@@ -32,6 +32,11 @@ namespace FormalSystem.Worker // Nuovo namespace per il progetto wrapper generic
         private Logger _logger;
         private string _databaseFilePath;
 
+        // --- INIZIO MODIFICA 1: Aggiungi queste due righe QUI SOTTO ---
+        private readonly IMIURepository _repository; // Nuovo campo per il repository iniettato
+        private readonly LearningStatisticsManager _learningStatsManager; // Nuovo campo per il gestore statistiche iniettato
+        // --- FINE MODIFICA 1 ---
+
         // Campi per le statistiche globali in memoria, gestite e sincronizzate da questa classe.
         // Questi campi saranno assegnati alle proprietà statiche di RegoleMIUManager all'inizializzazione.
         private Dictionary<long, RuleStatistics> _internalRuleStatistics;
@@ -44,15 +49,19 @@ namespace FormalSystem.Worker // Nuovo namespace per il progetto wrapper generic
         /// </summary>
         public event EventHandler<MiuNotificationEventArgs> OnFormalSystemNotification; // Rinomina da OnMiuSystemNotification, ma usa MiuNotificationEventArgs
 
-
         /// <summary>
         /// Costruttore di FormalSystemManager.
         /// </summary>
         /// <param name="logger">L'istanza del logger fornita dal servizio chiamante.</param>
-        public FormalSystemManager(Logger logger)
+        /// <param name="repository">L'implementazione del repository per l'accesso ai dati MIU.</param>
+        /// <param name="learningStatsManager">Il gestore per le statistiche di apprendimento.</param>
+        public FormalSystemManager(Logger logger, IMIURepository repository, LearningStatisticsManager learningStatsManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _logger.Log(LogLevel.DEBUG, "[FormalSystemManager] FormalSystemManager istanziato.");
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository)); // Assegna il repository iniettato
+            _learningStatsManager = learningStatsManager ?? throw new ArgumentNullException(nameof(learningStatsManager)); // Assegna il gestore statistiche iniettato
+
+            _logger.Log(LogLevel.DEBUG, "[FormalSystemManager] FormalSystemManager istanziato con dipendenze iniettate.");
         }
 
         /// <summary>

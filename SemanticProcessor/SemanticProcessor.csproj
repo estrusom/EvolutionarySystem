@@ -124,9 +124,9 @@
       <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
       <Name>EvolutiveSystem.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\EvolutiveSystem.Core\EvolutiveSystem.Core.csproj">
-      <Project>{A193E8C9-5AFA-4D49-ADFA-F25891B1A8EB}</Project>
-      <Name>EvolutiveSystem.Core</Name>
+    <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
+      <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
+      <Name>EvolutiveSystem.SQL.Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>

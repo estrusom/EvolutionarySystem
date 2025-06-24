@@ -13,7 +13,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MasterLog; // AGGIUNTO: Necessario per la tua classe Logger
-using System.IO; // AGGIUNTO: Necessario per File.Exists
+using System.IO;
+using System.Threading;
+using System.Xml.Serialization; // AGGIUNTO: Necessario per File.Exists
 
 namespace EvolutiveSystem.SQL.Core
 {
@@ -39,18 +41,39 @@ namespace EvolutiveSystem.SQL.Core
         }
     }
 
+    [Serializable]
     public class Table
     {
         public string TableName { get; set; }
         public List<Field> Fields { get; set; } = new List<Field>();
-        public Database ParentDatabase { get; set; }
 
-        public Table() { }
+        // --- INIZIO MODIFICA: Aggiunta la proprietà DataRecords ---
+        /// <summary>
+        /// Contiene i record di dati della tabella, come lista di dizionari serializzabili.
+        /// Questo è il campo che viene svuotato per la "struttura soltanto".
+        /// </summary>
+        public List<SerializableDictionary<string, object>> DataRecords { get; set; } = new List<SerializableDictionary<string, object>>();
+        // --- FINE MODIFICA ---
+
+        // --- INIZIO MODIFICA: Aggiunto [XmlIgnore] per ParentDatabase ---
+        [XmlIgnore]
+        public Database ParentDatabase { get; set; }
+        // --- FINE MODIFICA ---
+
+        public Table()
+        {
+            // Assicurati che le liste siano inizializzate anche nel costruttore di default
+            Fields = new List<Field>();
+            DataRecords = new List<SerializableDictionary<string, object>>();
+        }
 
         public Table(string tableName, Database parentDatabase)
         {
             TableName = tableName;
             ParentDatabase = parentDatabase;
+            // Assicurati che le liste siano inizializzate anche qui
+            Fields = new List<Field>();
+            DataRecords = new List<SerializableDictionary<string, object>>();
         }
 
         public void AddField(Field field)
@@ -59,23 +82,39 @@ namespace EvolutiveSystem.SQL.Core
             {
                 Fields.Add(field);
                 field.ParentTable = this;
-                // FIX CS1061: Rimuovi la riga seguente. TableName è già impostato nel costruttore di Table.
-                // this.TableName si riferisce a Database, che non ha un TableName.
-                // field.TableName = this.TableName; // RIGA ORIGINALE CHE CAUSAVA L'ERRORE
+                // La riga originale che causava CS1061 era in questo commento. La rimuoviamo completamente.
+                // field.TableName = this.TableName; 
             }
         }
     }
 
     public class Database
     {
+        // Contatore statico per generare ID unici per le istanze di Database in memoria.
+        // Utilizziamo long per supportare un numero elevato di database.
+        private static long _nextDatabaseId = 1;
+
+        /// <summary>
+        /// Ottiene o imposta l'ID unico di questo database.
+        /// Questo ID è generato al momento della creazione dell'istanza in memoria.
+        /// </summary>
+        public long DatabaseId { get; set; }
         public string DatabaseName { get; set; }
         public string FilePath { get; set; } // Percorso del file SQLite
         public List<Table> Tables { get; set; } = new List<Table>();
 
-        public Database() { }
+        public Database()
+        {
+            // --- INIZIO MODIFICA NECESSARIA (Continua) ---
+            // Assegna un ID unico al momento della creazione di un'istanza di Database.
+            // Interlocked.Increment garantisce che l'operazione sia thread-safe.
+            DatabaseId = Interlocked.Increment(ref _nextDatabaseId);
+            // --- FINE MODIFICA NECESSARIA (Continua) ---
+        }
 
         public Database(string databaseName, string filePath)
         {
+            DatabaseId = Interlocked.Increment(ref _nextDatabaseId);
             DatabaseName = databaseName;
             FilePath = filePath;
         }

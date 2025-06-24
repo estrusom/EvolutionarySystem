@@ -14,7 +14,7 @@ using EvolutiveSystem.Common; // Aggiunto per le classi modello spostate
 
 namespace MIU.Core
 {
-    public class MIURepository
+    public class MIURepository : IMIURepository 
     {
         private readonly IMIUDataManager _dataManager;
         private readonly Logger _logger;
@@ -185,6 +185,17 @@ namespace MIU.Core
         {
             _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta SaveTransitionStatistics per {transitionStats?.Count ?? 0} statistiche.");
             _dataManager.SaveTransitionStatistics(transitionStats);
+        }
+        /// <summary>
+        /// Carica tutti gli stati MIU dal database in modo asincrono.
+        /// Delega al data manager.
+        /// </summary>
+        /// <returns>Un oggetto Task che rappresenta l'operazione asincrona, con un risultato di tipo List<MiuStateInfo>.</returns>
+        public Task<List<MiuStateInfo>> LoadMIUStatesAsync()
+        {
+            _logger.Log(LogLevel.DEBUG, "[Repository DEBUG] Richiesta LoadMIUStatesAsync.");
+            // Delega la chiamata al metodo asincrono dell'IMIUDataManager iniettato
+            return _dataManager.LoadMIUStatesAsync();
         }
     }
 }

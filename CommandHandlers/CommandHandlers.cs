@@ -6,7 +6,7 @@
  */
 using AsyncSocketServer;
 using CommandHandlers.Properties;
-using EvolutiveSystem.Core;
+using EvolutiveSystem.SQL.Core;
 using MasterLog;
 using MessaggiErrore;
 using SocketManager;
@@ -38,6 +38,9 @@ namespace CommandHandlers
         private SocketMessageStructure response = null;
         private readonly List<Database> _loadedDatabases = new List<Database>(); // Esempio: Gestione interna semplice
         private static SQLiteConnection dbConnection;
+        private readonly MIU.Core.IMIURepository _miuRepository; // Nuovo campo per IMIURepository
+        
+
         public ClsCommandHandlers()
         {
 
@@ -208,31 +211,10 @@ namespace CommandHandlers
                     else
                     {
                         dbStatus = "DB Already open";
+                        DbConnection = dbConnection;
                     }
                 }
                 StringBuilder stringBuilder = new StringBuilder();
-                string sqlCmd = "SELECT ID,NomeParametro,ValoreParametro,Descrizione FROM MIUParameterConfigurator";
-                using (var sqlCommand = new SQLiteCommand(sqlCmd, dbConnection))
-                {
-                    using (SQLiteDataReader reader = sqlCommand.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var col = reader.GetValues();
-                            for (int i=0; i<col.Count; i++)
-                            {
-                                string s = string.Format($"[{col.AllKeys[i]}, {reader.GetValue(i)}]");
-                                stringBuilder.Append(s);
-                            }
-                            stringBuilder.Append(Environment.NewLine);
-                            //for (int i = 0; i < reader.FieldCount; i++)
-                            //{
-                            //    Console.WriteLine(reader[i]);
-                            //    //stringBuilder.Append(string.Format($"Key: {row.Keys[i]} Value: {v},"));
-                            //}
-                        }
-                    }
-                }
                 DbConnection = dbConnection;
                 response = new SocketMessageStructure
                 {
@@ -346,6 +328,45 @@ namespace CommandHandlers
                 //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
                 string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
                 asl.Send(asl.Handler, txtSendData);
+            }
+            catch (Exception ex)
+            {
+                string msg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                if (ex.InnerException != null)
+                {
+                    throw new Exception(msg, ex.InnerException);
+                }
+                else
+                {
+                    throw new Exception(msg);
+                }
+            }
+        }
+        /// <summary>
+        /// Funzione di acquisizione dei parametri di configurazione dl sistema MIU dalla tabella MIUParameterConfigurator
+        /// </summary>
+        /// <param name="DvCmd"></param>
+        /// <param name="Param"></param>
+        /// <param name="asl"></param>
+        public void CmdConfig(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl, MIU.Core.IMIURepository miuRepositoryInstance, out Dictionary<string, string> configuration)
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            Dictionary<string, string> configParam;
+            try
+            {
+                
+                string command = checkCommand(DvCmd.CmdConfig, DvCmd);
+
+                if (Param == null)
+                {
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
+                }
+                configParam = miuRepositoryInstance.LoadMIUParameterConfigurator();
+                foreach (var item in configParam)
+                {
+                    _loger.Log(LogLevel.DEBUG, item.Value);
+                }
+                configuration = configParam;
             }
             catch (Exception ex)
             {
@@ -642,7 +663,7 @@ namespace CommandHandlers
                     foreach (var table in clonedDb.Tables)
                     {
                         // Sostituisci la lista DataRecords con una nuova lista vuota
-                        table.DataRecords = new System.Collections.Generic.List<SerializableDictionary<string, object>>();
+                        table.DataRecords = new System.Collections.Generic.List<SerializableDictionary<string, object>>();  // <- errore cs1061
                     }
                 }
 

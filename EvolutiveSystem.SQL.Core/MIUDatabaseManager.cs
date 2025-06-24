@@ -476,7 +476,7 @@ namespace EvolutiveSystem.SQL.Core
                                     RuleID = ruleId,
                                     ApplicationCount = appCount,
                                     SuccessfulCount = succCount,
-                                    EffectivenessScore = effScore, // <- Error cs0272
+                                    EffectivenessScore = effScore, 
                                     LastApplicationTimestamp = lastUpdated
                                 };
                             }
