@@ -304,8 +304,9 @@ namespace SemanticProcessor
             try
             {
                 _logger.Log(LogLevel.INFO, "STOP REQUEST");
-
-
+                //Salvataggio dei parametri di configurazione di MIU system
+                if (configParam != null)
+                    miuRepositoryInstance.SaveMIUParameterConfigurator(this.configParam);
                 // Segnala al thread del motore semantico di fermarsi
                 _isRunning = false; // Imposta il flag di esecuzione a false
                                     // Assicurati che il thread non sia bloccato in pausa prima di segnalare l'arresto
@@ -945,7 +946,7 @@ namespace SemanticProcessor
                             myCustomBinder, // Usa il tuo binder per la risoluzione
                             new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener), typeof(ConcurrentDictionary<string, SemanticClientSocket>) }, // Tipi dei parametri (verifica che siano corretti!)
                             null
-                        );// Modificatori
+                        );
                         if (myMethod != null)
                         {
                             metodo = myMethod.Name;
@@ -976,15 +977,14 @@ namespace SemanticProcessor
                             }
                             else
                             {
-                                // comando tipo db open
-                                //myMethod = tyCommandHandlers.GetMethod(cmdCom.CommandSocket);
+                                // comando tipo OpenDb
                                 myMethod = tyCommandHandlers.GetMethod(
                                     cmdCom.CommandSocket, // Nome del metodo
                                     BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
                                     myCustomBinder, // Usa il tuo binder per la risoluzione
                                     new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener), typeof(SQLiteConnection).MakeByRefType() },// Tipi dei parametri (verifica che siano corretti!)
                                     null
-                                );// Modificatori
+                                );
                                 if (myMethod != null)
                                 {
                                     metodo = myMethod.Name;
@@ -1004,7 +1004,26 @@ namespace SemanticProcessor
                                 }
                                 else
                                 {
-                                    throw new Exception("Command not found");
+                                    // comando tipo save config
+                                    myMethod = tyCommandHandlers.GetMethod(
+                                        cmdCom.CommandSocket, // Nome del metodo
+                                        BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
+                                        myCustomBinder, // Usa il tuo binder per la risoluzione
+                                        new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener), typeof(MIU.Core.IMIURepository), typeof(Dictionary<string, string>) },
+                                        null
+                                    );
+                                    if (myMethod != null)
+                                    {
+                                        metodo = myMethod.Name;
+                                        _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                                        _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
+                                        object[] parameters = new object[] { myO, e.BufferDati, asl, miuRepositoryInstance, configParam };
+                                        myMethod.Invoke(commandHandlers, parameters);
+                                    }
+                                    else
+                                    {
+                                        throw new Exception("Command not found");
+                                    }
                                 }
                             }
                         }

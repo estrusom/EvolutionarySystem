@@ -362,11 +362,28 @@ namespace CommandHandlers
                     throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
                 }
                 configParam = miuRepositoryInstance.LoadMIUParameterConfigurator();
+                configuration = configParam;
+                StringBuilder stringBuilder = new StringBuilder();
                 foreach (var item in configParam)
                 {
                     _loger.Log(LogLevel.DEBUG, item.Value);
+                    stringBuilder.Append(string.Format($"[{item.Key}, {item.Value}]"));
                 }
-                configuration = configParam;
+                response = new SocketMessageStructure
+                {
+                    Command = command.Substring(1, command.Length - 2),
+                    SendingTime = DateTime.Now,
+                    BufferDati = new XElement("BufferDati",
+                    new XElement("CONFIG", stringBuilder.ToString())),
+                    Token = asl.TokenSocket.ToString(),
+                    CRC = 0
+                };
+                string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                ASCIIEncoding encoding = new ASCIIEncoding();
+                byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                asl.Send(asl.Handler, txtSendData);
             }
             catch (Exception ex)
             {
@@ -380,6 +397,68 @@ namespace CommandHandlers
                     throw new Exception(msg);
                 }
             }
+        }
+        /// <summary>
+        /// funzione di salvataggio dei parametri di funzionamento del sistema MIU
+        /// </summary>
+        /// <param name="DvCmd"></param>
+        /// <param name="Param"></param>
+        /// <param name="asl"></param>
+        /// <param name="miuRepositoryInstance"></param>
+        /// <param name="ConfigParam"></param>
+        /// <exception cref="Exception"></exception>
+        public void CmdSaveConfig(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl, MIU.Core.IMIURepository miuRepositoryInstance, Dictionary<string,string> ConfigParam)
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
+            {
+                string command = checkCommand(DvCmd.CmdConfig, DvCmd);
+                if (Param == null)
+                {
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
+                }
+                else
+                {
+
+                }
+                if (ConfigParam.Count() > 0)
+                {
+                    miuRepositoryInstance.SaveMIUParameterConfigurator(ConfigParam);
+                }
+                else
+                {
+                    throw new Exception($"Lista di configurazione vuota");
+                }
+                response = new SocketMessageStructure
+                {
+                    Command = command.Substring(1, command.Length - 2),
+                    SendingTime = DateTime.Now,
+                    BufferDati = new XElement("BufferDati",
+                    new XElement("CONFIG", "PARAMETRI SALVATI")),
+                    Token = asl.TokenSocket.ToString(),
+                    CRC = 0
+                };
+                string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                ASCIIEncoding encoding = new ASCIIEncoding();
+                byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                asl.Send(asl.Handler, txtSendData);
+
+            }
+            catch (Exception ex)
+            {
+                string msg = ClsMessaggiErrore.CustomMsg(ex, thisMethod);
+                if (ex.InnerException != null)
+                {
+                    throw new Exception(msg, ex.InnerException);
+                }
+                else
+                {
+                    throw new Exception(msg);
+                }
+            }
+
         }
         /// <summary>
         /// salvataggio di un database
