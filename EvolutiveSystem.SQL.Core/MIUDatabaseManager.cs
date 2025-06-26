@@ -461,24 +461,21 @@ namespace EvolutiveSystem.SQL.Core
                             long ruleId = reader.GetInt64(reader.GetOrdinal("RuleID"));
                             int appCount = reader.GetInt32(reader.GetOrdinal("ApplicationCount"));
                             int succCount = reader.GetInt32(reader.GetOrdinal("SuccessfulCount"));
-                            string effScoreString = reader.GetString(reader.GetOrdinal("EffectivenessScore"));
-                            double effScore = 0.0;
-                            if (!double.TryParse(effScoreString, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out effScore))
+                            double effScore = reader.GetDouble(reader.GetOrdinal("EffectivenessScore"));
+                            if (!reader.IsDBNull(reader.GetOrdinal("LastUpdated")))
                             {
-                                _logger.Log(LogLevel.WARNING, $"[MIUDatabaseManager] Impossibile convertire '{effScoreString}' in double per EffectivenessScore per RuleID {ruleId}. Impostato a 0.0.");
-                            }
-
-                            DateTime lastUpdated = DateTime.MinValue;
-                            if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
-                            {
-                                ruleStats[ruleId] = new RuleStatistics
+                                DateTime lastUpdated = DateTime.MinValue;
+                                if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
                                 {
-                                    RuleID = ruleId,
-                                    ApplicationCount = appCount,
-                                    SuccessfulCount = succCount,
-                                    EffectivenessScore = effScore, 
-                                    LastApplicationTimestamp = lastUpdated
-                                };
+                                    ruleStats[ruleId] = new RuleStatistics
+                                    {
+                                        RuleID = ruleId,
+                                        ApplicationCount = appCount,
+                                        SuccessfulCount = succCount,
+                                        EffectivenessScore = effScore,
+                                        LastApplicationTimestamp = lastUpdated
+                                    };
+                                }
                             }
                         }
                     }
