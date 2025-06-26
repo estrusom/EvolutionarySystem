@@ -881,5 +881,176 @@ namespace EvolutiveSystem.SQL.Core
                                                                                                                                                               // In caso di errore, la transazione verrà automaticamente annullata se non commessa.
             }
         }
+        /// <summary>
+        /// Carica le applicazioni di regole (archi della topologia) con opzioni di filtro.
+        /// Questo metodo è progettato per supportare il caricamento efficiente dei dati
+        /// grezzi necessari per costruire la topologia MIU.
+        /// </summary>
+        /// <param name="initialString">Filtra per la stringa iniziale di una ricerca specifica. Se nullo, non filtra.</param>
+        /// <param name="startDate">Filtra le applicazioni avvenute a partire da questa data. Se nullo, non filtra.</param>
+        /// <param name="endDate">Filtra le applicazioni avvenute fino a questa data. Se nullo, non filtra.</param>
+        /// <param name="maxDepth">Filtra le applicazioni che hanno una profondità minore o uguale a questo valore. Se nullo, non filtra.</param>
+        /// <returns>Una lista di oggetti MIUStringTopologyEdge (dati grezzi dell'applicazione di regole).</returns>
+        public async Task<List<MIUStringTopologyEdge>> LoadRawRuleApplicationsForTopologyAsync(
+            string initialString = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            int? maxDepth = null)
+        {
+            var edges = new List<MIUStringTopologyEdge>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+
+                    // Costruiamo dinamicamente la query SQL in base ai parametri di filtro.
+                    // Join con MIU_Searches per filtrare per InitialString.
+                    // Non joiniamo con MIU_States qui, perché le stringhe vengono inflate solo nel servizio di topologia.
+                    // Le colonne 'Timestamp' e 'CurrentDepth' sono direttamente da MIU_RuleApplications.
+                    StringBuilder sql = new StringBuilder();
+                    sql.Append(@"
+                        SELECT
+                            RA.ApplicationID,
+                            RA.SearchID,
+                            RA.ParentStateID,
+                            RA.NewStateID,
+                            RA.AppliedRuleID,
+                            RA.CurrentDepth,
+                            RA.Timestamp -- La colonna Timestamp da MIU_RuleApplications
+                        FROM MIU_RuleApplications AS RA
+                        JOIN MIU_Searches AS S ON RA.SearchID = S.SearchID
+                        WHERE 1=1 "); // Clauola WHERE fittizia per semplificare l'aggiunta di condizioni
+
+                    // Aggiungi condizioni WHERE in base ai parametri
+                    if (!string.IsNullOrEmpty(initialString))
+                    {
+                        sql.Append(" AND S.InitialString = @initialString");
+                    }
+                    if (startDate.HasValue)
+                    {
+                        // SQLite compara le stringhe ISO 8601 correttamente
+                        sql.Append(" AND RA.Timestamp >= @startDate");
+                    }
+                    if (endDate.HasValue)
+                    {
+                        sql.Append(" AND RA.Timestamp <= @endDate");
+                    }
+                    if (maxDepth.HasValue)
+                    {
+                        sql.Append(" AND RA.CurrentDepth <= @maxDepth");
+                    }
+
+                    using (var command = new SQLiteCommand(sql.ToString(), connection))
+                    {
+                        if (!string.IsNullOrEmpty(initialString))
+                        {
+                            command.Parameters.AddWithValue("@initialString", initialString);
+                        }
+                        if (startDate.HasValue)
+                        {
+                            // Formatta la data in un formato compatibile con SQLite (ISO 8601)
+                            command.Parameters.AddWithValue("@startDate", startDate.Value.ToString("yyyy-MM-dd HH:mm:ss.ffffff", CultureInfo.InvariantCulture));
+                        }
+                        if (endDate.HasValue)
+                        {
+                            command.Parameters.AddWithValue("@endDate", endDate.Value.ToString("yyyy-MM-dd HH:mm:ss.ffffff", CultureInfo.InvariantCulture));
+                        }
+                        if (maxDepth.HasValue)
+                        {
+                            command.Parameters.AddWithValue("@maxDepth", maxDepth.Value);
+                        }
+
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                DateTime timestamp;
+                                // Tenta di parsare la stringa del timestamp. Se fallisce, usa DateTime.MinValue.
+                                if (!DateTime.TryParse(reader.GetString(reader.GetOrdinal("Timestamp")), CultureInfo.InvariantCulture, DateTimeStyles.None, out timestamp))
+                                {
+                                    timestamp = DateTime.MinValue;
+                                    _logger.Log(LogLevel.WARNING, $"[MIUDatabaseManager] Impossibile parsare timestamp per ApplicationID {reader.GetInt64(reader.GetOrdinal("ApplicationID"))}.");
+                                }
+
+                                edges.Add(new MIUStringTopologyEdge
+                                {
+                                    ApplicationID = reader.GetInt64(reader.GetOrdinal("ApplicationID")),
+                                    SearchID = reader.GetInt64(reader.GetOrdinal("SearchID")),
+                                    ParentStateID = reader.GetInt64(reader.GetOrdinal("ParentStateID")),
+                                    NewStateID = reader.GetInt64(reader.GetOrdinal("NewStateID")),
+                                    AppliedRuleID = reader.GetInt64(reader.GetOrdinal("AppliedRuleID")),
+                                    CurrentDepth = reader.GetInt32(reader.GetOrdinal("CurrentDepth")),
+                                    Timestamp = timestamp,
+                                    // AppliedRuleName e Weight verranno impostati in MIUTopologyService
+                                    AppliedRuleName = null, // Verrà popolato in MIUTopologyService
+                                    Weight = 0.0 // Verrà popolato in MIUTopologyService
+                                });
+                            }
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.INFO, $"[MIUDatabaseManager] Caricate {edges.Count} applicazioni di regole per la topologia con filtri.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il caricamento delle applicazioni di regole per la topologia: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                return new List<MIUStringTopologyEdge>(); // Restituisce lista vuota in caso di errore
+            }
+            return edges;
+        }
+        /// <summary>
+        /// Resetta i dati specifici dell'esplorazione (ricerche, applicazioni di regole, percorsi, statistiche di apprendimento)
+        /// nel database, ma mantiene le regole base, i parametri di configurazione e gli stati MIU generati.
+        /// </summary>
+        public async Task ResetExplorationDataAsync()
+        {
+            _logger.Log(LogLevel.INFO, "[MIUDatabaseManager] Inizio reset selettivo dei dati di esplorazione.");
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+
+                    // Iniziamo una transazione per assicurare che tutte le eliminazioni siano atomiche
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        // Array delle tabelle da pulire
+                        string[] tablesToClear = new string[]
+                        {
+                            "MIU_Searches",
+                            "MIU_RuleApplications",
+                            "MIU_Paths",
+                            "MIU_Actions", // Inserita come richiesto, se esiste
+                            "Learning_TransitionStatistics",
+                            "Learning_RuleStatistics"
+                        };
+
+                        foreach (var tableName in tablesToClear)
+                        {
+                            string sql = $"DELETE FROM {tableName};";
+                            using (var command = new SQLiteCommand(sql, connection, transaction))
+                            {
+                                int rowsAffected = await command.ExecuteNonQueryAsync();
+                                _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Eliminati {rowsAffected} record dalla tabella '{tableName}'.");
+                                string resetSequenceSql = $"UPDATE sqlite_sequence SET seq = 0 WHERE name = '{tableName}';";
+                                using (var cmd = new SQLiteCommand(resetSequenceSql, connection, transaction))
+                                {
+                                    await cmd.ExecuteNonQueryAsync();
+                                    _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Sequenza AUTOINCREMENT resettata per '{tableName}'.");
+                                }
+                            }
+                        }
+                        transaction.Commit();
+                    }
+                }
+                _logger.Log(LogLevel.INFO, "[MIUDatabaseManager] Reset selettivo dei dati di esplorazione completato con successo.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il reset dei dati di esplorazione: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                throw; // Rilancia l'eccezione
+            }
+        }
     }
 }

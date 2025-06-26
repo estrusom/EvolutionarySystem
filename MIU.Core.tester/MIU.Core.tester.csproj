@@ -57,6 +57,10 @@
       <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
       <Name>EvolutiveSystem.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.Engine\EvolutiveSystem.Engine.csproj">
+      <Project>{0f8a47f7-fdfa-4ada-b372-b0636f2b16f8}</Project>
+      <Name>EvolutiveSystem.Engine</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.Learning\EvolutiveSystem.Learning.csproj">
       <Project>{65834756-c570-4269-afec-759b174fc02e}</Project>
       <Name>EvolutiveSystem.Learning</Name>

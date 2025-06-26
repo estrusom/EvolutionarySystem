@@ -14,7 +14,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using MasterLog; // Necessary for your Logger class
-using EvolutiveSystem.Common; // Added for model classes (RegolaMIU, RuleStatistics, TransitionStatistics)
+using EvolutiveSystem.Common;
+using System.Threading; // Added for model classes (RegolaMIU, RuleStatistics, TransitionStatistics)
 // DO NOT use 'using MIU.Core;' here because we are already in the MIU.Core namespace
 
 namespace MIU.Core
@@ -31,6 +32,11 @@ namespace MIU.Core
         public long? AppliedRuleID { get; set; } // The ID of the rule applied to reach this state (null for initial state)
         public string ParentStateStringStandard { get; set; } // The standard (decompressed) MIU string of the parent (null for initial state)
 
+        /// <summary>
+        /// Indica la posizione sequenziale (o indice) di questo stato all'interno del percorso di derivazione.
+        /// Il primo passo del percorso avrà tipicamente un StepNumber di 0 o 1.
+        /// </summary>
+        public int StepNumber { get; set; }
         // NUOVE PROPRIETÀ AGGIUNTE PER PERSISTENZA E STATISTICHE
         /// <summary>
         /// L'ID dello stato corrente nel database MIU_States.
@@ -615,8 +621,9 @@ namespace MIU.Core
         /// <param name="searchId">The ID of the current search for persistence.</param>
         /// <param name="startStringCompressed">The compressed starting string.</param>
         /// <param name="targetStringCompressed">The compressed target string.</param>
+        /// <param name="cancellationToken"> Un token di cancellazione che può essere usato per richiedere l'interruzione anticipata della ricerca.</param>
         /// <returns>The list of PathStepInfo that constitutes the solution, or null if not found.</returns>
-        public static List<PathStepInfo> TrovaDerivazioneAutomatica(long searchId, string startStringCompressed, string targetStringCompressed)
+        public static List<PathStepInfo> TrovaDerivazioneAutomatica(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken)
         {
             LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Automatic search requested from '{startStringCompressed}' to '{targetStringCompressed}'.");
 

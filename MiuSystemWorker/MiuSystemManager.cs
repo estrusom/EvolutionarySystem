@@ -224,7 +224,7 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
                 // RegoleMIUManager userà i suoi eventi (OnRuleApplied, OnSolutionFound) per notificare
                 // il MiuSystemManager di questo Task che gestirà l'aggiornamento delle statistiche in memoria
                 // e la persistenza sul DB tramite il suo taskRepository.
-                List<PathStepInfo> resultPath = RegoleMIUManager.TrovaDerivazioneAutomatica(searchId, startCompressed, targetCompressed);
+                List<PathStepInfo> resultPath = RegoleMIUManager.TrovaDerivazioneAutomatica(searchId, startCompressed, targetCompressed, CancellationToken.None);
 
                 token.ThrowIfCancellationRequested(); // Controlla se è stata richiesta la cancellazione
 

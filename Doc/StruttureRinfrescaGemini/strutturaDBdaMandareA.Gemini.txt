@@ -52,7 +52,6 @@ CREATE TABLE MIU_Searches (
     InitialStringLength INTEGER
 );
 
-
 CREATE TABLE MIU_RuleApplications (
     ApplicationID INTEGER PRIMARY KEY AUTOINCREMENT,
     SearchID      INTEGER NOT NULL,

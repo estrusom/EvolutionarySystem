@@ -78,7 +78,17 @@ namespace MIU.Core
         Dictionary<Tuple<string, long>, TransitionStatistics> LoadTransitionStatistics();
         void SaveTransitionStatistics(Dictionary<Tuple<string, long>, TransitionStatistics> transitionStats);
         Dictionary<Tuple<string, long>, TransitionStatistics> GetTransitionProbabilities();
-
+        /// </summary>
+        /// <param name="initialString">Filtra per la stringa iniziale di una ricerca specifica. Se nullo, non filtra.</param>
+        /// <param name="startDate">Filtra le applicazioni avvenute a partire da questa data. Se nullo, non filtra.</param>
+        /// <param name="endDate">Filtra le applicazioni avvenute fino a questa data. Se nullo, non filtra.</param>
+        /// <param name="maxDepth">Filtra le applicazioni che hanno una profondità minore o uguale a questo valore. Se nullo, non filtra.</param>
+        /// <returns>Una lista di oggetti MIUStringTopologyEdge (dati grezzi dell'applicazione di regole).</returns>
+        Task<List<MIUStringTopologyEdge>> LoadRawRuleApplicationsForTopologyAsync(
+            string initialString = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            int? maxDepth = null);
         // --- NUOVI METODI PER LA GESTIONE DEL CURSORE DI ESPLORAZIONE (Resi asincroni) ---
         /// <summary>
         /// Carica lo stato del cursore di esplorazione dal database.
@@ -91,5 +101,10 @@ namespace MIU.Core
         /// </summary>
         /// <param name="cursor">L'oggetto MIUExplorerCursor da salvare.</param>
         Task SaveExplorerCursorAsync(MIUExplorerCursor cursor);
+        /// <summary>
+        /// Resetta i dati specifici dell'esplorazione (ricerche, applicazioni di regole, percorsi, statistiche di apprendimento)
+        /// nel database, ma mantiene le regole base, i parametri di configurazione e gli stati MIU generati.
+        /// </summary>
+        Task ResetExplorationDataAsync();
     }
 }

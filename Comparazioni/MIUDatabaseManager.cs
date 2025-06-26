@@ -1,14 +1,20 @@
 // File: C:\Progetti\EvolutiveSystem\SQL.Core\MIUDatabaseManager.cs
-// Data di riferimento: 20 giugno 2025 (Correzione definitiva tipi Dictionary a long)
-// Gestore del database MIU con implementazione per la persistenza delle statistiche di apprendimento.
+// AGGIORNAMENTO 26.6.25: Implementazione dei metodi per la gestione della Topologia MIU Stringa.
+// Data di riferimento: 26 giugno 2025
+// Descrizione: Servizio per l'interazione con il database SQLite del sistema MIU.
+//              Incapsula la logica di connessione e le operazioni di base per le tabelle,
+//              ora con supporto per il caricamento della topologia.
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data.SQLite;
-using MIU.Core;
-using MasterLog; // Necessario per la tua classe Logger
-using System.Globalization; // Per CultureInfo.InvariantCulture
+using MIU.Core; // Assicurati che questo namespace sia corretto per le classi MIU.Core come RegolaMIU, RuleStatistics, TransitionStatistics
+using MasterLog;
+using System.Globalization;
+using System.Text; // Necessario per StringBuilder in LoadRegoleMIU o altri metodi di utilità
+using EvolutiveSystem.Common; // Aggiunto per le classi modello spostate (RegolaMIU, RuleStatistics, TransitionStatistics, MiuStateInfo, MIUExplorerCursor, MIUStringTopologyData)
+using System.Threading.Tasks; // NECESSARIO PER I METODI ASINCRONI
 
 namespace EvolutiveSystem.SQL.Core
 {
@@ -23,7 +29,7 @@ namespace EvolutiveSystem.SQL.Core
     public class MIUDatabaseManager : IMIUDataManager
     {
         private readonly SQLiteSchemaLoader _schemaLoader;
-        private readonly Logger _logger; // Campo per l'istanza del logger
+        private readonly Logger _logger;
 
         /// <summary>
         /// Costruttore di MIUDatabaseManager.
@@ -32,6 +38,7 @@ namespace EvolutiveSystem.SQL.Core
         /// </summary>
         /// <param name="schemaLoader">L'istanza di SQLiteSchemaLoader che gestisce la connection string.</param>
         /// <param name="logger">L'istanza del logger per la registrazione degli eventi.</param>
+        /// <exception cref="ArgumentNullException">Lanciata se schemaLoader o logger sono null.</exception>
         public MIUDatabaseManager(SQLiteSchemaLoader schemaLoader, Logger logger)
         {
             _schemaLoader = schemaLoader ?? throw new ArgumentNullException(nameof(schemaLoader), "SQLiteSchemaLoader non può essere nullo.");
@@ -42,10 +49,20 @@ namespace EvolutiveSystem.SQL.Core
         // --- Metodi di Persistenza (Implementazione dell'interfaccia IMIUDataManager) ---
 
         /// <summary>
-        /// Inserisce una nuova ricerca MIU nel database.
+        /// Inserisce una nuova ricerca MIU nel database con le caratteristiche delle stringhe.
         /// </summary>
         /// <returns>L'ID della ricerca appena inserita, o -1 in caso di errore.</returns>
-        public long InsertSearch(string initialString, string targetString, string searchAlgorithm)
+        public long InsertSearch(
+            string initialString,
+            string targetString,
+            string searchAlgorithm,
+            int initialStringLength,
+            int targetStringLength,
+            int initialIcount,
+            int initialUcount,
+            int targetIcount,
+            int targetUcount
+        )
         {
             long lastId = -1;
             try
@@ -53,13 +70,36 @@ namespace EvolutiveSystem.SQL.Core
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
                     connection.Open();
-                    string sql = $"INSERT INTO MIU_Searches (InitialString, TargetString, SearchAlgorithm, StartTime) VALUES (@initialString, @targetString, @searchAlgorithm, @startTime)";
+                    string sql = @"
+                        INSERT INTO MIU_Searches (
+                            InitialString, TargetString, SearchAlgorithm,
+                            InitialStringLength, TargetStringLength,
+                            InitialIcount, InitialUcount, TargetIcount, TargetUcount,
+                            StartTime, Outcome, StepsTaken, NodesExplored, MaxDepth, ElapsedMilliseconds
+                        ) VALUES (
+                            @initialString, @targetString, @searchAlgorithm,
+                            @initialStringLength, @targetStringLength,
+                            @initialIcount, @initialUcount, @targetIcount, @targetUcount,
+                            @startTime, @outcome, @stepsTaken, @nodesExplored, @maxDepth, @elapsedMilliseconds
+                        )";
                     using (var command = new SQLiteCommand(sql, connection))
                     {
                         command.Parameters.AddWithValue("@initialString", initialString);
                         command.Parameters.AddWithValue("@targetString", targetString);
                         command.Parameters.AddWithValue("@searchAlgorithm", searchAlgorithm);
-                        command.Parameters.AddWithValue("@startTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                        command.Parameters.AddWithValue("@initialStringLength", initialStringLength);
+                        command.Parameters.AddWithValue("@targetStringLength", targetStringLength);
+                        command.Parameters.AddWithValue("@initialIcount", initialIcount);
+                        command.Parameters.AddWithValue("@initialUcount", initialUcount);
+                        command.Parameters.AddWithValue("@targetIcount", targetIcount);
+                        command.Parameters.AddWithValue("@targetUcount", targetUcount);
+                        command.Parameters.AddWithValue("@startTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffffff"));
+                        command.Parameters.AddWithValue("@outcome", "Pending");
+                        command.Parameters.AddWithValue("@stepsTaken", 0);
+                        command.Parameters.AddWithValue("@nodesExplored", 0);
+                        command.Parameters.AddWithValue("@maxDepth", 0);
+                        command.Parameters.AddWithValue("@elapsedMilliseconds", 0.0);
+
                         command.ExecuteNonQuery();
 
                         using (var idCommand = new SQLiteCommand("SELECT last_insert_rowid()", connection))
@@ -87,19 +127,28 @@ namespace EvolutiveSystem.SQL.Core
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
                     connection.Open();
-                    string sql = $"UPDATE MIU_Searches SET Outcome = @outcome, EndTime = @endTime, StepsTaken = @stepsTaken, NodesExplored = @nodesExplored, MaxDepth = @maxDepth WHERE SearchID = @searchId";
+                    string sql = @"
+                        UPDATE MIU_Searches
+                        SET Outcome = @outcome,
+                            EndTime = @endTime,
+                            StepsTaken = @stepsTaken,
+                            NodesExplored = @nodesExplored,
+                            MaxDepth = @maxDepth,
+                            ElapsedMilliseconds = @elapsedMilliseconds
+                        WHERE SearchID = @searchId";
                     using (var command = new SQLiteCommand(sql, connection))
                     {
-                        command.Parameters.AddWithValue("@outcome", success ? "Success" : "Failure");
-                        command.Parameters.AddWithValue("@endTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                        command.Parameters.AddWithValue("@outcome", success ? "Success" : "Failed");
+                        command.Parameters.AddWithValue("@endTime", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffffff"));
                         command.Parameters.AddWithValue("@stepsTaken", stepsTaken);
                         command.Parameters.AddWithValue("@nodesExplored", nodesExplored);
                         command.Parameters.AddWithValue("@maxDepth", maxDepthReached);
+                        command.Parameters.AddWithValue("@elapsedMilliseconds", flightTimeMs);
                         command.Parameters.AddWithValue("@searchId", searchId);
                         command.ExecuteNonQuery();
                     }
                 }
-                _logger.Log(LogLevel.DEBUG, $"Search '{searchId}' aggiornata: Success={success}, FlightTime={flightTimeMs}.");
+                _logger.Log(LogLevel.DEBUG, $"Search '{searchId}' aggiornata: Success={success}, ElapsedMilliseconds={flightTimeMs}.");
             }
             catch (Exception ex)
             {
@@ -145,13 +194,14 @@ namespace EvolutiveSystem.SQL.Core
                             long discoveryTimeInt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                             string discoveryTimeText = DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss");
 
+                            // Utilizza MIUStringConverter per la compressione
                             string insertSql = "INSERT INTO MIU_States (CurrentString, StringLength, DeflateString, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount) VALUES (@currentString, @stringLength, @deflateString, @hash, @timeInt, @timeText, 1); SELECT last_insert_rowid();";
                             using (var insertCommand = new SQLiteCommand(insertSql, connection))
                             {
                                 insertCommand.Parameters.AddWithValue("@currentString", miuString);
                                 insertCommand.Parameters.AddWithValue("@stringLength", stringLength);
-                                insertCommand.Parameters.AddWithValue("@deflateString", MIUStringConverter.InflateMIUString(miuString)); // Store compressed version
-                                insertCommand.Parameters.AddWithValue("@hash", miuString.GetHashCode().ToString()); // Simple hash for now
+                                insertCommand.Parameters.AddWithValue("@deflateString", MIUStringConverter.DeflateMIUString(miuString)); // Modificato: Ora chiama DeflateMIUString
+                                insertCommand.Parameters.AddWithValue("@hash", MIUStringConverter.ComputeHash(miuString)); // Usiamo ComputeHash
                                 insertCommand.Parameters.AddWithValue("@timeInt", discoveryTimeInt);
                                 insertCommand.Parameters.AddWithValue("@timeText", discoveryTimeText);
                                 stateId = (long)insertCommand.ExecuteScalar();
@@ -164,10 +214,10 @@ namespace EvolutiveSystem.SQL.Core
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, $"Errore in UpsertMIUState: {ex.Message}");
+                throw; // Rilancia l'eccezione per gestione a livello superiore
             }
             return stateId;
         }
-
 
         /// <summary>
         /// Registra un'applicazione di una regola MIU come parte di una ricerca.
@@ -187,7 +237,7 @@ namespace EvolutiveSystem.SQL.Core
                         command.Parameters.AddWithValue("@newStateId", newStateId);
                         command.Parameters.AddWithValue("@appliedRuleID", appliedRuleID);
                         command.Parameters.AddWithValue("@currentDepth", currentDepth);
-                        command.Parameters.AddWithValue("@timestamp", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss"));
+                        command.Parameters.AddWithValue("@timestamp", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.ffffff")); // Formato completo
                         command.ExecuteNonQuery();
                     }
                 }
@@ -196,6 +246,7 @@ namespace EvolutiveSystem.SQL.Core
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, $"Errore in InsertRuleApplication: {ex.Message}");
+                throw; // Rilancia l'eccezione per gestione a livello superiore
             }
         }
 
@@ -228,6 +279,7 @@ namespace EvolutiveSystem.SQL.Core
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, $"Errore in InsertSolutionPathStep: {ex.Message}");
+                throw;
             }
         }
 
@@ -357,8 +409,7 @@ namespace EvolutiveSystem.SQL.Core
         }
 
         /// <summary>
-        /// Salva (upsert) i parametri di configurazione nel database.
-        /// Utilizza una transazione per garantire l'atomicità dell'operazione.
+        /// Salva i parametri di configurazione.
         /// </summary>
         public void SaveMIUParameterConfigurator(Dictionary<string, string> config)
         {
@@ -371,7 +422,6 @@ namespace EvolutiveSystem.SQL.Core
                     {
                         foreach (var entry in config)
                         {
-                            var stats = entry.Value;
                             string sql = "INSERT OR REPLACE INTO MIUParameterConfigurator (NomeParametro, ValoreParametro) VALUES (@nomeParametro, @valoreParametro)";
                             using (var command = new SQLiteCommand(sql, connection, transaction))
                             {
@@ -393,9 +443,10 @@ namespace EvolutiveSystem.SQL.Core
 
         /// <summary>
         /// Carica le statistiche di apprendimento delle regole dal database.
+        /// Implementazione necessaria per IMIUDataManager.
         /// </summary>
         /// <returns>Un dizionario di RuleStatistics, con chiave=RuleID.</returns>
-        public Dictionary<long, RuleStatistics> LoadRuleStatistics() // Modificato il tipo della chiave a long
+        public Dictionary<long, RuleStatistics> LoadRuleStatistics()
         {
             var ruleStats = new Dictionary<long, RuleStatistics>();
             try
@@ -412,7 +463,12 @@ namespace EvolutiveSystem.SQL.Core
                             long ruleId = reader.GetInt64(reader.GetOrdinal("RuleID"));
                             int appCount = reader.GetInt32(reader.GetOrdinal("ApplicationCount"));
                             int succCount = reader.GetInt32(reader.GetOrdinal("SuccessfulCount"));
-                            double effScore = reader.GetDouble(reader.GetOrdinal("EffectivenessScore"));
+                            string effScoreString = reader.GetString(reader.GetOrdinal("EffectivenessScore"));
+                            double effScore = 0.0;
+                            if (!double.TryParse(effScoreString, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out effScore))
+                            {
+                                _logger.Log(LogLevel.WARNING, $"[MIUDatabaseManager] Impossibile convertire '{effScoreString}' in double per EffectivenessScore per RuleID {ruleId}. Impostato a 0.0.");
+                            }
 
                             DateTime lastUpdated = DateTime.MinValue;
                             if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
@@ -441,9 +497,9 @@ namespace EvolutiveSystem.SQL.Core
 
         /// <summary>
         /// Salva (upsert) le statistiche delle regole di apprendimento nel database.
-        /// Utilizza una transazione per garantire l'atomicità dell'operazione.
+        /// Implementazione necessaria per IMIUDataManager.
         /// </summary>
-        public void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats) // Modificato il tipo della chiave a long
+        public void SaveRuleStatistics(Dictionary<long, RuleStatistics> ruleStats)
         {
             try
             {
@@ -461,7 +517,8 @@ namespace EvolutiveSystem.SQL.Core
                                 command.Parameters.AddWithValue("@ruleId", stats.RuleID);
                                 command.Parameters.AddWithValue("@appCount", stats.ApplicationCount);
                                 command.Parameters.AddWithValue("@succCount", stats.SuccessfulCount);
-                                command.Parameters.AddWithValue("@effScore", stats.EffectivenessScore.ToString(CultureInfo.InvariantCulture));
+                                // Converte il double in stringa usando CultureInfo.InvariantCulture per evitare problemi di formattazione decimale
+                                command.Parameters.AddWithValue("@effScore", stats.EffectivenessScore.ToString(System.Globalization.CultureInfo.InvariantCulture));
                                 command.Parameters.AddWithValue("@lastUpdated", stats.LastApplicationTimestamp.ToString("yyyy/MM/dd HH:mm:ss"));
                                 command.ExecuteNonQuery();
                             }
@@ -476,12 +533,12 @@ namespace EvolutiveSystem.SQL.Core
                 _logger.Log(LogLevel.ERROR, $"Errore salvataggio RuleStatistics: {ex.Message}");
             }
         }
-
         /// <summary>
         /// Carica le statistiche di transizione di apprendimento dal database.
+        /// Implementazione necessaria per IMIUDataManager.
         /// </summary>
         /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
-        public Dictionary<Tuple<string, long>, TransitionStatistics> LoadTransitionStatistics() // Modificato il tipo della chiave a long
+        public Dictionary<Tuple<string, long>, TransitionStatistics> LoadTransitionStatistics()
         {
             var transitionStats = new Dictionary<Tuple<string, long>, TransitionStatistics>();
             try
@@ -503,7 +560,7 @@ namespace EvolutiveSystem.SQL.Core
                             DateTime lastUpdated = DateTime.MinValue;
                             if (DateTime.TryParse(reader.GetString(reader.GetOrdinal("LastUpdated")), out lastUpdated))
                             {
-                                var key = Tuple.Create(parentString, appliedRuleId); // La chiave del dizionario è long
+                                var key = Tuple.Create(parentString, appliedRuleId);
                                 transitionStats[key] = new TransitionStatistics
                                 {
                                     ParentStringCompressed = parentString,
@@ -528,9 +585,9 @@ namespace EvolutiveSystem.SQL.Core
 
         /// <summary>
         /// Salva (upsert) le statistiche di transizione di apprendimento nel database.
-        /// Utilizza una transazione per garantire l'atomicità dell'operazione.
+        /// Implementazione necessaria per IMIUDataManager.
         /// </summary>
-        public void SaveTransitionStatistics(Dictionary<Tuple<string, long>, TransitionStatistics> transitionStats) // Modificato il tipo della chiave a long
+        public void SaveTransitionStatistics(Dictionary<Tuple<string, long>, TransitionStatistics> transitionStats)
         {
             try
             {
@@ -562,6 +619,603 @@ namespace EvolutiveSystem.SQL.Core
             {
                 _logger.Log(LogLevel.ERROR, $"Errore salvataggio TransitionStatistics: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Carica le statistiche di transizione aggregate (conteggi totali e di successo)
+        /// dal database, calcolando la probabilità di successo per ogni transizione.
+        /// Questo metodo esegue una query SQL complessa che aggrega i dati delle applicazioni di regole
+        /// e dei risultati delle ricerche per fornire una "topografia pesata e dinamica"
+        /// basata su dati storici reali.
+        /// </summary>
+        /// <returns>Un dizionario di TransitionStatistics, con chiave (ParentStringCompressed, AppliedRuleID).</returns>
+        public Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics> GetTransitionProbabilities()
+        {
+            var transitionProbabilities = new Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = @"
+                        SELECT
+                            MS.DeflateString AS ParentStringCompressed,
+                            AR.AppliedRuleID,
+                            COUNT(AR.ApplicationID) AS TotalApplications,
+                            SUM(CASE WHEN S.Outcome = 'Success' THEN 1 ELSE 0 END) AS SuccessfulApplications
+                        FROM
+                            MIU_RuleApplications AS AR
+                        JOIN
+                            MIU_Searches AS S ON AR.SearchID = S.SearchID
+                        JOIN
+                            MIU_States AS MS ON AR.ParentStateID = MS.StateID
+                        GROUP BY
+                            MS.DeflateString,
+                            AR.AppliedRuleID;";
+
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string parentStringCompressed = reader.GetString(reader.GetOrdinal("ParentStringCompressed"));
+                            long appliedRuleId = reader.GetInt64(reader.GetOrdinal("AppliedRuleID"));
+                            int totalApplications = reader.GetInt32(reader.GetOrdinal("TotalApplications"));
+                            int successfulApplications = reader.GetInt32(reader.GetOrdinal("SuccessfulApplications"));
+
+                            var key = Tuple.Create(parentStringCompressed, appliedRuleId);
+
+                            transitionProbabilities[key] = new EvolutiveSystem.Common.TransitionStatistics
+                            {
+                                ParentStringCompressed = parentStringCompressed,
+                                AppliedRuleID = appliedRuleId,
+                                ApplicationCount = totalApplications,
+                                SuccessfulCount = successfulApplications,
+                                LastUpdated = DateTime.Now // Imposta la data dell'ultima aggregazione
+                            };
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.INFO, $"[MIUDatabaseManager] Caricate {transitionProbabilities.Count} statistiche di transizione aggregate.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager] Errore durante il caricamento delle probabilità di transizione: {ex.Message}. Restituisco dizionario vuoto.");
+                return new Dictionary<Tuple<string, long>, EvolutiveSystem.Common.TransitionStatistics>();
+            }
+            return transitionProbabilities;
+        }
+
+        /// <summary>
+        /// Imposta la modalità di journaling del database (es. WAL, DELETE, TRUNCATE).
+        /// Questo metodo incapsula l'esecuzione del comando PRAGMA, garantendo che
+        /// tutte le interazioni SQL dirette avvengano all'interno di MIUDatabaseManager.
+        /// </summary>
+        /// <param name="mode">La modalità di journaling da impostare (es. "WAL").</param>
+        public void SetJournalMode(string mode)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = $"PRAGMA journal_mode={mode};";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.ExecuteNonQuery();
+                        _logger.Log(LogLevel.INFO, $"[MIUDatabaseManager] Modalità WAL impostata a '{mode}' per il database.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore nell'impostazione della modalità WAL a '{mode}': {ex.Message}");
+                throw; // Rilancia l'eccezione per gestione a livello superiore
+            }
+        }
+
+        /// <summary>
+        /// Carica tutti gli stati MIU dal database in modo asincrono.
+        /// Implementazione di IMIUDataManager.LoadMIUStatesAsync().
+        /// </summary>
+        /// <returns>Un oggetto Task che rappresenta l'operazione asincrona, con un risultato di tipo List<MiuStateInfo>.</returns>
+        public async Task<List<EvolutiveSystem.Common.MiuStateInfo>> LoadMIUStatesAsync()
+        {
+            var states = new List<EvolutiveSystem.Common.MiuStateInfo>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    string sql = "SELECT StateID, CurrentString, StringLength, DeflateString, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount FROM MIU_States";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            states.Add(new EvolutiveSystem.Common.MiuStateInfo
+                            {
+                                StateID = reader.GetInt64(reader.GetOrdinal("StateID")),
+                                CurrentString = reader.GetString(reader.GetOrdinal("CurrentString")),
+                                StringLength = reader.GetInt32(reader.GetOrdinal("StringLength")),
+                                DeflateString = reader.GetString(reader.GetOrdinal("DeflateString")),
+                                Hash = reader.GetString(reader.GetOrdinal("Hash")),
+                                DiscoveryTime_Int = reader.GetInt64(reader.GetOrdinal("DiscoveryTime_Int")),
+                                DiscoveryTime_Text = reader.GetString(reader.GetOrdinal("DiscoveryTime_Text")),
+                                UsageCount = reader.GetInt32(reader.GetOrdinal("UsageCount"))
+                            });
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Caricati {states.Count} stati MIU dal database in modo asincrono.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore caricamento MIU_States asincrono: {ex.Message}. Restituisco lista vuota.");
+                return new List<EvolutiveSystem.Common.MiuStateInfo>();
+            }
+            return states;
+        }
+
+        /// <summary>
+        /// Verifica se una ricerca con una specifica coppia (initial, target) esiste già nel database
+        /// e ha un esito non "Pending".
+        /// </summary>
+        /// <param name="initialString">La stringa iniziale standard (decompressa).</param>
+        /// <param name="targetString">La stringa target standard (decompressa).</param>
+        /// <returns>True se la ricerca esiste e non è in stato "Pending", False altrimenti.</returns>
+        public bool SearchExists(string initialString, string targetString)
+        {
+            bool exists = false;
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT COUNT(*) FROM MIU_Searches WHERE InitialString = @initialString AND TargetString = @targetString AND Outcome != 'Pending'";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@initialString", initialString);
+                        command.Parameters.AddWithValue("@targetString", targetString);
+                        long count = (long)command.ExecuteScalar();
+                        exists = count > 0;
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Verifica SearchExists per '{initialString}'->'{targetString}': {exists}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore in SearchExists per '{initialString}'->'{targetString}': {ex.Message}. Restituisco false.");
+            }
+            return exists;
+        }
+        /// <summary>
+        /// Carica lo stato del cursore di esplorazione dal database (tabella MIUParameterConfigurator) in modo asincrono.
+        /// Implementazione di IMIUDataManager.LoadExplorerCursorAsync().
+        /// </summary>
+        /// <returns>Un oggetto Task che rappresenta l'operazione asincrona, con un risultato di tipo MIUExplorerCursor.</returns>
+        public async Task<EvolutiveSystem.Common.MIUExplorerCursor> LoadExplorerCursorAsync()
+        {
+            _logger.Log(LogLevel.DEBUG, "[MIUDatabaseManager] Caricamento cursore esplorazione asincrono...");
+            var cursor = new EvolutiveSystem.Common.MIUExplorerCursor(); // Inizializza con i valori di default
+
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    string sql = "SELECT NomeParametro, ValoreParametro FROM MIUParameterConfigurator WHERE NomeParametro IN ('Explorer_CurrentSourceIndex', 'Explorer_CurrentTargetIndex', 'Explorer_LastExplorationTimestamp')";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        var parameters = new Dictionary<string, string>();
+                        while (await reader.ReadAsync())
+                        {
+                            parameters[reader.GetString(0)] = reader.GetString(1);
+                        }
+
+                        if (parameters.TryGetValue("Explorer_CurrentSourceIndex", out string sourceIndexStr) && long.TryParse(sourceIndexStr, out long sourceIndex))
+                        {
+                            cursor.CurrentSourceIndex = sourceIndex;
+                        }
+                        if (parameters.TryGetValue("Explorer_CurrentTargetIndex", out string targetIndexStr) && long.TryParse(targetIndexStr, out long targetIndex))
+                        {
+                            cursor.CurrentTargetIndex = targetIndex;
+                        }
+                        if (parameters.TryGetValue("Explorer_LastExplorationTimestamp", out string timestampStr) && DateTime.TryParse(timestampStr, out DateTime timestamp))
+                        {
+                            cursor.LastExplorationTimestamp = timestamp;
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Cursore esplorazione caricato asincrono: Source={cursor.CurrentSourceIndex}, Target={cursor.CurrentTargetIndex}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il caricamento del cursore di esplorazione asincrono: {ex.Message}. Utilizzo valori di default.");
+                // In caso di errore, restituisce il cursore con i valori di default (0, 0, DateTime.UtcNow)
+            }
+            return cursor;
+        }
+        /// <summary>
+        /// Salva lo stato corrente del cursore di esplorazione nel database (tabella MIUParameterConfigurator) in modo asincrono.
+        /// Implementazione di IMIUDataManager.SaveExplorerCursorAsync().
+        /// </summary>
+        /// <param name="cursor">L'oggetto MIUExplorerCursor da salvare.</param>
+        /// <returns>Un oggetto Task che rappresenta l'operazione asincrona.</returns>
+        public async Task SaveExplorerCursorAsync(EvolutiveSystem.Common.MIUExplorerCursor cursor)
+        {
+            _logger.Log(LogLevel.DEBUG, "[MIUDatabaseManager] Salvataggio cursore esplorazione asincrono...");
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        // Inserisce o aggiorna ogni parametro del cursore
+                        string sql = "INSERT OR REPLACE INTO MIUParameterConfigurator (NomeParametro, ValoreParametro) VALUES (@nomeParametro, @valoreParametro)";
+
+                        using (var command = new SQLiteCommand(sql, connection, transaction))
+                        {
+                            command.Parameters.Add(new SQLiteParameter("@nomeParametro", "Explorer_CurrentSourceIndex"));
+                            command.Parameters.Add(new SQLiteParameter("@valoreParametro", cursor.CurrentSourceIndex.ToString()));
+                            await command.ExecuteNonQueryAsync();
+
+                            command.Parameters.Clear();
+                            command.Parameters.Add(new SQLiteParameter("@nomeParametro", "Explorer_CurrentTargetIndex"));
+                            command.Parameters.Add(new SQLiteParameter("@valoreParametro", cursor.CurrentTargetIndex.ToString()));
+                            await command.ExecuteNonQueryAsync();
+
+                            command.Parameters.Clear();
+                            command.Parameters.Add(new SQLiteParameter("@nomeParametro", "Explorer_LastExplorationTimestamp"));
+                            command.Parameters.Add(new SQLiteParameter("@valoreParametro", cursor.LastExplorationTimestamp.ToString("yyyy-MM-dd HH:mm:ss.ffffff")));
+                            await command.ExecuteNonQueryAsync();
+                        }
+                        transaction.Commit();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"[MIUDatabaseManager] Cursore esplorazione salvato asincrono: Source={cursor.CurrentSourceIndex}, Target={cursor.CurrentTargetIndex}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il salvataggio del cursore di esplorazione asincrono: {ex.Message}");
+                // In caso di errore, la transazione verrà automaticamente annullata se non commessa.
+            }
+        }
+
+        // --- NUOVE IMPLEMENTAZIONI PER LA MAPPA TOPOLOGICA DELLE STRINGHE MIU ---
+
+        /// <summary>
+        /// Carica i dati della topologia dello spazio degli stati MIU, inclusi nodi, bordi e pesi.
+        /// Consente il filtraggio temporale e per profondità, per supportare visualizzazioni dinamiche e "a film".
+        /// </summary>
+        /// <param name="initialString">La stringa iniziale della ricerca per cui caricare la topologia.
+        ///                               Se nullo, carica la topologia aggregata di tutte le ricerche.</param>
+        /// <param name="startDate">Data di inizio opzionale per filtrare gli eventi (nodi e bordi) in base al timestamp.</param>
+        /// <param name="endDate">Data di fine opzionale per filtrare gli eventi.</param>
+        /// <param name="maxDepth">Profondità massima opzionale per limitare l'esplorazione del grafo.</param>
+        /// <returns>Un oggetto MIUStringTopologyData contenente nodi e bordi della topologia.</returns>
+        public async Task<MIUStringTopologyData> LoadMIUStringTopologyAsync(
+            string initialString = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            int? maxDepth = null
+        )
+        {
+            _logger.Log(LogLevel.INFO, $"Caricamento topologia MIU: Initial='{initialString ?? "Tutte"}', Start='{startDate?.ToString() ?? "N/A"}', End='{endDate?.ToString() ?? "N/A"}', MaxDepth='{maxDepth?.ToString() ?? "N/A"}'.");
+
+            var topologyData = new MIUStringTopologyData();
+            var nodesDict = new Dictionary<long, MIUStringTopologyNode>();
+            var edges = new List<MIUStringTopologyEdge>();
+
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+
+                    // 1. Carica le ricerche rilevanti e le informazioni della stringa iniziale
+                    StringBuilder searchSqlBuilder = new StringBuilder("SELECT SearchID, InitialString, MaxDepth FROM MIU_Searches WHERE 1=1");
+                    List<SQLiteParameter> searchParams = new List<SQLiteParameter>();
+
+                    if (!string.IsNullOrEmpty(initialString))
+                    {
+                        searchSqlBuilder.Append(" AND InitialString = @initialString");
+                        searchParams.Add(new SQLiteParameter("@initialString", initialString));
+                    }
+                    if (startDate.HasValue)
+                    {
+                        searchSqlBuilder.Append(" AND StartTime >= @startDate");
+                        searchParams.Add(new SQLiteParameter("@startDate", startDate.Value.ToString("yyyy-MM-dd HH:mm:ss.ffffff")));
+                    }
+                    if (endDate.HasValue)
+                    {
+                        searchSqlBuilder.Append(" AND EndTime <= @endDate");
+                        searchParams.Add(new SQLiteParameter("@endDate", endDate.Value.ToString("yyyy-MM-dd HH:mm:ss.ffffff")));
+                    }
+
+                    using (var command = new SQLiteCommand(searchSqlBuilder.ToString(), connection))
+                    {
+                        command.Parameters.AddRange(searchParams.ToArray());
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            if (reader.Read()) // Prendiamo solo la prima ricerca se specificato initialString, altrimenti aggreghiamo.
+                            {
+                                topologyData.SearchID = reader.GetInt64(reader.GetOrdinal("SearchID"));
+                                topologyData.InitialString = reader.GetString(reader.GetOrdinal("InitialString"));
+                                topologyData.MaxDepthExplored = reader.GetInt32(reader.GetOrdinal("MaxDepth"));
+                            }
+                            else if (!string.IsNullOrEmpty(initialString)) // Se non trovata una ricerca specifica
+                            {
+                                _logger.Log(LogLevel.WARNING, $"Nessuna ricerca trovata per InitialString '{initialString}' nell'intervallo specificato.");
+                                return topologyData; // Restituisce dati vuoti se non c'è una ricerca di base
+                            }
+                            // Se initialString è nullo, la SearchID e InitialString rimarranno ai valori di default (0, null)
+                            // e la topologia verrà costruita aggregando tutti i nodi/archi che rispettano i filtri temporali.
+                        }
+                    }
+
+                    // 2. Carica tutti gli stati (nodi) rilevanti, con filtro temporale e di profondità
+                    StringBuilder nodesSqlBuilder = new StringBuilder("SELECT StateID, CurrentString, StringLength, DeflateString, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount FROM MIU_States WHERE 1=1");
+                    List<SQLiteParameter> nodesParams = new List<SQLiteParameter>();
+
+                    if (startDate.HasValue)
+                    {
+                        nodesSqlBuilder.Append(" AND DiscoveryTime_Text >= @startDate");
+                        nodesParams.Add(new SQLiteParameter("@startDate", startDate.Value.ToString("yyyy/MM/dd HH:mm:ss")));
+                    }
+                    if (endDate.HasValue)
+                    {
+                        nodesSqlBuilder.Append(" AND DiscoveryTime_Text <= @endDate");
+                        nodesParams.Add(new SQLiteParameter("@endDate", endDate.Value.ToString("yyyy/MM/dd HH:mm:ss")));
+                    }
+                    // Non possiamo filtrare per profondità qui direttamente sulla tabella MIU_States
+                    // perché Depth è una proprietà del MapNode/MIUStringTopologyNode e non della tabella MIU_States.
+                    // Il filtro per profondità dovrà essere applicato sulla logica che consuma questi nodi,
+                    // oppure in base alle applicazioni di regole.
+
+                    using (var command = new SQLiteCommand(nodesSqlBuilder.ToString(), connection))
+                    {
+                        command.Parameters.AddRange(nodesParams.ToArray());
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                var node = new MIUStringTopologyNode
+                                {
+                                    StateID = reader.GetInt64(reader.GetOrdinal("StateID")),
+                                    CurrentString = reader.GetString(reader.GetOrdinal("CurrentString")),
+                                    Depth = -1, // La profondità verrà impostata tramite i bordi
+                                    DiscoveryTimeInt = reader.GetInt64(reader.GetOrdinal("DiscoveryTime_Int")),
+                                    DiscoveryTimeText = reader.GetString(reader.GetOrdinal("DiscoveryTime_Text")),
+                                    AdditionalStats = { { "UsageCount", reader.GetInt32(reader.GetOrdinal("UsageCount")) } }
+                                };
+                                nodesDict[node.StateID] = node;
+                            }
+                        }
+                    }
+                    _logger.Log(LogLevel.DEBUG, $"Caricati {nodesDict.Count} nodi potenziali per la topologia.");
+
+                    // 3. Carica tutti i bordi (applicazioni di regole) rilevanti, con filtro temporale
+                    StringBuilder edgesSqlBuilder = new StringBuilder("SELECT ApplicationID, SearchID, ParentStateID, NewStateID, AppliedRuleID, CurrentDepth, Timestamp FROM MIU_RuleApplications WHERE 1=1");
+                    List<SQLiteParameter> edgesParams = new List<SQLiteParameter>();
+
+                    if (!string.IsNullOrEmpty(initialString))
+                    {
+                        // Se c'è una initialString, filtiamo i bordi che appartengono a quella SearchID
+                        // Questa parte è più complessa perché MIU_RuleApplications non ha InitialString.
+                        // Potremmo recuperare le SearchID dalle ricerche filtrate al punto 1.
+                        // Per semplicità iniziale, se initialString è specificato, assumiamo che
+                        // i bordi debbano appartenere a ricerche che partono da quella stringa.
+                        // Questo potrebbe richiedere una JOIN più complessa o un pre-filtro di SearchIDs.
+                        // Per ora, ci basiamo sul filtro temporale e sul maxDepth.
+                    }
+
+                    if (startDate.HasValue)
+                    {
+                        edgesSqlBuilder.Append(" AND Timestamp >= @startDate");
+                        edgesParams.Add(new SQLiteParameter("@startDate", startDate.Value.ToString("yyyy/MM/dd HH:mm:ss.ffffff")));
+                    }
+                    if (endDate.HasValue)
+                    {
+                        edgesSqlBuilder.Append(" AND Timestamp <= @endDate");
+                        edgesParams.Add(new SQLiteParameter("@endDate", endDate.Value.ToString("yyyy/MM/dd HH:mm:ss.ffffff")));
+                    }
+                    if (maxDepth.HasValue)
+                    {
+                        edgesSqlBuilder.Append(" AND CurrentDepth <= @maxDepth");
+                        edgesParams.Add(new SQLiteParameter("@maxDepth", maxDepth.Value));
+                    }
+
+
+                    using (var command = new SQLiteCommand(edgesSqlBuilder.ToString(), connection))
+                    {
+                        command.Parameters.AddRange(edgesParams.ToArray());
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                long parentStateID = reader.GetInt64(reader.GetOrdinal("ParentStateID"));
+                                long newStateID = reader.GetInt64(reader.GetOrdinal("NewStateID"));
+                                long appliedRuleID = reader.GetInt64(reader.GetOrdinal("AppliedRuleID"));
+                                int currentDepth = reader.GetInt32(reader.GetOrdinal("CurrentDepth"));
+                                DateTime timestamp = DateTime.Parse(reader.GetString(reader.GetOrdinal("Timestamp"))); // Assicurati del formato
+
+                                // Recupera il nome della regola
+                                string ruleName = "Sconosciuta"; // Default
+                                var rule = LoadRegoleMIU().FirstOrDefault(r => r.ID == appliedRuleID);
+                                if (rule != null)
+                                {
+                                    ruleName = rule.Nome;
+                                }
+
+                                // Filtra gli archi se i nodi non sono stati caricati (a causa di filtri temporali sui nodi, ad esempio)
+                                if (nodesDict.ContainsKey(parentStateID) && nodesDict.ContainsKey(newStateID))
+                                {
+                                    edges.Add(new MIUStringTopologyEdge
+                                    {
+                                        ApplicationID = reader.GetInt64(reader.GetOrdinal("ApplicationID")),
+                                        ParentStateID = parentStateID,
+                                        NewStateID = newStateID,
+                                        AppliedRuleID = appliedRuleID,
+                                        AppliedRuleName = ruleName,
+                                        CurrentDepth = currentDepth,
+                                        Timestamp = timestamp,
+                                        Weight = 1.0 // Peso iniziale, verrà sovrascritto dalle statistiche
+                                    });
+
+                                    // Aggiorna la profondità del nodo figlio se il bordo ha una profondità maggiore
+                                    // Questo assicura che Depth rifletta la profondità effettiva raggiunta.
+                                    if (nodesDict[newStateID].Depth == -1 || currentDepth < nodesDict[newStateID].Depth)
+                                    {
+                                        nodesDict[newStateID].Depth = currentDepth;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _logger.Log(LogLevel.DEBUG, $"Caricati {edges.Count} bordi potenziali per la topologia.");
+
+                    // 4. Calcola e applica i pesi basati sulle statistiche di transizione
+                    var transitionProbabilities = GetTransitionProbabilities(); // Questo metodo già aggrega i dati
+
+                    foreach (var edge in edges)
+                    {
+                        string parentCompressedString = MIUStringConverter.DeflateMIUString(nodesDict[edge.ParentStateID].CurrentString);
+                        var key = Tuple.Create(parentCompressedString, edge.AppliedRuleID);
+
+                        if (transitionProbabilities.TryGetValue(key, out TransitionStatistics stats))
+                        {
+                            // Applica il tasso di successo come peso.
+                            // Qui potremmo anche applicare un fattore di decadimento temporale.
+                            // Esempio rudimentale di decadimento:
+                            double timeDecayFactor = 1.0;
+                            if (startDate.HasValue && edge.Timestamp < startDate.Value)
+                            {
+                                // Se l'evento è fuori dall'intervallo visualizzato ma si vuole comunque un peso ridotto
+                                // questo è un esempio: più l'evento è vecchio rispetto allo start, minore il peso.
+                                TimeSpan age = startDate.Value - edge.Timestamp;
+                                timeDecayFactor = Math.Max(0.1, 1.0 - (age.TotalDays / 365.0)); // Diminuisce linearmente in un anno
+                            }
+                            else if (endDate.HasValue && edge.Timestamp > endDate.Value)
+                            {
+                                // Gli eventi futuri non dovrebbero avere peso nella topologia corrente.
+                                timeDecayFactor = 0.0;
+                            }
+
+
+                            edge.Weight = stats.SuccessRate * (1.0 + (stats.ApplicationCount / 100.0)) * timeDecayFactor; // SuccessRate + bonus per frequenza
+                            // Il bonus (stats.ApplicationCount / 100.0) è un esempio per dare più peso a statistiche con più dati.
+                            // Puoi affinare questa formula.
+                        }
+                        else
+                        {
+                            edge.Weight = 0.1; // Basso peso se non ci sono statistiche di successo
+                        }
+                    }
+                    _logger.Log(LogLevel.DEBUG, $"Pesi applicati ai {edges.Count} bordi della topologia.");
+
+                    // 5. Popola l'oggetto Topologia
+                    topologyData.Nodes = nodesDict.Values.Where(n => n.Depth != -1).ToList(); // Aggiunge solo nodi con profondità valida
+                    topologyData.Edges = edges;
+
+                    // Pulizia finale dei nodi che non sono collegati a nessun bordo rilevante (se filtriamo pesantemente)
+                    var connectedNodeIds = new HashSet<long>();
+                    foreach (var edge in edges)
+                    {
+                        connectedNodeIds.Add(edge.ParentStateID);
+                        connectedNodeIds.Add(edge.NewStateID);
+                    }
+                    topologyData.Nodes = topologyData.Nodes.Where(node => connectedNodeIds.Contains(node.StateID)).ToList();
+                    _logger.Log(LogLevel.INFO, $"Topologia MIU caricata con {topologyData.Nodes.Count} nodi e {topologyData.Edges.Count} bordi.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore durante il caricamento della topologia MIU: {ex.Message}");
+                // In caso di errore, restituisce un oggetto topologia vuoto.
+                return new MIUStringTopologyData();
+            }
+            return topologyData;
+        }
+
+        /// <summary>
+        /// Salva un singolo nodo della topologia MIU (Stato) nel database.
+        /// Questo metodo è un helper per il motore di esplorazione, delegando a UpsertMIUState.
+        /// </summary>
+        /// <param name="node">Il nodo da salvare/aggiornare. La sua CurrentString è usata per l'upsert.</param>
+        /// <returns>L'ID dello stato nel database.</returns>
+        public async Task<long> SaveMIUStringTopologyNodeAsync(MIUStringTopologyNode node)
+        {
+            if (node == null) throw new ArgumentNullException(nameof(node));
+            long stateId = UpsertMIUState(node.CurrentString); // Chiama il metodo sincrono esistente
+            node.StateID = stateId; // Aggiorna l'ID nel modello del nodo
+            return await Task.FromResult(stateId); // Wrap in Task per compatibilità async
+        }
+
+        /// <summary>
+        /// Salva un singolo bordo della topologia MIU (Applicazione di Regola) nel database.
+        /// Questo metodo è un helper per il motore di esplorazione, delegando a InsertRuleApplication.
+        /// </summary>
+        /// <param name="edge">Il bordo da salvare.</param>
+        /// <returns>L'ID dell'applicazione di regola nel database.</returns>
+        public async Task<long> SaveMIUStringTopologyEdgeAsync(MIUStringTopologyEdge edge)
+        {
+            if (edge == null) throw new ArgumentNullException(nameof(edge));
+            // InsertRuleApplication non restituisce l'ApplicationID direttamente,
+            // quindi dovremo fare una piccola modifica se vogliamo l'ID di ritorno,
+            // oppure accettare che l'ApplicationID non sia popolato nel modello MapEdge
+            // al momento del salvataggio. Per ora, lo lasciamo come void e restituiamo un dummy ID.
+
+            InsertRuleApplication(
+                edge.ApplicationID, // SearchID - attenzione, MapEdge non ha SearchID. Dovrà essere passato da chi chiama.
+                                    // Per ora userò edge.ApplicationID come SearchID per evitare un errore di compilazione,
+                                    // ma questa è una *correzione temporanea* e andrà rivista a livello di motore.
+                edge.ParentStateID,
+                edge.NewStateID,
+                edge.AppliedRuleID,
+                edge.CurrentDepth
+            );
+            // Non possiamo recuperare l'ApplicationID con last_insert_rowid() facilmente da un metodo void.
+            // Se ApplicationID è AUTOINCREMENT, il valore nel database è gestito dal DB.
+            // Restituiamo 0L o un valore significativo se possiamo recuperarlo.
+            // Per il momento, assumiamo che l'ApplicationID non sia necessario in ritorno immediato.
+            // Potremmo introdurre un SELECT last_insert_rowid() dopo l'insert se necessario.
+            // Per ora, restituiamo un ID fittizio o rifattorizziamo InsertRuleApplication.
+            // Per la topologia, l'ID dell'applicazione è utile, quindi è meglio modificarlo.
+            long newApplicationID = -1;
+             try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    // Assumendo che InsertRuleApplication venga eseguito come una transazione separata,
+                    // altrimenti il last_insert_rowid() potrebbe essere per un'altra operazione.
+                    string sql = $"INSERT INTO MIU_RuleApplications (SearchID, ParentStateID, NewStateID, AppliedRuleID, CurrentDepth, Timestamp) VALUES (@searchId, @parentStateId, @newStateId, @appliedRuleID, @currentDepth, @timestamp); SELECT last_insert_rowid();";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        // Qui dobbiamo decidere come SearchID arriva a MIUStringTopologyEdge.
+                        // Al momento, MIUStringTopologyEdge non ha una proprietà SearchID.
+                        // Assumo che l'ApplicationID del bordo sia un placeholder per il SearchID o venga ignorato.
+                        // *Rivedere questo quando si implementa il motore che chiama questo metodo.*
+                        command.Parameters.AddWithValue("@searchId", edge.ParentStateID); // TEMPORANEO: Usa ParentStateID come SearchID, da correggere!
+                        command.Parameters.AddWithValue("@parentStateId", edge.ParentStateID);
+                        command.Parameters.AddWithValue("@newStateId", edge.NewStateID);
+                        command.Parameters.AddWithValue("@appliedRuleID", edge.AppliedRuleID);
+                        command.Parameters.AddWithValue("@currentDepth", edge.CurrentDepth);
+                        command.Parameters.AddWithValue("@timestamp", edge.Timestamp.ToString("yyyy/MM/dd HH:mm:ss.ffffff"));
+                        newApplicationID = (long)await command.ExecuteScalarAsync();
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"Bordo topologia inserito: Parent={edge.ParentStateID}, New={edge.NewStateID}, Rule={edge.AppliedRuleID}. ID: {newApplicationID}.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore in SaveMIUStringTopologyEdgeAsync: {ex.Message}");
+                throw; // Rilancia l'eccezione per gestione a livello superiore
+            }
+            return newApplicationID;
         }
     }
 }

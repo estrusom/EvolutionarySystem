@@ -49,6 +49,7 @@
   <ItemGroup>
     <Compile Include="IMIUDataManager.cs" />
     <Compile Include="IMIURepository.cs" />
+    <Compile Include="IMIUTopologyService.cs" />
     <Compile Include="InflateDeflateMIUstring.cs" />
     <Compile Include="MIURepository.cs" />
     <Compile Include="MIUStringGenerator.cs" />
