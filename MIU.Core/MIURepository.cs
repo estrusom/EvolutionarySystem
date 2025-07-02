@@ -14,7 +14,7 @@ using EvolutiveSystem.Common; // Aggiunto per le classi modello spostate
 
 namespace MIU.Core
 {
-    public class MIURepository : IMIURepository 
+    public class MIURepository : IMIURepository  // <- errore cd0738
     {
         private readonly IMIUDataManager _dataManager;
         private readonly Logger _logger;
@@ -86,11 +86,13 @@ namespace MIU.Core
         /// Inserisce o aggiorna uno stato MIU. Delega al data manager.
         /// </summary>
         /// <param name="miuString">La stringa MIU standard.</param>
-        /// <returns>L'ID dello stato MIU nel database.</returns>
-        public long UpsertMIUState(string miuString)
+        /// <returns>Un Tuple dove Item1 è l'ID dello stato e Item2 è true se la stringa è stata appena inserita (nuova), false se esisteva già.</returns>
+        // *** MODIFICA QUI: CAMBIATO IL TIPO DI RITORNO DA long A Tuple<long, bool> ***
+        public Tuple<long, bool> UpsertMIUState(string miuString)
         {
             _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta UpsertMIUState per '{miuString}'.");
-            return _dataManager.UpsertMIUState(miuString);
+            // *** MODIFICA QUI: ORA RESTITUISCE IL Tuple COMPLETO ***
+            return _dataManager.UpsertMIUState(miuString); // Nessun errore di conversione implicita
         }
 
         /// <summary>

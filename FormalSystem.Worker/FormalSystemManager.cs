@@ -323,8 +323,8 @@ namespace FormalSystem.Worker // Nuovo namespace per il progetto wrapper generic
                 transitionStats.LastUpdated = DateTime.Now;
 
                 // 3. Persisti l'applicazione della regola nel database utilizzando il repository locale all'evento
-                long parentStateId = eventRepository.UpsertMIUState(e.OriginalString);
-                long newStateId = eventRepository.UpsertMIUState(e.NewString);
+                long parentStateId = eventRepository.UpsertMIUState(e.OriginalString).Item1;
+                long newStateId = eventRepository.UpsertMIUState(e.NewString).Item1;
 
                 eventRepository.InsertRuleApplication(
                     e.SearchID, // Utilizza la nuova proprietà SearchID da RuleAppliedEventArgs

@@ -34,4 +34,18 @@ namespace EvolutiveSystem.Common // Namespace per le utilità comuni MIU-specifi
             Message = message;
         }
     }
+    /// <summary>
+    /// *** CLASSE EVENTARGS PER L'EVENTO OnNewStringDiscovered DEL MOTORE 
+    /// </summary>
+    public class NewMiuStringFoundEventArgs : EventArgs
+    {
+        public string NewMiuString { get; }
+        public string DerivationPath { get; }
+
+        public NewMiuStringFoundEventArgs(string newMiuString, string derivationPath)
+        {
+            NewMiuString = newMiuString;
+            DerivationPath = derivationPath;
+        }
+    }
 }

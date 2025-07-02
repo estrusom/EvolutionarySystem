@@ -47,6 +47,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Engine", "E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Services", "EvolutiveSystem.Services\EvolutiveSystem.Services.csproj", "{AE2B69FA-9233-411F-98BC-5FD45AF24167}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Automation", "EvolutiveSystem.Automation\EvolutiveSystem.Automation.csproj", "{96899867-986F-4BC2-A86A-7763F2F894D5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -231,6 +233,14 @@ Global
 		{AE2B69FA-9233-411F-98BC-5FD45AF24167}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AE2B69FA-9233-411F-98BC-5FD45AF24167}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{AE2B69FA-9233-411F-98BC-5FD45AF24167}.Release|ARM64.Build.0 = Release|Any CPU
+		{96899867-986F-4BC2-A86A-7763F2F894D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96899867-986F-4BC2-A86A-7763F2F894D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96899867-986F-4BC2-A86A-7763F2F894D5}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{96899867-986F-4BC2-A86A-7763F2F894D5}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{96899867-986F-4BC2-A86A-7763F2F894D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96899867-986F-4BC2-A86A-7763F2F894D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96899867-986F-4BC2-A86A-7763F2F894D5}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{96899867-986F-4BC2-A86A-7763F2F894D5}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -60,6 +60,14 @@
       <Project>{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}</Project>
       <Name>AsyncSocketServer</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.Automation\EvolutiveSystem.Automation.csproj">
+      <Project>{96899867-986f-4bc2-a86a-7763f2f894d5}</Project>
+      <Name>EvolutiveSystem.Automation</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.Engine\EvolutiveSystem.Engine.csproj">
+      <Project>{0f8a47f7-fdfa-4ada-b372-b0636f2b16f8}</Project>
+      <Name>EvolutiveSystem.Engine</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
       <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
       <Name>EvolutiveSystem.SQL.Core</Name>

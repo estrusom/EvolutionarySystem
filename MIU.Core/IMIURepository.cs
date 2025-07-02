@@ -4,6 +4,7 @@
 // Questa interfaccia include tutti i metodi attualmente utilizzati dall'implementazione concreta
 // di MIURepository nel sistema, per garantire la compilazione e la funzionalità immediata.
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks; // Necessario per metodi asincroni
 using EvolutiveSystem.Common; // Per MiuStateInfo, RuleStatistics, TransitionStatistics, RegolaMIU
@@ -43,9 +44,14 @@ namespace MIU.Core
             int maxDepthReached
         );
 
-        // Metodi per gli stati MIU (tabella MIU_States)
-        long UpsertMIUState(string miuString);
-        // LoadMIUStatesAsync non è qui se MIURepository non lo espone direttamente
+        /// <summary>
+        /// 2025.07.02 01.32
+        /// Inserisce o aggiorna uno stato MIU nel database.
+        /// </summary>
+        /// <param name="miuString">La stringa MIU da inserire/aggiornare.</param>
+        /// <returns>Un Tuple dove Item1 è l'ID dello stato e Item2 è true se la stringa è stata appena inserita (nuova), false se esisteva già.</returns>
+        // *** MODIFICA QUI: CAMBIA IL TIPO DI RITORNO DA long A Tuple<long, bool> ***
+        Tuple<long, bool> UpsertMIUState(string miuString);        // LoadMIUStatesAsync non è qui se MIURepository non lo espone direttamente
         // e se viene chiamato direttamente su IMIUDataManager come nel MIUAutoExplorer.
 
         // Metodi per le applicazioni di regole (tabella MIU_RuleApplications)

@@ -19,6 +19,21 @@ using EvolutiveSystem.Learning; // Per LearningStatisticsManager
 
 namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progetto
 {
+
+    ///// <summary>
+    ///// *** CLASSE EVENTARGS PER L'EVENTO OnNewStringDiscovered DEL MOTORE 
+    ///// </summary>
+    //public class NewMiuStringFoundEventArgs : EventArgs
+    //{
+    //    public string NewMiuString { get; }
+    //    public string DerivationPath { get; }
+
+    //    public NewMiuStringFoundEventArgs(string newMiuString, string derivationPath)
+    //    {
+    //        NewMiuString = newMiuString;
+    //        DerivationPath = derivationPath;
+    //    }
+    //}
     /// <summary>
     /// Motore di derivazione per il sistema MIU.
     /// Implementa IMIUDataProcessingService per orchestrare l'esplorazione dello spazio degli stati,
@@ -44,6 +59,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
 
         public event EventHandler<string> OnExplorationStatusChanged;
         public event EventHandler<int> OnNodesExploredCountChanged;
+        public event EventHandler<NewMiuStringFoundEventArgs> OnNewStringDiscovered;
 
         /// <summary>
         /// Costruttore del motore di derivazione.
@@ -64,6 +80,12 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
             RegoleMIUManager.LoggerInstance = _logger;
 
             _logger.Log(LogLevel.INFO, "[MIUDerivationEngine] Motore di derivazione inizializzato.");
+        }
+
+        // Metodo protetto per sollevare l'evento OnNewStringDiscovered
+        protected virtual void OnNewStringDiscoveredInternal(NewMiuStringFoundEventArgs e)
+        {
+            OnNewStringDiscovered?.Invoke(this, e);
         }
 
         /// <summary>
@@ -116,7 +138,9 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     // Se non ci sono ID salvati nel cursore, persistiamo la stringa iniziale
                     if (cursor.CurrentSourceIndex <= 0)
                     {
-                        initialStringStateId = _dataManager.UpsertMIUState(initialString);
+                        Tuple<long, bool> result = _dataManager.UpsertMIUState(initialString);
+                        initialStringStateId = result.Item1;
+
                         cursor.CurrentSourceIndex = initialStringStateId;
                         _logger.Log(LogLevel.INFO, $"[MIUDerivationEngine] Inizializzato stato di partenza: '{initialString}' (ID: {initialStringStateId}).");
                     }
@@ -133,7 +157,8 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                         else
                         {
                             _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine] Impossibile trovare stato con ID {cursor.CurrentSourceIndex}. Riavvio da '{initialString}'.");
-                            initialStringStateId = _dataManager.UpsertMIUState(initialString);
+                            Tuple<long, bool> result = _dataManager.UpsertMIUState(initialString);
+                            initialStringStateId = result.Item1;
                             cursor.CurrentSourceIndex = initialStringStateId;
                         }
                     }
@@ -256,8 +281,13 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
             _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Rule Applied] {message}");
 
             // Persistenza dello stato originale e del nuovo stato
-            long parentStateId = _dataManager.UpsertMIUState(e.OriginalString);
-            long newStateId = _dataManager.UpsertMIUState(e.NewString);
+
+            Tuple<long, bool> parentStateResult = _dataManager.UpsertMIUState(e.OriginalString);
+            long parentStateId = parentStateResult.Item1;
+
+            Tuple<long, bool> newStateResult = _dataManager.UpsertMIUState(e.NewString);
+            long newStateId = newStateResult.Item1;
+            bool isNewString = newStateResult.Item2; // Questo flag ci dice se la stringa è nuova
 
             // Persistenza dell'applicazione della regola
             _dataManager.InsertRuleApplication(

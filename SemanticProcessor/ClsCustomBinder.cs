@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace SemanticProcessor
 {
+    /// <summary>
+    /// BNuova classe per il bindig dei metodi fornita da Gemini
+    /// </summary>
     class ClsCustomBinder : Binder
     {
         public override FieldInfo BindToField(BindingFlags bindingAttr, FieldInfo[] match, object value, CultureInfo culture)

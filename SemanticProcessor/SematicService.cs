@@ -29,6 +29,10 @@ using System.Collections.Concurrent;
 using SocketManager;
 using System.Data.SQLite;
 using EvolutiveSystem.SQL.Core;
+using MIU.Core;
+using EvolutiveSystem.Learning;
+using EvolutiveSystem.Engine;
+using EvolutiveSystem.Automation;
 
 namespace SemanticProcessor
 {
@@ -62,7 +66,6 @@ namespace SemanticProcessor
         /// Service is pending pause
         /// </summary>
         SERVICE_PAUSE_PENDING = 0x00000006,
-
         /// <summary>
         /// service is in pause
         /// </summary>
@@ -108,21 +111,19 @@ namespace SemanticProcessor
         private const int K_MILLI = 2500;
         [DllImport("advapi32.dll", SetLastError = true)]
         private static extern bool SetServiceStatus(System.IntPtr handle, ref ServiceStatus serviceStatus);
-        // Componente EventLog per scrivere nel registro eventi di Windows
-        private EventLog eventLog1;
+        private EventLog eventLog1; // Componente EventLog per scrivere nel registro eventi di Windows
         private Timer SchedularWD;  //Watch dog scheduling time
         private int TimerWatchDog = 0;
         private short StepStartingService = 0; //Steps for starting the service correctly
         private bool SemaforoDC = false; // (semaforo) serve per evitare l'over run durante l'avvio del servizio
         private int logCountSrv = 0; //Timer for the issuance of the service notification is working
         #region definizioni per logger
-        protected Logger _logger;
+        protected readonly Logger _logger;
         private int swDebug = 0;
         private string _path = "";
         protected Mutex SyncMtxLogger = new Mutex();
         #endregion
         private long HandlerError = 0;
-
         private volatile bool _isRunning = false; // volatile per garantire visibilità tra thread
         // Flag per indicare se il processo semantico è in pausa
         private volatile bool _isPaused = false; // volatile per garantire visibilità tra thread
@@ -130,7 +131,7 @@ namespace SemanticProcessor
         private ManualResetEvent _pauseEvent = new ManualResetEvent(true); // Inizializzato su 'true' (segnale) per partire non in pausa
         protected DateTime today = DateTime.MinValue;
         private string ServiceVer = "";
-        #region
+        #region lettura dati di configurazione dalla tabella 
         private EvolutiveSystem.SQL.Core.SQLiteSchemaLoader schemaLoader;
         private MIU.Core.IMIURepository miuRepositoryInstance;// per potere chiamare le interfacce in IMIURepository 
         private Dictionary<string, string> configParam;
@@ -144,22 +145,29 @@ namespace SemanticProcessor
         private int CommandRunning = 0; // se true c'è un comando in corso 
         #endregion
         private string VersionDate = "07.05.2025";// Cambiare ad ogni release 
-
         private List<Database> _loadedDatabases;
-        private readonly ConcurrentDictionary<string, SemanticClientSocket> _connectedUiClients;
-        private ClsCommandHandlers _commandHandlers;
+        private ConcurrentDictionary<string, SemanticClientSocket> _connectedUiClients;
         #region dichiarazioni per gestire la concorrenza d'accesso a canale socket
-        private static ConcurrentDictionary<string, string> concurrentData = new ConcurrentDictionary<string, string>(); //2025.05.20 lista per accessi concorrenti al clien socket asincrono
         private ConcurrentQueue<Tuple<SocketMessageStructure, Socket>> _receivedMessageQueue;
-        private static SQLiteConnection dbConnection;
+        private SQLiteConnection dbConnection;
         #endregion
-
+        #region *** NUOVI CAMPI PER LE DIPENDENZE DEL MOTORE MIU ***
+        private LearningStatisticsManager _learningStatisticsManager;
+        private MIUDerivationEngine _miuDerivationEngine;
+        private CancellationTokenSource _miuExplorationCancellationTokenSource;
+        private MIU.Core.IMIUDataManager miuDataManagerInstance;
+        // Task per tenere traccia dell'esplorazione MIU, se in background
+        private Task _miuExplorationTask;
+        #endregion
+        #region *** CAMPO PER L'ISTANZA DEL NUOVO SCHEDULER CONTINUO (NUOVA CLASSE) ***
+        private MiuContinuousExplorerScheduler _continuousScheduler; // <--- QUESTA MANCAVA: Istanza creata e gestita
+        #endregion
 #if DEBUG
         private bool firstInDebug = false;
 #endif
 
         /// <summary>
-        /// costrutt
+        /// costruttore servizio
         /// </summary>
         public SemanticProcessorService()
         {
@@ -192,11 +200,9 @@ namespace SemanticProcessor
                 _logger.Log(LogLevel.INFO, string.Format("Log path:{0}", _logger.GetPercorsoCompleto()));
                 today = DateTime.Now;
 
-                //_receivedMessageQueue = new ConcurrentQueue<Tuple<SocketMessageStructure, Socket>>();
-                //_loadedDatabases = new List<Database>();
-                _connectedUiClients = new ConcurrentDictionary<string, SocketManager.SemanticClientSocket>();
+                _connectedUiClients = new ConcurrentDictionary<string, SocketManager.SemanticClientSocket>(); // serve per memorizzare le UI collegate
 
-                commandHandlers = new ClsCommandHandlers(_logger, concurrentData);
+                commandHandlers = new ClsCommandHandlers(_logger);
                 StartServerSocket();
                 if (swDebug > 0)
                 {
@@ -212,7 +218,8 @@ namespace SemanticProcessor
                 this.myStart();
                 swWatchDog(false, 0);
                 StartThread();
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, ClsMessaggiErrore.CustomMsg(ex, thisMethod));
             }
@@ -283,8 +290,7 @@ namespace SemanticProcessor
                 _isRunning = true; // Imposta il flag di esecuzione
                 _isPaused = false; // Assicurati che non sia in pausa all'avvio
                 _pauseEvent.Set(); // Assicurati che l'evento di pausa sia segnalato (non bloccato)
-                //_cancellationTokenSource = new CancellationTokenSource(); // Crea un nuovo token di cancellazione
-
+                
                 serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
                 SetServiceStatus(this.ServiceHandle, ref serviceStatus);
                 this.myStart();
@@ -305,8 +311,8 @@ namespace SemanticProcessor
             {
                 _logger.Log(LogLevel.INFO, "STOP REQUEST");
                 //Salvataggio dei parametri di configurazione di MIU system
-                if (configParam != null)
-                    miuRepositoryInstance.SaveMIUParameterConfigurator(this.configParam);
+                if (this.configParam != null)
+                    this.miuRepositoryInstance.SaveMIUParameterConfigurator(this.configParam);
                 // Segnala al thread del motore semantico di fermarsi
                 _isRunning = false; // Imposta il flag di esecuzione a false
                                     // Assicurati che il thread non sia bloccato in pausa prima di segnalare l'arresto
@@ -786,6 +792,13 @@ namespace SemanticProcessor
                     var call = fInfo.CustomAttributes.First().NamedArguments.Where(CALL => CALL.MemberName == "TockenManaging");
                     if (call.Any())
                     {
+                        var v = fInfo.CustomAttributes.First().NamedArguments.Where(C => C.MemberName == "Method");
+                        if (v.Any())
+                        {
+                            var r = v.First().TypedValue.Value;
+                            var val = ((System.Reflection.TypeInfo)tySktCmd).DeclaredProperties.Where(VAL => VAL.Name.Contains("MethoToBeExecute")).First();
+                            val.SetValue(scktCmd, v.First().TypedValue.Value);
+                        }
                         //var vToken = tySktCmd.GetProperties().Where(A => A.Name == "AccessToken");
                         //if (vToken.Any())
                         {
@@ -935,7 +948,11 @@ namespace SemanticProcessor
                         erCnt = 5;
                         // Invoke the overload.
                         //tyCommandHandlers.InvokeMember(metodo, BindingFlags.InvokeMethod, myCustomBinder, commandHandlers, new Object[] { myO, e.Data, asl });
-                        object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.BufferDati, asl, dbConnection });
+                        object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.BufferDati, asl, this.dbConnection });
+                        if (cmdCom.MethoToBeExecute.Length > 0)
+                        {
+
+                        }
                     }
                     else
                     {
@@ -953,6 +970,10 @@ namespace SemanticProcessor
                             _logger.Log(LogLevel.INFO, "<START COMMAND>");
                             _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
                             object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.BufferDati, asl, _connectedUiClients });
+                            if (cmdCom.MethoToBeExecute.Length > 0)
+                            {
+
+                            }
                         }
                         else
                         {
@@ -969,11 +990,14 @@ namespace SemanticProcessor
                                 metodo = myMethod.Name;
                                 _logger.Log(LogLevel.INFO, "<START COMMAND>");
                                 _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
-                                //object result = myMethod.Invoke(commandHandlers, new Object[] { myO, e.BufferDati, asl, miuRepositoryInstance });
-                                configParam = null;
-                                object[] parameters = new object[] { myO, e.BufferDati, asl, miuRepositoryInstance, configParam };
+                                this.configParam = null;
+                                object[] parameters = new object[] { myO, e.BufferDati, asl, this.miuRepositoryInstance, this.configParam };
                                 myMethod.Invoke(commandHandlers, parameters);
-                                configParam = parameters[4] as Dictionary<string, string>;
+                                this.configParam = parameters[4] as Dictionary<string, string>;
+                                if (cmdCom.MethoToBeExecute.Length > 0)
+                                {
+
+                                }
                             }
                             else
                             {
@@ -990,17 +1014,21 @@ namespace SemanticProcessor
                                     metodo = myMethod.Name;
                                     _logger.Log(LogLevel.INFO, "<START COMMAND>");
                                     _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
-                                    SQLiteConnection dbConnection = null;
-                                    object[] parameters = new object[] { myO, e.BufferDati, asl, dbConnection };
+                                    this.dbConnection = null;
+                                    object[] parameters = new object[] { myO, e.BufferDati, asl, this.dbConnection };
                                     myMethod.Invoke(commandHandlers, parameters);
-
-                                    dbConnection = (SQLiteConnection)parameters[3];
-                                    //this.schemaLoader = new EvolutiveSystem.SQL.Core.SQLiteSchemaLoader(((System.Data.SQLite.SQLiteConnection)parameters[3]).FileName, _logger);
-                                    this.schemaLoader = new EvolutiveSystem.SQL.Core.SQLiteSchemaLoader(dbConnection.FileName, _logger);
+                                    this.dbConnection = (SQLiteConnection)parameters[3];
+                                    this.schemaLoader = new EvolutiveSystem.SQL.Core.SQLiteSchemaLoader(this.dbConnection.FileName, _logger);
                                     this.schemaLoader.InitializeDatabase();
-                                    MIU.Core.IMIUDataManager miuDataManagerInstance = new EvolutiveSystem.SQL.Core.MIUDatabaseManager(schemaLoader, _logger);
+                                    this.miuDataManagerInstance = new EvolutiveSystem.SQL.Core.MIUDatabaseManager(schemaLoader, _logger);
                                     this.miuRepositoryInstance = new MIU.Core.MIURepository(miuDataManagerInstance, _logger);
-                                    
+                                    this._learningStatisticsManager = new LearningStatisticsManager(miuDataManagerInstance, _logger);
+                                    this._miuDerivationEngine = new MIUDerivationEngine(miuDataManagerInstance, this._learningStatisticsManager, _logger);
+                                    commandHandlers.MiuDerivationEngine = this._miuDerivationEngine;
+                                    if (cmdCom.MethoToBeExecute.Length > 0)
+                                    {
+
+                                    }
                                 }
                                 else
                                 {
@@ -1017,12 +1045,73 @@ namespace SemanticProcessor
                                         metodo = myMethod.Name;
                                         _logger.Log(LogLevel.INFO, "<START COMMAND>");
                                         _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
-                                        object[] parameters = new object[] { myO, e.BufferDati, asl, miuRepositoryInstance, configParam };
+                                        object[] parameters = new object[] { myO, e.BufferDati, asl, this.miuRepositoryInstance, this.configParam };
                                         myMethod.Invoke(commandHandlers, parameters);
+                                        if (cmdCom.MethoToBeExecute.Length > 0)
+                                        {
+
+                                        }
                                     }
                                     else
                                     {
-                                        throw new Exception("Command not found");
+                                        // comando tipo save ricerca stringa MIU
+                                        myMethod = tyCommandHandlers.GetMethod(
+                                            cmdCom.CommandSocket, // Nome del metodo
+                                            BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
+                                            myCustomBinder, // Usa il tuo binder per la risoluzione
+                                            new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener) },
+                                            null
+                                        );
+                                        if (myMethod != null)
+                                        {
+                                            metodo = myMethod.Name;
+                                            _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                                            _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
+                                            object[] parameters = new object[] { myO, e.BufferDati, asl};
+                                            myMethod.Invoke(commandHandlers, parameters);
+                                            if (cmdCom.MethoToBeExecute.Length > 0)
+                                            {
+
+                                            }
+                                        }
+                                        else
+                                        {
+                                            // comando tipo CmdMIUautomation
+                                            myMethod = tyCommandHandlers.GetMethod(
+                                                cmdCom.CommandSocket, // Nome del metodo
+                                                BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
+                                                myCustomBinder, // Usa il tuo binder per la risoluzione
+                                                new Type[] { typeof(SocketCommand), typeof(XElement), typeof(AsyncSocketListener), typeof(IMIUDataManager), typeof(IMIURepository), typeof(Dictionary<string, string>), typeof(MiuContinuousExplorerScheduler).MakeByRefType(), },
+                                                null
+                                            );
+                                            if (myMethod != null)
+                                            {
+                                                metodo = myMethod.Name;
+                                                _logger.Log(LogLevel.INFO, "<START COMMAND>");
+                                                _logger.Log(LogLevel.DEBUG, string.Format("{0} {1} param DeviceCommand, string", SemSerRes.logMsgCmdRved, metodo));
+                                                object[] parameters = new object[] { myO, e.BufferDati, asl, this.miuDataManagerInstance, this.miuRepositoryInstance, this.configParam, this._continuousScheduler };
+                                                myMethod.Invoke(commandHandlers, parameters);
+                                                this._continuousScheduler = (MiuContinuousExplorerScheduler)parameters[parameters.Length - 1];
+                                                if (cmdCom.MethoToBeExecute.Length > 0)
+                                                {
+                                                    Type ty = typeof(SemanticProcessorService);
+                                                    myMethod = ty.GetMethod(
+                                                        cmdCom.MethoToBeExecute, // Nome del metodo
+                                                        BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
+                                                        myCustomBinder, // Usa il tuo binder per la risoluzione
+                                                        new Type[] { },
+                                                        null
+                                                    );
+                                                    parameters = new object[] {  };
+                                                    myMethod.Invoke(this, parameters);
+                                                }
+                                            }
+                                            else
+                                            {
+                                                throw new Exception("Command not found");
+                                            }
+                                        }
+                                        
                                     }
                                 }
                             }
@@ -1070,7 +1159,10 @@ namespace SemanticProcessor
                 // swWatchDog(true, IntervalMilliSeconds);
             }
         }
+        public void SetEventAutomation()
+        {
 
+        }
         private void Asl_ErrorFromSocket(object sender, string e)
         {
             CommandRunning = 0;

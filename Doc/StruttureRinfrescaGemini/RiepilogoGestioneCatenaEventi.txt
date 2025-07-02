@@ -1,0 +1,25 @@
+Abbiamo modificato nel progetto MIU.Core.csproj nel modulo IMIUDataManager.cs nella classe IMIURepository 
+Tuple<long, bool> UpsertMIUState(string miuString);
+
+Abbiamo modificato nel progetto CommandHandlers.csproj nel modulo IMIURepository.cs in IMIURepository UpsertMIUState è diventato così:
+Tuple<long, bool> UpsertMIUState(string miuString);
+
+Ciò ha generato errori in tutti i punti dove le interfacce sono usate ma li abbiamo corretti tutti.
+
+nel progetto EvolutiveSystem.Engine.csproj, nel fileMIUDerivationEngine.cs in MIUDerivationEngine abbiamo aggiunto la classe 
+ public class NewMiuStringFoundEventArgs : EventArgs
+ {
+     public string NewMiuString { get; }
+     public string DerivationPath { get; }
+
+     public NewMiuStringFoundEventArgs(string newMiuString, string derivationPath)
+     {
+         NewMiuString = newMiuString;
+         DerivationPath = derivationPath;
+     }
+ }
+
+e l'avento 
+public event EventHandler<NewMiuStringFoundEventArgs> OnNewStringDiscovered; 
+
+Ora come procediamo?

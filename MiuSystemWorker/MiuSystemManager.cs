@@ -310,8 +310,8 @@ namespace MiuSystemWorker // Nuovo namespace per il progetto wrapper
                 transitionStats.LastUpdated = DateTime.Now;
 
                 // 3. Persisti l'applicazione della regola nel database utilizzando il repository locale all'evento
-                long parentStateId = eventRepository.UpsertMIUState(e.OriginalString);
-                long newStateId = eventRepository.UpsertMIUState(e.NewString);
+                long parentStateId = eventRepository.UpsertMIUState(e.OriginalString).Item1;
+                long newStateId = eventRepository.UpsertMIUState(e.NewString).Item1;
 
                 eventRepository.InsertRuleApplication(
                     e.SearchID, // <- errore 1061

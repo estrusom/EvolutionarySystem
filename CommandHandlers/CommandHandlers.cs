@@ -6,14 +6,18 @@
  */
 using AsyncSocketServer;
 using CommandHandlers.Properties;
+using EvolutiveSystem.Automation;
+using EvolutiveSystem.Engine;
 using EvolutiveSystem.SQL.Core;
 using MasterLog;
 using MessaggiErrore;
+using MIU.Core;
 using SocketManager;
 using SocketManagerInfo;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
@@ -32,13 +36,14 @@ namespace CommandHandlers
     {
         // private readonly ConcurrentDictionary<string, string> _connectedUiEndpoints;
         private const string prefisso = "<CommandHandlers>";
-        private Logger _loger = null;
+        private Logger _logger = null;
         private string lastCmdExec = "";
         private SocketCommand GdvCmd = new SocketCommand();//Global variable containing the communication status
         private SocketMessageStructure response = null;
-        private readonly List<Database> _loadedDatabases = new List<Database>(); // Esempio: Gestione interna semplice
+        private readonly List<EvolutiveSystem.SQL.Core.Database> _loadedDatabases = new List<EvolutiveSystem.SQL.Core.Database>(); // Esempio: Gestione interna semplice
         private static SQLiteConnection dbConnection;
-        private readonly MIU.Core.IMIURepository _miuRepository; // Nuovo campo per IMIURepository
+        private MIUDerivationEngine _miuDerivationEngine;
+        //private readonly MIU.Core.IMIURepository _miuRepository; // Nuovo campo per IMIURepository
         
 
         public ClsCommandHandlers()
@@ -47,13 +52,13 @@ namespace CommandHandlers
         }
         public ClsCommandHandlers(Logger Log)
         {
-            _loger = Log;
+            _logger = Log;
         }
-        public  ClsCommandHandlers(Logger Log, ConcurrentDictionary<string, string> connectedUiEndpoints)
-        {
-            _loger = Log;
-            //_connectedUiEndpoints = connectedUiEndpoints;
-        }
+        //public  ClsCommandHandlers(Logger Log, ConcurrentDictionary<string, string> connectedUiEndpoints)
+        //{
+        //    _loger = Log;
+        //    //_connectedUiEndpoints = connectedUiEndpoints;
+        //}
         /// <summary>
         /// 2025.05.19 Aggiunta la comunicazione di IP Address e IP Port per il client asincrono
         /// Controllo esistenze e connessione stabile col server socket
@@ -96,7 +101,7 @@ namespace CommandHandlers
                 string command = checkCommand(DvCmd.CmdSync, DvCmd);
 
                 uiEndpointKey = $"{uiIpAddress}:{uiPort}";
-                SemanticClientSocket clientSocket = new SemanticClientSocket(uiIpAddress, uiPort, this._loger);
+                SemanticClientSocket clientSocket = new SemanticClientSocket(uiIpAddress, uiPort, this._logger);
                 bool connected = Task.Run(() => clientSocket.ConnectAsync()).Result; // Tenta la connessione asincrona
                 string addedstatus = "";
                 if (connected)
@@ -268,7 +273,6 @@ namespace CommandHandlers
         /// <param name="asl"></param>
         public void CmdCloseDB(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl, SQLiteConnection dbConnection)
         {
-            string sendMessage = "";
             MethodBase thisMethod = MethodBase.GetCurrentMethod();
             try
             {
@@ -361,29 +365,42 @@ namespace CommandHandlers
                 {
                     throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
                 }
-                configParam = miuRepositoryInstance.LoadMIUParameterConfigurator();
-                configuration = configParam;
-                StringBuilder stringBuilder = new StringBuilder();
-                foreach (var item in configParam)
+                int dbstat = CheckDbExistAndOpen();
+                configuration = null;
+                if (dbstat == 0)
                 {
-                    _loger.Log(LogLevel.DEBUG, item.Value);
-                    stringBuilder.Append(string.Format($"[{item.Key}, {item.Value}]"));
+                    configParam = miuRepositoryInstance.LoadMIUParameterConfigurator();
+                    configuration = configParam;
+                    StringBuilder stringBuilder = new StringBuilder();
+                    foreach (var item in configParam)
+                    {
+                        _logger.Log(LogLevel.DEBUG, item.Value);
+                        stringBuilder.Append(string.Format($"[{item.Key}, {item.Value}]"));
+                    }
+                    response = new SocketMessageStructure
+                    {
+                        Command = command.Substring(1, command.Length - 2),
+                        SendingTime = DateTime.Now,
+                        BufferDati = new XElement("BufferDati",
+                        new XElement("CONFIG", stringBuilder.ToString())),
+                        Token = asl.TokenSocket.ToString(),
+                        CRC = 0
+                    };
+                    string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                    ASCIIEncoding encoding = new ASCIIEncoding();
+                    byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                    //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                    string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                    asl.Send(asl.Handler, txtSendData);
                 }
-                response = new SocketMessageStructure
+                else if (dbstat == -1) 
                 {
-                    Command = command.Substring(1, command.Length - 2),
-                    SendingTime = DateTime.Now,
-                    BufferDati = new XElement("BufferDati",
-                    new XElement("CONFIG", stringBuilder.ToString())),
-                    Token = asl.TokenSocket.ToString(),
-                    CRC = 0
-                };
-                string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
-                ASCIIEncoding encoding = new ASCIIEncoding();
-                byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
-                //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
-                string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
-                asl.Send(asl.Handler, txtSendData);
+                    throw new Exception($"Manca l'istanza al database");
+                }
+                else if (dbstat == -2)
+                {
+                    throw new Exception($"Il database non è stato aperto");
+                }
             }
             catch (Exception ex)
             {
@@ -504,7 +521,7 @@ namespace CommandHandlers
                 /*2025.05.16 adesso il percorso del file lo vado a prendere dalla classe Database campo dalla classe FilePath
                 string saveFilePath = filePathElement.Value;
                 */
-                Database databaseToSave = null;
+                EvolutiveSystem.SQL.Core.Database databaseToSave = null;
                 if (identifierType?.Equals("Id", StringComparison.OrdinalIgnoreCase) == true && int.TryParse(identifierValue, out int dbId))
                 {
                     databaseToSave = _loadedDatabases.FirstOrDefault(db => db.DatabaseId == dbId);
@@ -535,9 +552,9 @@ namespace CommandHandlers
                     throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} per database '{databaseToSave.DatabaseName}', ma percorso file non memorizzato.database. Caricare prima il database da file.");
                 }
 
-                _loger.Log(LogLevel.INFO, $"Salvataggio database '{databaseToSave.DatabaseName}' in corso su: {saveFilePath}");
+                _logger.Log(LogLevel.INFO, $"Salvataggio database '{databaseToSave.DatabaseName}' in corso su: {saveFilePath}");
                 DatabaseSerializer.SerializeToXmlFile(databaseToSave, saveFilePath);
-                _loger.Log(LogLevel.INFO, $"Database '{databaseToSave.DatabaseName}' salvato con successo.");
+                _logger.Log(LogLevel.INFO, $"Database '{databaseToSave.DatabaseName}' salvato con successo.");
 
                 if (string.IsNullOrWhiteSpace(saveFilePath))
                 {
@@ -553,7 +570,7 @@ namespace CommandHandlers
                                         new XElement("Database", $"Db {databaseToSave.DatabaseName}caricato"),
                                         new XElement("Status", "OK")); // Esempio di stato
                 string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
-                _loger.Log(LogLevel.DEBUG, telegramGenerate);
+                _logger.Log(LogLevel.DEBUG, telegramGenerate);
                 ASCIIEncoding encoding = new ASCIIEncoding();
                 byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
                 //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
@@ -644,7 +661,7 @@ namespace CommandHandlers
                 // restituiamo una lista di tutti i database caricati.
                 if (dbIdentifierElement == null && requestDetails.Equals("ListOnly", StringComparison.OrdinalIgnoreCase))
                 {
-                    _loger.Log (LogLevel.INFO, $"Comando CmdRequestDbState ricevuto da {asl.CallerIpAddress}. Richiesta lista database caricati.");
+                    _logger.Log (LogLevel.INFO, $"Comando CmdRequestDbState ricevuto da {asl.CallerIpAddress}. Richiesta lista database caricati.");
                     // *** Usa il metodo helper normalizzato per creare la risposta della lista ***
                     response.BufferDati = new XElement("BufferDati", CreateDatabaseListResponse(_loadedDatabases));
                 }
@@ -655,7 +672,7 @@ namespace CommandHandlers
                     // *** Usa il metodo helper normalizzato per creare la risposta di errore ***
                     throw new Exception($"Comando CmdRequestDbState ricevuto da {asl.CallerIpAddress} ma Identificatore database mancante per richiesta dettagliata. ");
                 }
-                Database databaseToReport = null;
+                EvolutiveSystem.SQL.Core.Database databaseToReport = null;
                 if (identifierType?.Equals("Id", StringComparison.OrdinalIgnoreCase) == true && int.TryParse(identifierValue, out int dbId))
                 {
                     databaseToReport = _loadedDatabases.FirstOrDefault(db => db.DatabaseId == dbId);
@@ -679,7 +696,7 @@ namespace CommandHandlers
                 XElement responseBufferContent = null; // Contenuto per il BufferDati della risposta
                 if (requestDetails.Equals("Full", StringComparison.OrdinalIgnoreCase) || requestDetails.Equals("StructureOnly", StringComparison.OrdinalIgnoreCase))
                 {
-                    Database dbToSerialize = CloneDatabaseForSerialization(databaseToReport, requestDetails.Equals("StructureOnly", StringComparison.OrdinalIgnoreCase));
+                    EvolutiveSystem.SQL.Core.Database dbToSerialize = CloneDatabaseForSerialization(databaseToReport, requestDetails.Equals("StructureOnly", StringComparison.OrdinalIgnoreCase));
                     string dbXmlContent = DatabaseSerializer.SerializeToXmlString(dbToSerialize);
                     try
                     {
@@ -713,15 +730,271 @@ namespace CommandHandlers
                 // _logger.LogError($"Errore durante la gestione del comando CmdRequestDbState:", ex);
             }
             string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
-            _loger.Log(LogLevel.DEBUG, telegramGenerate);
+            _logger.Log(LogLevel.DEBUG, telegramGenerate);
             ASCIIEncoding encoding = new ASCIIEncoding();
             byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
             //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
             string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
             asl.Send(asl.Handler, txtSendData);
         }
+        /// <summary>
+        /// Handler d'avvio della ricerca MIU
+        /// </summary>
+        /// <param name="DvCmd"></param>
+        /// <param name="Param"></param>
+        /// <param name="asl"></param>
+        public void CmdMIUexploration(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl)
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            SocketMessageStructure response = null;
+            try
+            {
+                string command = checkCommand(DvCmd.CmdStructDb, DvCmd);
+                if (Param == null)
+                {
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
+                }
+                int dbstat = CheckDbExistAndOpen();
+                if (dbstat == 0) 
+                {
+                    string initialString = null;
+                    string targetString = null;
+                    XElement miuStringElement = Param.Element("MIUstring");
+                    if (miuStringElement != null)
+                    {
+                        XElement stringStartElement = miuStringElement.Element("StringStart");
+                        XElement endStringElement = miuStringElement.Element("EndString");
+
+                        initialString = stringStartElement?.Value;
+                        targetString = endStringElement?.Value; // Potrebbe essere una stringa vuota se non specificato
+
+                        // Assicurati che initialString non sia nullo o vuoto
+                        if (string.IsNullOrEmpty(initialString))
+                        {
+                            throw new ArgumentException("La stringa iniziale per l'esplorazione MIU non può essere vuota.");
+                        }
+                    }
+                    else
+                    {
+                        throw new ArgumentException("La stringa iniziale per l'esplorazione MIU non può essere vuota.");
+                    }
+                    // *** LOGICA DI AVVIO DIRETTO DEL MOTORE MIU ***
+
+                    // Verifica se un'esplorazione è già in corso per evitare sovrapposizioni
+                    if (_miuDerivationEngine != null && _miuDerivationEngine.IsExplorationRunning)
+                    {
+                        string statusMessage = $"[SemanticProcessorService] Esplorazione MIU già in corso da '{_miuDerivationEngine.ToString()}'. Comando '{command}' ignorato.";
+                        _logger.Log(LogLevel.WARNING, statusMessage);
+                        // Invia una risposta di avviso alla UI (ora la gestione degli errori centralizzata se ne occuperà se lanci throw)
+                        // Se vuoi una risposta immediata senza rilanciare un errore, dovrai chiamare asl.Send qui.
+                        // Per la tua architettura, rilanciare un'eccezione è il modo preferito per segnalare alla UI.
+                        throw new InvalidOperationException("Esplorazione MIU già in corso. Impossibile avviare una nuova esplorazione.");
+                    }
+                    _miuDerivationEngine.StartExplorationAsync(initialString, targetString); // <--- NESSUN 'await' QUI
+
+                    response = new SocketMessageStructure
+                    {
+                        Command = command.Substring(1, command.Length - 2),
+                        SendingTime = DateTime.Now,
+                        BufferDati = new XElement("BufferDati",
+                                    new XElement("STATUS", $"Motore di esplorazione MIU avviato per '{initialString}' -> '{targetString ?? "ignoto"}'.")),
+                        Token = asl.TokenSocket.ToString(),
+                        CRC = 0
+                    };
+
+                    string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                    ASCIIEncoding encoding = new ASCIIEncoding();
+                    byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                    //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                    string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                    asl.Send(asl.Handler, txtSendData);
+                    return; // Esci dal metodo
+                } else if (dbstat == -1)
+                {
+                    throw new Exception($"Manca l'istanza al database");
+                }
+                else if (dbstat == -2)
+                {
+                    throw new Exception($"Il database non è stato aperto");
+                }
+            }
+            catch (Exception ex)
+            {
+                // Gestione generica degli errori
+                throw new Exception($"Errore durante la gestione del comando CmdRequestDbState: {ex.Message}");
+            }
+        }
+        /// <summary>
+        /// avvia il ciclo di derivazione delle stringhe MIU esplorando la tabella 
+        /// </summary>
+        /// <param name="DvCmd"></param>
+        /// <param name="Param"></param>
+        /// <param name="asl"></param>
+        /// <param name="miuDataManager"></param>
+        /// <param name="miuRepositoryInstance"></param>
+        /// <param name="configParam"></param>
+        /// <param name="continuousScheduler"></param>
+        /// <exception cref="Exception"></exception>
+        public void CmdMIUautomation(
+            SocketCommand DvCmd,
+            XElement Param,
+            AsyncSocketListener asl,
+            IMIUDataManager miuDataManager,
+            IMIURepository miuRepositoryInstance,
+            Dictionary<string, string> configParam,
+            out MiuContinuousExplorerScheduler continuousScheduler // Questo è il pezzo chiave per avviare lo scheduler
+        )
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            SocketMessageStructure response = null;
+            continuousScheduler = null; // Inizializza il parametro 'out' per garantire l'assegnazione su tutti i percorsi
+            try
+            {
+                string command = checkCommand(DvCmd.CmdStructDb, DvCmd);
+                if (Param == null)
+                {
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
+                }
+
+                int dbstat = CheckDbExistAndOpen();
+                if (dbstat == 0)
+                {
+                    continuousScheduler = new MiuContinuousExplorerScheduler(
+                                       _miuDerivationEngine,
+                                       miuDataManager,
+                                       miuRepositoryInstance,
+                                       _logger, // Passa il logger ricevuto come parametro
+                                       configParam
+                                   );
+                    _logger.Log(LogLevel.INFO, "[CmdMIUautomation] MiuContinuousExplorerScheduler istanziato nell'handler.");
+                    continuousScheduler.StartScheduler();
+                    _logger.Log(LogLevel.INFO, $"[SemanticProcessorService] Richiesta di avvio scheduler di esplorazione continua MIU elaborata. Comando '{command}'.");
+                    response = new SocketMessageStructure
+                    {
+                        Command = command.Substring(1, command.Length - 2),
+                        SendingTime = DateTime.Now,
+                        BufferDati = new XElement("BufferDati",
+                                        new XElement("STATUS", $"Motore di esplorazione MIU avviato per")),
+                        Token = asl.TokenSocket.ToString(),
+                        CRC = 0
+                    };
+                    string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                    ASCIIEncoding encoding = new ASCIIEncoding();
+                    byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                    //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                    string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                    asl.Send(asl.Handler, txtSendData);
+                }
+                else if (dbstat == -1)
+                {
+                    throw new Exception($"Manca l'istanza al database");
+                }
+                else 
+                if (dbstat == -2)
+                {
+                    throw new Exception($"Il database non è stato aperto");
+                }
+            }
+            catch(Exception ex)
+            {
+                // Gestione generica degli errori
+                throw new Exception($"Errore durante la gestione del comando CmdRequestDbState: {ex.Message}");
+            }
+        }
+        /// <summary>
+        /// handler per mettere in pausa la derivazione delle stringhe MIU
+        /// </summary>
+        /// <param name="DvCmd"></param>
+        /// <param name="Param"></param>
+        /// <param name="asl"></param>
+        /// <param name="continuousScheduler"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+        public void CmdStopMIUautomation(SocketCommand DvCmd, XElement Param, AsyncSocketListener asl, MiuContinuousExplorerScheduler continuousScheduler)
+        {
+            MethodBase thisMethod = MethodBase.GetCurrentMethod();
+            try
+            {
+                string command = checkCommand(DvCmd.CmdStructDb, DvCmd);
+                if (Param == null)
+                {
+                    throw new Exception($"Comando CmdSaveDb ricevuto da {IPAddress.Parse(((IPEndPoint)asl.Handler.RemoteEndPoint).Address.ToString())} ma BufferDati mancante.");
+                }
+                int dbstat = CheckDbExistAndOpen();
+                if (dbstat == 0)
+                {
+                    if (continuousScheduler.IsRunning && !continuousScheduler.IsPaused) // Se è in esecuzione E NON è già in pausa
+                    {
+                        continuousScheduler.PauseScheduler();
+                        _logger.Log(LogLevel.INFO, "Schedulazione sospesa."); // INFO, non WARNING, perché è un'azione richiesta
+                        response = new SocketMessageStructure
+                        {
+                            Command = command.Substring(1, command.Length - 2),
+                            SendingTime = DateTime.Now,
+                            BufferDati = new XElement("BufferDati",
+                                    new XElement("STATUS", "Schedulazione sospesa")),
+                            Token = asl.TokenSocket.ToString(),
+                            CRC = 0
+                        };
+                    }
+                    else if (continuousScheduler.IsRunning && continuousScheduler.IsPaused) // Se è in esecuzione MA già in pausa
+                    {
+                        _logger.Log(LogLevel.WARNING, "Schedulazione già in pausa");
+                        response = new SocketMessageStructure
+                        {
+                            Command = command.Substring(1, command.Length - 2),
+                            SendingTime = DateTime.Now,
+                            BufferDati = new XElement("BufferDati",
+                                    new XElement("STATUS","Schedulazione già sospesa")),
+                            Token = asl.TokenSocket.ToString(),
+                            CRC = 0
+                        };
+                    }
+                    else
+                    {
+                        _logger.Log(LogLevel.WARNING, "Schedulazione non in esecuzione. Impossibile sospendere.");
+                        response = new SocketMessageStructure
+                        {
+                            Command = command.Substring(1, command.Length - 2),
+                            SendingTime = DateTime.Now,
+                            BufferDati = new XElement("BufferDati",
+                                    new XElement("STATUS", "Schedulazione non in esecuzione")),
+                            Token = asl.TokenSocket.ToString(),
+                            CRC = 0
+                        };
+
+                    }
+                    string telegramGenerate = SocketMessageSerializer.SerializeUTF8(response);
+                    ASCIIEncoding encoding = new ASCIIEncoding();
+                    byte[] bytes = Encoding.UTF8.GetBytes(telegramGenerate);
+                    //string txtSendData = "<SocketMessageStructure>" + Convert.ToBase64String(bytes, 0, bytes.Length) + "</SocketMessageStructure>";
+                    string txtSendData = SocketMessageSerializer.Base64Start + Convert.ToBase64String(bytes, 0, bytes.Length) + SocketMessageSerializer.Base64End;
+                    asl.Send(asl.Handler, txtSendData);
+                    return; // Esci dal metodo
+                }
+                else if (dbstat == -1) 
+                {
+                    throw new Exception($"Manca l'istanza al database");
+                }
+                else if (dbstat == -2)
+                {
+                    throw new Exception($"Il database non è stato aperto");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Errore durante la sospensione dello scheduler: {ex.Message}");
+                // _logger.LogError("Errore durante la clonazione del database per serializzazione:", ex);
+                // Potresti voler lanciare di nuovo l'eccezione o restituire null a seconda della gestione degli errori desiderata.
+                throw new InvalidOperationException($"Impossibile completare la pausa dello scheduler: {ex.Message}", ex);
+
+            }
+        }
+        /// <summary>
+        /// modo poco elegante ma funzionale per assegnare la variabile _miuDerivationEngine
+        /// </summary>
+        public MIUDerivationEngine MiuDerivationEngine { get { return this._miuDerivationEngine; } set { this._miuDerivationEngine = value; } }
         #region private methods
-        private Database CloneDatabaseForSerialization(Database originalDb, bool structureOnly)
+        private EvolutiveSystem.SQL.Core.Database CloneDatabaseForSerialization(EvolutiveSystem.SQL.Core.Database originalDb, bool structureOnly)
         {
             if (originalDb == null) return null;
 
@@ -734,7 +1007,7 @@ namespace CommandHandlers
                 string originalXml = DatabaseSerializer.SerializeToXmlString(originalDb);
 
                 // Deserializza la stringa XML in un nuovo oggetto Database
-                Database clonedDb = DatabaseSerializer.DeserializeFromXmlString(originalXml);
+                EvolutiveSystem.SQL.Core.Database clonedDb = DatabaseSerializer.DeserializeFromXmlString(originalXml);
 
                 // Se richiesto solo la struttura, rimuovi i DataRecords dal clone
                 if (structureOnly && clonedDb != null && clonedDb.Tables != null)
@@ -789,19 +1062,6 @@ namespace CommandHandlers
                     {
                         cCode.First().SetValue(DevCmd, ret); // set command code
                     }
-                    /*
-                    //Check if the command to be activated is a signature type
-                    var cStat = ((System.Reflection.TypeInfo)tyCmd).DeclaredProperties.Where(VAL => VAL.Name.Contains("IsSignCommand"));
-                    if (cStat.Any())
-                    {
-                        var sic = getComCmd.First().CustomAttributes.First().NamedArguments.Where(A => A.MemberName.Equals("IsSignCommand"));
-                        if (sic.Any())
-                        {
-                            cStat.First().SetValue(DevCmd, sic.First().TypedValue.Value); // Signature attribute assignment
-                        }
-
-                    }
-                    */
                     var cWait = ((System.Reflection.TypeInfo)tyCmd).DeclaredProperties.Where(VAL => VAL.Name.Contains("WaitResponse"));
                     if (cWait.Any())
                     {
@@ -822,8 +1082,8 @@ namespace CommandHandlers
             }
             finally
             {
-                if(_loger != null)
-                    _loger.Log(LogLevel.DEBUG, string.Format("{0} command {1} errStat [{2}]", prefisso, cmd, msg));
+                if(_logger != null)
+                    _logger.Log(LogLevel.DEBUG, string.Format("{0} command {1} errStat [{2}]", prefisso, cmd, msg));
                 // SyncComMutex.ReleaseMutex();
             }
             return ret;
@@ -835,7 +1095,7 @@ namespace CommandHandlers
         /// <param name="originalToken">Il token del messaggio originale.</param>
         /// <param name="databaseList">La lista dei database caricati.</param>
         /// <returns>Un messaggio di risposta con la lista dei database.</returns>
-        private XElement CreateDatabaseListResponse(System.Collections.Generic.List<Database> databaseList)
+        private XElement CreateDatabaseListResponse(System.Collections.Generic.List<EvolutiveSystem.SQL.Core.Database> databaseList)
         {
             // Prepara il contenuto specifico per il BufferDati della risposta
             XElement dbListElement = new XElement("LoadedDatabases");
@@ -848,6 +1108,26 @@ namespace CommandHandlers
 
             // *** Usa il metodo helper normalizzato per creare la risposta di successo ***
             return dbListElement;
+        }
+        /// <summary>
+        /// determina se db esiste e aperto
+        /// </summary>
+        /// <returns></returns>
+        private int CheckDbExistAndOpen()
+        {
+            int ret = 0;
+            if (dbConnection == null)
+            {
+                ret = -1;
+            }
+            else
+            {
+                if (dbConnection.State != System.Data.ConnectionState.Open)
+                {
+                    ret = -2;
+                }
+            }
+            return ret;
         }
         #endregion
     }

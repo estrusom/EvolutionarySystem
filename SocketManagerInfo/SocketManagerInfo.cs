@@ -30,6 +30,7 @@ namespace SocketManagerInfo
         DbId = 2,
         DbName = 3,
         DbRequest = 4,
+        DefStartStopString = 5
     }
     /// <summary>
     /// Classe dove sono definiti i campi da trasferire durante la conmunicazione socket fra client e server
@@ -382,7 +383,7 @@ namespace SocketManagerInfo
         public byte TockenManaging { get; set; } //02.04.2021 gestione accesso concorrente alla tavoletta 
         /// <summary>
         /// Sending data in packets.
-        /// If true, send in packets13.04.2021
+        /// If true, send in packets 13.04.2021
         /// </summary>
         public bool SendingDataPackets { get; set; }
         /// <summary>
@@ -397,6 +398,10 @@ namespace SocketManagerInfo
         /// Siccome con la nuova gestione DB alcuni comandi perdono di significato uso la flag IgnoraComand per escluderli dalla gestione dell'applicazione
         /// </summary>
         public bool IgnoraComand { get; set; }
+        /// <summary>
+        /// Metodo da eseguire in conseguenza all'evento socket
+        /// </summary>
+        public string Method { get; set; }
     }
     /// <summary>
     /// Classe contenente la lista dei comandi da eseguire
@@ -413,7 +418,9 @@ namespace SocketManagerInfo
         private string cmd08 = stx + "CmdCloseDB" + etx;
         private string cmd09 = stx + "CmdConfig" + etx;
         private string cmd0A = stx + "CmdSaveConfig" + etx;
-        private string cmd0B = stx + "CmdSendFormConfiguration[{0}]" + etx;
+        private string cmd0B = stx + "CmdMIUexploration" + etx;
+        private string cmd0C = stx + "CmdMIUautomation" + etx;
+        private string cmd0D = stx + "CmdStopMIUautomation" + etx;
         private string cmd0R = stx + "CmdDeviceReset" + etx;
         private string cmd1A = stx + "CmdActivationSignatureForm" + etx;
         private string cmd1B = stx + "CmdDownloadLog" + etx;
@@ -462,107 +469,26 @@ namespace SocketManagerInfo
         /// </summary>
         [SktProperty (SendingDataPackets = true, AddToCombobox = true, Description = "Lettura parametri di configurazione" , TockenManaging = 1, SelectAction = ActionType.DbRequest)]
         public string CmdConfig { get  { return this.cmd09; } }
+        /// <summary>
+        /// 2025.06.24 aggiunto comando di salvataggio configurazione della tabella MIUParameterConfigurator
+        /// </summary>
         [SktProperty (SendingDataPackets = true, AddToCombobox = true, Description = "Salva nel database la configurazione", TockenManaging = 1, SelectAction = ActionType.DbRequest)]
         public string CmdSaveConfig { get { return this.cmd0A; } }
-        /*
         /// <summary>
-        /// Single signature frame reception CMD = 06
+        /// Avvia l'elaborazione di una stringa MIU
         /// </summary>
-        [SktProperty(IsSignatureRequest = 2, Description = "Single signature frame reception", TockenManaging = 0)]
-        public string CmdRxDataSign { get { return this.cmd06; } }
+        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "avvia la ricerca di stringhe MIU con parametrizazione delle stringhe di ricerca nel buffer", TockenManaging = 1, SelectAction = ActionType.DefStartStopString)]
+        public string CmdMIUexploration { get  { return this.cmd0B; } }
         /// <summary>
-        /// Command to clearing signature surface area CMD = 07
+        /// Avvia l'esplorazione sistematica delle stringhe MIU presenti in MIU_States
         /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Command to clearing signature surface area", TockenManaging = 0)]
-        public string CmdCancSignSurface { get { return this.cmd07; } }
+        [SktProperty(SendingDataPackets = true, AddToCombobox = true, Description = "avvia l'automazione di ricerca delle stringhe MIU", TockenManaging = 1, SelectAction = ActionType.None, Method = "SetEventAutomation")]
+        public string CmdMIUautomation { get { return this.cmd0C; } }
         /// <summary>
-        /// Start acquiring signature CMD = 08
+        /// ferma il ciclo di derivazione delle stringhe MIU
         /// </summary>
-        [SktProperty(IsSignatureRequest = 1, Description = "Start acquiring signature", TockenManaging = 0)]
-        public string CmdSigningProcStarted { get { return this.cmd08; } }
-        /// <summary>
-        /// Signing process ended CMD = 09
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 3, Description = "Signing process ended", TockenManaging = 0)]
-        public string CmdSigningProcTermination { get { return this.cmd09; } }
-        /// <summary>
-        /// Hide signature form CMD = 0A
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Hide signature form", TockenManaging = 0)]
-        public string CmdHideSignatureForm { get { return this.cmd0A; } }
-        /// <summary>
-        /// Show signature form CMD = 1A
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Show signature form", TockenManaging = 0)]
-        public string CmdActivationSignatureForm { get { return this.cmd1A; } }
-        /// <summary>
-        /// Send the background configuration data to the device CMD = 0B
-        /// Added attribute for packet sending 13.04.2021 
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Send the background configuration data to the device CMD = 0B", TockenManaging = 0, SendingDataPackets = true)]
-        public string CmdSendFormConfiguration { get { return this.cmd0B; } }
-        /// <summary>
-        /// This command is device type, but behaves like a service command since it does not require a response. The response is sent to the client anyway
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "reset app on device")]
-        public string CmdDeviceReset { get { return this.cmd0R; } }
-        /// <summary>
-        /// 18.05.2021 TockenManaging modificato da 1 a 2 per evitare il controllo del token durante il download
-        /// Senza l'esclusione del controllo del token, all'orario pianificato per lo scarico dei log del tablet, accade l'errore di token mismatch
-        /// Download and send the requested log file to the client CMD = 1B
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Download and send the requested log file to the client CMD = 1B", TockenManaging = 2)]
-        public string CmdDownloadLog { get { return this.cmd1B; } }
-        /// <summary>
-        /// Response to client the usb cable sconected
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Response message to client when USB cable is not conected", TockenManaging = 2)] //30.11.2021 prima era TockenManaging = 0
-        public string ErrUSBsconected { get { return this.cmdEE; } }
-        /// <summary>
-        /// The service will be Awakening 
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "The service will be Awakening ")]
-        public string ServiceAwakening { get { return this.sktServiceAwakening; } }
-        /// <summary>
-        /// Pax restart command
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "The tablet will be restarted", TockenManaging = 2)]
-        public string PaxAries8Restart { get { return this.sktPaxRestart; } } // 31.03.2022 commant restarting PAX Airies 8
-        /// <summary>
-        /// The service will be stopped
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "The service will be stopped")]
-        public string StopService { get { return this.sktStopService; } }
-        /// <summary>
-        /// The service will be suspended
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "The service will be suspended")]
-        public string ServiceSuspended { get { return this.sktServiceSuspended; } }
-        /// <summary>
-        /// Socket command for opening the communication port
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Comunication port opening")]
-        public string OpenComPort { get { return this.sktOpenComPort; } }
-        /// <summary>
-        /// Socket command for closing the communication port
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Comunication port closing")]
-        public string CloseComPort { get { return this.sktCloseComPort; } }
-        /// <summary>
-        /// Transmits the port number on which the socket server responds
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "Transmits socket server the port number", TockenManaging = 2)]
-        public string PortInit { get { return this.sktSocketSrvPort; } }
-        /// <summary>
-        /// It cleans the screen of the tablet, also of the background images
-        /// </summary>
-        [SktProperty(IsSignatureRequest = 0, Description = "It cleans the screen of the tablet, also of the background images")]
-        public string ClearScreen { get { return this.sktClearScreen; } }
-        /// <summary>
-        /// Stops and cancels a signing process
-        /// </summary>
-        public string CancelSignature { get { return this.sktCancelSignature; } }
-        */
+        [SktProperty(AddToCombobox =true, Description = "Ferma il ciclo di derivazione stringhe MIU", SelectAction = ActionType.None, TockenManaging = 1)]
+        public string CmdStopMIUautomation { get { return this.cmd0D; } }
         /// <summary>
         /// Telegram start sequence
         /// </summary>
@@ -625,6 +551,10 @@ namespace SocketManagerInfo
         /// Stringa di chiusura di un messaggio ricevuto via socket
         /// </summary>
         public string Base64End { get { return SocketManagerRes.EndB64String; } }
+        /// <summary>
+        /// Contiene il nome dell'handler da eseguire all'uscita della gestione del socket
+        /// </summary>
+        public string MethoToBeExecute { get; set; } = "";
         #region IDisposable Support
         private bool disposedValue = false; // Per rilevare chiamate ridondanti
         /// <summary>

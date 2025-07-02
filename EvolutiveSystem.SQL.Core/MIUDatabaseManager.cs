@@ -28,7 +28,7 @@ namespace EvolutiveSystem.SQL.Core
     /// garantendo il controllo delle transazioni e l'uso di query parametrizzate.
     /// Implementa l'interfaccia IMIUDataManager.
     /// </summary>
-    public class MIUDatabaseManager : IMIUDataManager  // 
+    public class MIUDatabaseManager : IMIUDataManager  // <- errore cs0738
     {
         private readonly SQLiteSchemaLoader _schemaLoader;
         private readonly Logger _logger;
@@ -163,9 +163,10 @@ namespace EvolutiveSystem.SQL.Core
         /// </summary>
         /// <param name="miuString">La stringa MIU standard (non compressa).</param>
         /// <returns>L'ID dello stato MIU nel database.</returns>
-        public long UpsertMIUState(string miuString)
+        public Tuple<long, bool> UpsertMIUState(string miuString)
         {
             long stateId = -1;
+            bool isNewString = false; // Flag per indicare se la stringa è nuova
             try
             {
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
@@ -216,7 +217,7 @@ namespace EvolutiveSystem.SQL.Core
             {
                 _logger.Log(LogLevel.ERROR, $"Errore in UpsertMIUState: {ex.Message}");
             }
-            return stateId;
+            return Tuple.Create(stateId, isNewString);
         }
 
         /// <summary>

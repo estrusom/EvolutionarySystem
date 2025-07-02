@@ -51,7 +51,14 @@ namespace MIU.Core
         );
 
         // Operazioni per MIU_States
-        long UpsertMIUState(string miuString);
+        //long UpsertMIUState(string miuString);
+        /// <summary>
+        /// 2025.07.02 1.31
+        /// Inserisce o aggiorna uno stato MIU nel database.
+        /// </summary>
+        /// <param name="miuString">La stringa MIU da inserire/aggiornare.</param>
+        /// <returns>Un Tuple dove Item1 è l'ID dello stato e Item2 è true se la stringa è stata appena inserita (nuova), false se esisteva già.</returns>
+        Tuple<long, bool> UpsertMIUState(string miuString);
         // Reso asincrono per l'I/O del database
         Task<List<MiuStateInfo>> LoadMIUStatesAsync();
         bool SearchExists(string initialString, string targetString);

@@ -31,8 +31,6 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmTelegram));
             this.btnAnnullaSend = new System.Windows.Forms.Button();
             this.gbSelCmd = new System.Windows.Forms.GroupBox();
-            this.lblMonitor = new System.Windows.Forms.Label();
-            this.rtxtMonitor = new System.Windows.Forms.RichTextBox();
             this.lblDb = new System.Windows.Forms.Label();
             this.lblDenDb = new System.Windows.Forms.Label();
             this.chkbCRC = new System.Windows.Forms.CheckBox();
@@ -48,9 +46,12 @@
             this.btnSendMsg = new System.Windows.Forms.Button();
             this.gbCompilaBufferTx = new System.Windows.Forms.GroupBox();
             this.rtxtBuffer = new System.Windows.Forms.RichTextBox();
+            this.gbConfigFunzione = new System.Windows.Forms.GroupBox();
+            this.lblTitle = new System.Windows.Forms.Label();
             this.gbSelCmd.SuspendLayout();
             this.pnlbtn.SuspendLayout();
             this.gbCompilaBufferTx.SuspendLayout();
+            this.gbConfigFunzione.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnAnnullaSend
@@ -67,8 +68,7 @@
             // 
             // gbSelCmd
             // 
-            this.gbSelCmd.Controls.Add(this.lblMonitor);
-            this.gbSelCmd.Controls.Add(this.rtxtMonitor);
+            this.gbSelCmd.Controls.Add(this.gbConfigFunzione);
             this.gbSelCmd.Controls.Add(this.lblDb);
             this.gbSelCmd.Controls.Add(this.lblDenDb);
             this.gbSelCmd.Controls.Add(this.chkbCRC);
@@ -83,28 +83,10 @@
             this.gbSelCmd.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.gbSelCmd.Location = new System.Drawing.Point(0, 0);
             this.gbSelCmd.Name = "gbSelCmd";
-            this.gbSelCmd.Size = new System.Drawing.Size(818, 298);
+            this.gbSelCmd.Size = new System.Drawing.Size(1019, 410);
             this.gbSelCmd.TabIndex = 36;
             this.gbSelCmd.TabStop = false;
             this.gbSelCmd.Text = "Seezione comandi e parametri di trasmissione";
-            // 
-            // lblMonitor
-            // 
-            this.lblMonitor.AutoSize = true;
-            this.lblMonitor.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblMonitor.Location = new System.Drawing.Point(60, 173);
-            this.lblMonitor.Name = "lblMonitor";
-            this.lblMonitor.Size = new System.Drawing.Size(71, 18);
-            this.lblMonitor.TabIndex = 48;
-            this.lblMonitor.Text = "Monitor:";
-            // 
-            // rtxtMonitor
-            // 
-            this.rtxtMonitor.Location = new System.Drawing.Point(160, 173);
-            this.rtxtMonitor.Name = "rtxtMonitor";
-            this.rtxtMonitor.Size = new System.Drawing.Size(288, 92);
-            this.rtxtMonitor.TabIndex = 47;
-            this.rtxtMonitor.Text = "";
             // 
             // lblDb
             // 
@@ -132,7 +114,7 @@
             this.chkbCRC.AutoSize = true;
             this.chkbCRC.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.chkbCRC.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chkbCRC.Location = new System.Drawing.Point(601, 65);
+            this.chkbCRC.Location = new System.Drawing.Point(458, 65);
             this.chkbCRC.Name = "chkbCRC";
             this.chkbCRC.Size = new System.Drawing.Size(156, 22);
             this.chkbCRC.TabIndex = 42;
@@ -176,7 +158,7 @@
             this.cmbCommand.FormattingEnabled = true;
             this.cmbCommand.Location = new System.Drawing.Point(160, 29);
             this.cmbCommand.Name = "cmbCommand";
-            this.cmbCommand.Size = new System.Drawing.Size(607, 28);
+            this.cmbCommand.Size = new System.Drawing.Size(828, 28);
             this.cmbCommand.TabIndex = 38;
             this.cmbCommand.SelectedIndexChanged += new System.EventHandler(this.cmbCommand_SelectedIndexChanged);
             // 
@@ -214,9 +196,9 @@
             this.pnlbtn.Controls.Add(this.btnAnnullaSend);
             this.pnlbtn.Controls.Add(this.btnSendMsg);
             this.pnlbtn.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlbtn.Location = new System.Drawing.Point(0, 584);
+            this.pnlbtn.Location = new System.Drawing.Point(0, 687);
             this.pnlbtn.Name = "pnlbtn";
-            this.pnlbtn.Size = new System.Drawing.Size(818, 62);
+            this.pnlbtn.Size = new System.Drawing.Size(1019, 62);
             this.pnlbtn.TabIndex = 37;
             // 
             // btnOkSend
@@ -247,9 +229,9 @@
             this.gbCompilaBufferTx.Controls.Add(this.rtxtBuffer);
             this.gbCompilaBufferTx.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.gbCompilaBufferTx.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.gbCompilaBufferTx.Location = new System.Drawing.Point(0, 400);
+            this.gbCompilaBufferTx.Location = new System.Drawing.Point(0, 503);
             this.gbCompilaBufferTx.Name = "gbCompilaBufferTx";
-            this.gbCompilaBufferTx.Size = new System.Drawing.Size(818, 184);
+            this.gbCompilaBufferTx.Size = new System.Drawing.Size(1019, 184);
             this.gbCompilaBufferTx.TabIndex = 38;
             this.gbCompilaBufferTx.TabStop = false;
             this.gbCompilaBufferTx.Text = "Telegramma compilato";
@@ -260,16 +242,36 @@
             this.rtxtBuffer.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.rtxtBuffer.Location = new System.Drawing.Point(3, 18);
             this.rtxtBuffer.Name = "rtxtBuffer";
-            this.rtxtBuffer.Size = new System.Drawing.Size(812, 163);
+            this.rtxtBuffer.Size = new System.Drawing.Size(1013, 163);
             this.rtxtBuffer.TabIndex = 0;
             this.rtxtBuffer.Text = "";
+            // 
+            // gbConfigFunzione
+            // 
+            this.gbConfigFunzione.Controls.Add(this.lblTitle);
+            this.gbConfigFunzione.Location = new System.Drawing.Point(50, 173);
+            this.gbConfigFunzione.Name = "gbConfigFunzione";
+            this.gbConfigFunzione.Size = new System.Drawing.Size(938, 231);
+            this.gbConfigFunzione.TabIndex = 49;
+            this.gbConfigFunzione.TabStop = false;
+            this.gbConfigFunzione.Text = "Configurazione comando";
+            // 
+            // lblTitle
+            // 
+            this.lblTitle.AutoSize = true;
+            this.lblTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTitle.Location = new System.Drawing.Point(7, 24);
+            this.lblTitle.Name = "lblTitle";
+            this.lblTitle.Size = new System.Drawing.Size(46, 18);
+            this.lblTitle.TabIndex = 0;
+            this.lblTitle.Text = "label1";
             // 
             // FrmTelegram
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnAnnullaSend;
-            this.ClientSize = new System.Drawing.Size(818, 646);
+            this.ClientSize = new System.Drawing.Size(1019, 749);
             this.Controls.Add(this.gbCompilaBufferTx);
             this.Controls.Add(this.pnlbtn);
             this.Controls.Add(this.gbSelCmd);
@@ -286,6 +288,8 @@
             this.gbSelCmd.PerformLayout();
             this.pnlbtn.ResumeLayout(false);
             this.gbCompilaBufferTx.ResumeLayout(false);
+            this.gbConfigFunzione.ResumeLayout(false);
+            this.gbConfigFunzione.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -308,7 +312,7 @@
         private System.Windows.Forms.Label lblDenDb;
         private System.Windows.Forms.Button btnOkSend;
         private System.Windows.Forms.Label lblDb;
-        private System.Windows.Forms.RichTextBox rtxtMonitor;
-        private System.Windows.Forms.Label lblMonitor;
+        private System.Windows.Forms.GroupBox gbConfigFunzione;
+        private System.Windows.Forms.Label lblTitle;
     }
 }

@@ -33,6 +33,8 @@ namespace EvolutiveSystem_02
         private CommandConfig cmdCnf;
         private SocketMessageStructure telegramma;
         private string _connectionString = "";
+        private string startString = "";
+        private string endString = "";
         public FrmTelegram(AsyncSocketListener Asl, string ConnectionString)
         {
             InitializeComponent();
@@ -41,6 +43,7 @@ namespace EvolutiveSystem_02
             this.cmdCnf = new CommandConfig();
             cmdCnf.ExecuteCmdSync += CmdCnf_ExecuteCmdSync;
             cmdCnf.ExecuteOpenDB += CmdCnf_ExecuteOpenDB;
+            cmdCnf.ExecuteMIUexploration += CmdCnf_ExecuteMIUexploration;
             //cmdCnf.ExecuteSaveDB += CmdCnf_ExecuteSaveDB;
             //cmdCnf.ExecuteDBStruct += CmdCnf_ExecuteDBStruct;
             txtDateSend.Text = DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss");
@@ -127,13 +130,87 @@ namespace EvolutiveSystem_02
                 var action = acti.First().CustomAttributes.First().NamedArguments.Where(ACT => ACT.MemberName == "SelectAction");
                 if (action.Any())
                 {
-                    //switch ((ActionType) Convert.ToInt32( action.First().TypedValue.Value) )
-                    //{
-                    //    case ActionType.None:
-                    //        {
-
-                    //        }
-                    //        break;
+                    switch ((ActionType) Convert.ToInt32( action.First().TypedValue.Value) )
+                    {
+                        case ActionType.None:
+                            {
+                                gbConfigFunzione.Controls.Clear();
+                            }
+                        break;
+                        case ActionType.DefStartStopString:
+                            {
+                                btnSendMsg.Enabled = false;
+                                btnOkSend.Enabled = false;
+                                btnAnnullaSend.Enabled = false;
+                                lblTitle.Text = cmbCommand.SelectedItem.ToString();
+                                Label labelStart = new Label()
+                                {
+                                    Name = "lblStartString",
+                                    Top = 50,
+                                    Left = 10,
+                                    Width = 100,
+                                    Text = "Start string:",
+                                    Font = new Font(this.Font.FontFamily, 10, FontStyle.Bold),
+                                    Enabled = true
+                                };
+                                gbConfigFunzione.Controls.Add(labelStart);
+                                System.Windows.Forms.TextBox txtStart = new System.Windows.Forms.TextBox()
+                                {
+                                    Name = "txtStartString",
+                                    Top = 50,
+                                    Left= 110,
+                                    Width = 100,
+                                    Font = new Font(this.Font.FontFamily, 10, FontStyle.Regular),
+                                    Enabled = true
+                                };
+                                gbConfigFunzione.Controls.Add(txtStart);
+                                Label labelEnd = new Label()
+                                {
+                                    Name = "lblEndString",
+                                    Top = 80,
+                                    Left = 10,
+                                    Width = 100,
+                                    Text = "End string:",
+                                    Font = new Font(this.Font.FontFamily, 10, FontStyle.Bold),
+                                    Enabled = true
+                                };
+                                gbConfigFunzione.Controls.Add(labelEnd);
+                                System.Windows.Forms.TextBox txtEnd = new System.Windows.Forms.TextBox()
+                                {
+                                    Name = "txtEndString",
+                                    Top = 80,
+                                    Left = 110,
+                                    Width = 100,
+                                    Font = new Font(this.Font.FontFamily, 10, FontStyle.Regular),
+                                    Enabled = true
+                                };
+                                gbConfigFunzione.Controls.Add(txtEnd);
+                                System.Windows.Forms.Button btnOk = new System.Windows.Forms.Button()
+                                {
+                                    Name = "btnOk",
+                                    Top = 150,
+                                    Width = 80,
+                                    Height = 35,
+                                    Left = 10,
+                                    Font = new Font(this.Font.FontFamily, 10, FontStyle.Regular),
+                                    Text = "OK"
+                                };
+                                gbConfigFunzione.Controls.Add(btnOk);
+                                System.Windows.Forms.Button btnAnnulla = new System.Windows.Forms.Button()
+                                {
+                                    Name = "btnAnnulla",
+                                    Top = 150,
+                                    Width = 80,
+                                    Height = 35,
+                                    Left = 100,
+                                    Font = new Font(this.Font.FontFamily, 10, FontStyle.Regular),
+                                    Text = "Annula"
+                                };
+                                gbConfigFunzione.Controls.Add(btnAnnulla);
+                                btnOk.Click += BtnOk_Click;
+                                btnAnnulla.Click += BtnAnnulla_Click;
+                            }
+                            break;
                     //    case ActionType.FilePath:
                     //        {
                     //            gbSelCmd.Enabled = false;
@@ -159,12 +236,41 @@ namespace EvolutiveSystem_02
                     //            gbSelRequest.Dock = DockStyle.Fill;
                     //        }
                     //        break;
-                    //}
+                    }
                 }
             }
             testStruct.Command = command;
         }
         #region buttons events
+        private void BtnAnnulla_Click(object sender, EventArgs e)
+        {
+            this.startString = "";
+            this.endString = "";
+            btnSendMsg.Enabled = true;
+            btnOkSend.Enabled = true;
+            btnAnnullaSend.Enabled = true;
+            gbConfigFunzione.Controls.Clear();
+        }
+
+        private void BtnOk_Click(object sender, EventArgs e)
+        {
+            foreach (Control control in gbConfigFunzione.Controls)
+            {
+                if(control.Name == "txtStartString")
+                {
+                    this.startString = control.Text;
+                }
+                if (control.Name == "txtEndString")
+                {
+                    this.endString = control.Text;
+                }
+            }
+            btnSendMsg.Enabled = true;
+            btnOkSend.Enabled = true;
+            btnAnnullaSend.Enabled = true;
+            gbConfigFunzione.Controls.Clear();
+        }
+
         private void btnSendMsg_Click(object sender, EventArgs e)
         {
             rtxtBuffer.Clear();
@@ -260,6 +366,15 @@ namespace EvolutiveSystem_02
             bufferDatiContent.Add(new XElement("UiPort", asl.SrvPort.ToString()));
             telegramma.BufferDati = bufferDatiContent;
         }
+        private void CmdCnf_ExecuteMIUexploration(object sender, string e)
+        {
+            XElement BufferDati = new XElement("BufferDati",
+                    new XElement("MIUstring",
+                    new XElement("StringStart", this.startString),
+                    new XElement("EndString", this.endString)));
+            telegramma.BufferDati = BufferDati;
+        }
+
         #endregion
         public string TxtSendData { get { return this.txtSendData; } }
     }
