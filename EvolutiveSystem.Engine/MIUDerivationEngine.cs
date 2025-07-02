@@ -59,7 +59,8 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
 
         public event EventHandler<string> OnExplorationStatusChanged;
         public event EventHandler<int> OnNodesExploredCountChanged;
-        public event EventHandler<NewMiuStringFoundEventArgs> OnNewStringDiscovered;
+        // public event EventHandler<NewMiuStringFoundEventArgs> OnNewStringDiscovered;
+        public event EventHandler<NewMiuStringDiscoveredEventArgs> OnNewStringDiscovered; // MODIFIED: Ora usa NewMiuStringDiscoveredEventArgs
 
         /// <summary>
         /// Costruttore del motore di derivazione.
@@ -79,11 +80,14 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
             // Questo potrebbe essere fatto anche in Program.cs all'avvio.
             RegoleMIUManager.LoggerInstance = _logger;
 
+            // NEW: Sottoscrivi all'evento di RegoleMIUManager per le nuove stringhe scoperte
+            RegoleMIUManager.OnNewMiuStringDiscoveredInternal += HandleNewMiuStringDiscoveredFromRegoleMIUManager; // <- errore cs0103
+
             _logger.Log(LogLevel.INFO, "[MIUDerivationEngine] Motore di derivazione inizializzato.");
         }
 
         // Metodo protetto per sollevare l'evento OnNewStringDiscovered
-        protected virtual void OnNewStringDiscoveredInternal(NewMiuStringFoundEventArgs e)
+        protected virtual void OnNewStringDiscoveredInternal(NewMiuStringDiscoveredEventArgs e) // MODIFIED: Ora usa NewMiuStringDiscoveredEventArgs
         {
             OnNewStringDiscovered?.Invoke(this, e);
         }
@@ -185,11 +189,12 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     // 6. Avvia la derivazione usando RegoleMIUManager (statico)
                     // Il RegoleMIUManager chiamerà gli eventi HandleRuleApplied e HandleSolutionFound.
                     _logger.Log(LogLevel.INFO, $"[MIUDerivationEngine] Chiamata a RegoleMIUManager.TrovaDerivazioneAutomatica per SearchID: {_currentSearchId}");
-                    List<PathStepInfo> miuPath = RegoleMIUManager.TrovaDerivazioneAutomatica(
+                    List<PathStepInfo> miuPath = RegoleMIUManager.TrovaDerivazioneAutomatica( 
                         _currentSearchId,
                         compressedInitial,
                         compressedTarget,
-                        _cancellationTokenSource.Token // Passa il CancellationToken
+                        _cancellationTokenSource.Token, // Passa il CancellationToken
+                        _dataManager // NEW: Passa l'istanza di IMIUDataManager
                     );
 
                     // Dopo che TrovaDerivazioneAutomatica è terminato (o annullato), aggiorna la ricerca finale
@@ -243,6 +248,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     // Disiscrizione dagli eventi per evitare memory leak o chiamate a oggetto dismesso
                     RegoleMIUManager.OnRuleApplied -= HandleRuleApplied;
                     RegoleMIUManager.OnSolutionFound -= HandleSolutionFound;
+                    RegoleMIUManager.OnNewMiuStringDiscoveredInternal -= HandleNewMiuStringDiscoveredFromRegoleMIUManager; // NEW: Disiscrizione per il nuovo evento
                     OnExplorationStatusChanged?.Invoke(this, "Motore inattivo.");
                 }
             }, _cancellationTokenSource.Token);
@@ -404,6 +410,15 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     }
                 }
             }
+        }
+        /// <summary>
+        /// Gestisce l'evento OnNewMiuStringDiscoveredInternal scatenato da RegoleMIUManager
+        /// e lo ritrasmette tramite l'evento OnNewStringDiscovered di questo motore.
+        /// </summary>
+        private void HandleNewMiuStringDiscoveredFromRegoleMIUManager(object sender, NewMiuStringDiscoveredEventArgs e)
+        {
+            // Rilancia l'evento usando l'evento pubblico di MIUDerivationEngine
+            OnNewStringDiscoveredInternal(e);
         }
     }
 }

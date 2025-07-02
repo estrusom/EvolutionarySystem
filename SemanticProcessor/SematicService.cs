@@ -33,6 +33,7 @@ using MIU.Core;
 using EvolutiveSystem.Learning;
 using EvolutiveSystem.Engine;
 using EvolutiveSystem.Automation;
+using EvolutiveSystem.Common; // Necessario per IMIUDataManager e NewMiuStringDiscoveredEventArgs
 
 namespace SemanticProcessor
 {
@@ -155,10 +156,11 @@ namespace SemanticProcessor
         private LearningStatisticsManager _learningStatisticsManager;
         private MIUDerivationEngine _miuDerivationEngine;
         private CancellationTokenSource _miuExplorationCancellationTokenSource;
-        private MIU.Core.IMIUDataManager miuDataManagerInstance;
+        private IMIUDataManager miuDataManagerInstance; 
         // Task per tenere traccia dell'esplorazione MIU, se in background
         private Task _miuExplorationTask;
         #endregion
+        private int logMainCounter = 0;
         #region *** CAMPO PER L'ISTANZA DEL NUOVO SCHEDULER CONTINUO (NUOVA CLASSE) ***
         private MiuContinuousExplorerScheduler _continuousScheduler; // <--- QUESTA MANCAVA: Istanza creata e gestita
         #endregion
@@ -477,8 +479,9 @@ namespace SemanticProcessor
             try
             {
                 swWatchDog(false, IntervalMilliSeconds);
+                if (this.logMainCounter > 3) this.logMainCounter = 0;
 #if DEBUG
-                if (!firstInDebug)
+                    if (!firstInDebug)
                 {
                     Assembly tyWinTTab = typeof(SemanticProcessor).Assembly;
                     AssemblyName WinTTabVER = tyWinTTab.GetName();
@@ -503,7 +506,10 @@ namespace SemanticProcessor
                     IntervalMilliSeconds = IntervalMilliSeconds < K_MILLI ? K_MILLI : IntervalMilliSeconds;
                     Thread.Sleep(100);
                     if (scktThrd != null)
-                        _logger.Log(LogLevel.SERVICE_EVENT, string.Format("THREAD SOCKET IS STARTED = {0} STEPS START = {1}", scktThrd.IsStarted, StepStartingService));
+                    {
+                        if (this.logMainCounter == 0)
+                            _logger.Log(LogLevel.SERVICE_EVENT, string.Format("THREAD SOCKET IS STARTED = {0} STEPS START = {1}", scktThrd.IsStarted, StepStartingService));
+                    }
                     else
                     {
                         _logger.Log(LogLevel.ERROR, "THREAD SOCKET NOT STARTED ");
@@ -519,7 +525,8 @@ namespace SemanticProcessor
                         }
 #endif
                     }
-                    _logger.Log(LogLevel.SERVICE, string.Format("Step status: {0}", StepStartingService));
+                    if (this.logMainCounter == 0) 
+                        _logger.Log(LogLevel.SERVICE, string.Format("Step status: {0}", StepStartingService));
                 }
                 switch (StepStartingService)
                 {
@@ -562,7 +569,8 @@ namespace SemanticProcessor
                                     soc = new Socket(asl.Listner.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                                     if (asl.SocketConnected(soc))
                                     {
-                                        _logger.Log(LogLevel.DEBUG, "The socket exists");
+                                        if (logMainCounter == 0) 
+                                            _logger.Log(LogLevel.DEBUG, "The socket exists");
                                     }
                                     else
                                     {
@@ -576,7 +584,8 @@ namespace SemanticProcessor
                                 manageService();
 #endif
                                 string pathFileCtrl = Path.Combine(ServicePath, "CheckFile.txt");
-                                _logger.Log(LogLevel.DEBUG, $"Check file {pathFileCtrl}");
+                                if (this.logMainCounter == 0) 
+                                    _logger.Log(LogLevel.DEBUG, $"Check file {pathFileCtrl}");
                                 if (File.Exists(pathFileCtrl))
                                 {
                                     _logger.Log(LogLevel.INFO, $"Trovato file:{pathFileCtrl}");
@@ -609,7 +618,8 @@ namespace SemanticProcessor
                                     }
                                     File.Delete(pathFileCtrl);  
                                 }
-                                _logger.Log(LogLevel.DEBUG, thSocket.IsAlive ? "Thread is alive" : "Thread is dead");
+                                if (this.logMainCounter == 0) 
+                                    _logger.Log(LogLevel.DEBUG, thSocket.IsAlive ? "Thread is alive" : "Thread is dead");
                                 this.SemaforoDC = false;
                             }
                         }
@@ -621,6 +631,7 @@ namespace SemanticProcessor
                         }
                         break;
                 }
+                logMainCounter++;
                 //this.myStart();
                 swWatchDog(true, IntervalMilliSeconds);
             }
@@ -1161,8 +1172,89 @@ namespace SemanticProcessor
         }
         public void SetEventAutomation()
         {
+_logger.Log(LogLevel.INFO, "[SemanticProcessorService] SetEventAutomation chiamato. Sottoscrizione agli eventi dello scheduler continuo.");
+
+            if (_continuousScheduler == null)
+            {
+                _logger.Log(LogLevel.ERROR, "[SemanticProcessorService] _continuousScheduler è nullo. Impossibile sottoscrivere agli eventi.");
+                return;
+            }
+
+            // *** Sottoscrizione agli eventi pubblici del MiuContinuousExplorerScheduler ***
+            // Rimuovi eventuali sottoscrizioni precedenti per evitare duplicazioni se il metodo viene chiamato più volte
+            // (anche se idealmente dovrebbe essere chiamato una sola volta per istanza dello scheduler).
+            // Questo è un pattern comune per gli eventi che potrebbero essere sottoscritti dinamicamente.
+            _continuousScheduler.ProgressUpdated -= _continuousScheduler_ProgressUpdated;
+            _continuousScheduler.ExplorationCompleted -= _continuousScheduler_ExplorationCompleted;
+            _continuousScheduler.ExplorationError -= _continuousScheduler_ExplorationError;
+            _continuousScheduler.NewMiuStringDiscovered -= _continuousScheduler_NewMiuStringFound; // MODIFIED: Usa il nuovo nome dell'evento
+                                                                                                   // ...
+            _continuousScheduler.ProgressUpdated += _continuousScheduler_ProgressUpdated;
+            _continuousScheduler.ExplorationCompleted += _continuousScheduler_ExplorationCompleted;
+            _continuousScheduler.ExplorationError += _continuousScheduler_ExplorationError;
+            _continuousScheduler.NewMiuStringDiscovered += _continuousScheduler_NewMiuStringFound; // MODIFIED: Usa il nuovo nome dell'evento
+
+            _logger.Log(LogLevel.INFO, "[SemanticProcessorService] Sottoscrizione agli eventi dello scheduler continuo completata.");
 
         }
+        /// <summary>
+        /// Gestisce l'evento NewMiuStringFound dal MiuContinuousExplorerScheduler.
+        /// Questo è l'evento chiave che indica la scoperta di una stringa MIU realmente nuova.
+        /// Notifica i client UI e logga la scoperta.
+        /// </summary>
+        private void _continuousScheduler_NewMiuStringFound(object sender, NewMiuStringDiscoveredEventArgs e) // MODIFIED: Ora accetta NewMiuStringDiscoveredEventArgs
+        {
+            _logger.Log(LogLevel.INFO, $"[SemanticProcessorService] Nuova stringa MIU scoperta dallo scheduler: '{e.DiscoveredString}'. StateID: {e.StateID}, IsTrulyNewToDatabase: {e.IsTrulyNewToDatabase}");
+            // Se hai logica che usa e.NewMiuString, cambiala in e.DiscoveredString
+
+            // Esempio: Notifica i client UI
+            // string uiMessage = $"NEW_MIU_STRING|{e.NewMiuString}|{e.DerivationPath}";
+            // SendMessageToAllUiClients(uiMessage);
+
+            // Qui potresti anche voler:
+            // 1. Aggiornare una lista interna di nuove stringhe scoperte.
+            // 2. Attivare una logica di apprendimento aggiuntiva basata sulla nuova stringa.
+            // 3. Persistere la nuova stringa in un log specifico per le scoperte.
+        }
+        /// <summary>
+        /// Gestisce l'evento ExplorationError dal MiuContinuousExplorerScheduler.
+        /// Notifica i client UI e logga l'errore.
+        /// </summary>
+        private void _continuousScheduler_ExplorationError(object sender, MiuExplorationErrorEventArgs e)
+        {
+            _logger.Log(LogLevel.ERROR, $"[SemanticProcessorService] Errore nell'Esplorazione Continua: {e.ErrorMessage}. Eccezione: {e.Exception?.Message}");
+
+            // Esempio: Notifica i client UI
+            // string uiMessage = $"ERROR|{e.ErrorMessage}|{e.Exception?.Message}";
+            // SendMessageToAllUiClients(uiMessage);
+        }
+        /// <summary>
+        /// Gestisce l'evento ExplorationCompleted dal MiuContinuousExplorerScheduler.
+        /// Notifica i client UI e logga il completamento.
+        /// </summary>
+        private void _continuousScheduler_ExplorationCompleted(object sender, MiuExplorationCompletedEventArgs e)
+        {
+            _logger.Log(LogLevel.INFO, $"[SemanticProcessorService] Esplorazione Continua Completata. Successo: {e.IsSuccessful}, Messaggio: '{e.FinalMessage}'. Coppie Esplorate: {e.TotalPairsExplored}, Nuove Stringhe Totali: {e.TotalNewMiuStringsFound}");
+
+            // Esempio: Notifica i client UI
+            // string uiMessage = $"COMPLETED|{e.IsSuccessful}|{e.FinalMessage}|{e.TotalPairsExplored}|{e.TotalNewMiuStringsFound}";
+            // SendMessageToAllUiClients(uiMessage);
+        }
+        /// <summary>
+        /// Gestisce l'evento ProgressUpdated dal MiuContinuousExplorerScheduler.
+        /// Notifica i client UI e logga il progresso.
+        /// </summary>
+        private void _continuousScheduler_ProgressUpdated(object sender, MiuExplorationProgressEventArgs e)
+        {
+            _logger.Log(LogLevel.INFO, $"[SemanticProcessorService] Progresso Esplorazione: Coppia {e.ExploredPairsCount} (S:{e.CurrentSourceId} T:{e.CurrentTargetId}) - Nuove Stringhe: {e.TotalNewMiuStringsFound} - Nodi Motore: {e.NodesExploredInCurrentEngineWave}");
+
+            // Esempio: Notifica i client UI (se hai una logica per farlo)
+            // Potresti voler inviare un messaggio SocketCommand ai client connessi
+            // con i dati di progresso.
+            // string uiMessage = $"PROGRESS|{e.CurrentSourceString}|{e.CurrentTargetString}|{e.ExploredPairsCount}|{e.TotalNewMiuStringsFound}|{e.NodesExploredInCurrentEngineWave}";
+            // SendMessageToAllUiClients(uiMessage); // Metodo ipotetico per inviare messaggi ai client UI
+        }
+
         private void Asl_ErrorFromSocket(object sender, string e)
         {
             CommandRunning = 0;

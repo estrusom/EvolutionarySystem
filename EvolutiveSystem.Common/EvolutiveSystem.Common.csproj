@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IMIUDataManager.cs" />
     <Compile Include="MIUDerivationPath.cs" />
     <Compile Include="MIUExplorerCursor.cs" />
     <Compile Include="MiuNotificationEventArgs.cs" />

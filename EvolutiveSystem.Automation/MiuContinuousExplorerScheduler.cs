@@ -1,4 +1,5 @@
 ﻿// File: EvolutiveSystem.Automation/MiuContinuousExplorerScheduler.cs
+// File: EvolutiveSystem.Automation/MiuContinuousExplorerScheduler.cs
 // Data di riferimento: 01 luglio 2025 (Classe MiuContinuousExplorerScheduler Completa)
 
 using System;
@@ -117,7 +118,8 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
         public event EventHandler<MiuExplorationProgressEventArgs> ProgressUpdated;
         public event EventHandler<MiuExplorationCompletedEventArgs> ExplorationCompleted;
         public event EventHandler<MiuExplorationErrorEventArgs> ExplorationError;
-        public event EventHandler<NewMiuStringFoundEventArgs> NewMiuStringFound; // Evento per nuove scoperte
+        //public event EventHandler<NewMiuStringFoundEventArgs> NewMiuStringFound; // eliminato il 2025.07.02 Evento per nuove scoperte
+        public event EventHandler<NewMiuStringDiscoveredEventArgs> NewMiuStringDiscovered; // 2025.07.02: Evento per nuove scoperte (usa il nuovo EventArgs)
 
         // --- Contatori per gli eventi ---
         private int _totalExploredPairs = 0;
@@ -160,13 +162,20 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
             // Se MIUDerivationEngine ha un evento, decommenta e implementa HandleNewStringDiscoveredByEngine.
             // _miuDerivationEngine.NewStringDiscovered += HandleNewStringDiscoveredByEngine; 
         }
-        private void _miuDerivationEngine_OnNewStringDiscovered(object sender, NewMiuStringFoundEventArgs e)
+        //private void _miuDerivationEngine_OnNewStringDiscovered(object sender, NewMiuStringFoundEventArgs e)
+        //{
+        //    _totalNewMiuStringsFound++; // Incrementa il contatore totale delle nuove stringhe trovate
+        //    OnNewMiuStringFound(e); // <- errore cs1503 **** Solleva l'evento pubblico dello scheduler
+        //    _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Nuova stringa MIU scoperta dal motore: '{e.NewMiuString}'. (Totale: {_totalNewMiuStringsFound})");
+        //}
+        private void _miuDerivationEngine_OnNewStringDiscovered(object sender, NewMiuStringDiscoveredEventArgs e) // MODIFIED: Usa il nuovo EventArgs
         {
-            _totalNewMiuStringsFound++; // Incrementa il contatore totale delle nuove stringhe trovate
-            OnNewMiuStringFound(e); // <- errore cs1503 **** Solleva l'evento pubblico dello scheduler
-            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Nuova stringa MIU scoperta dal motore: '{e.NewMiuString}'. (Totale: {_totalNewMiuStringsFound})");
+            // Incrementa il contatore solo se la stringa è nuova per la sessione di ricerca (come definito dal motore)
+            // Se vuoi contare solo quelle *veramente nuove per il DB*, aggiungi '&& e.IsTrulyNewToDatabase'
+            _totalNewMiuStringsFound++;
+            OnNewMiuStringDiscovered(e); // MODIFIED: Solleva il nuovo evento pubblico dello scheduler
+            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Nuova stringa MIU scoperta dal motore: '{e.DiscoveredString}'. (Totale: {_totalNewMiuStringsFound}). Nuova per DB: {e.IsTrulyNewToDatabase}");
         }
-
         /// <summary>
         /// Gestisce l'evento OnExplorationStatusChanged dal MIUDerivationEngine.
         /// Utilizzato principalmente per il logging dettagliato dello stato del motore.
@@ -343,6 +352,33 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
 
             try
             {
+                // Questi valori verranno impostati sulle proprietà statiche di RegoleMIUManager.
+                int maxDepth = 0;
+                int maxSteps = 0;
+                if (_configParam.TryGetValue("ProfonditaDiRicerca", out string depthStr) && int.TryParse(depthStr, out int parsedDepth))
+                {
+                    maxDepth = parsedDepth;
+                }
+                else
+                {
+                    _logger.Log(LogLevel.WARNING, "[MiuContinuousExplorerScheduler] Parametro 'ProfonditaDiRicerca' non trovato o non valido. Usando default 0.");
+                }
+
+                if (_configParam.TryGetValue("MassimoPassiRicerca", out string stepsStr) && int.TryParse(stepsStr, out int parsedSteps))
+                {
+                    maxSteps = parsedSteps;
+                }
+                else
+                {
+                    _logger.Log(LogLevel.WARNING, "[MiuContinuousExplorerScheduler] Parametro 'MassimoPassiRicerca' non trovato o non valido. Usando default 0.");
+                }
+                _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Parametri di ricerca letti dalla configurazione: MaxDepth={maxDepth}, MaxSteps={maxSteps}.");
+
+                // Questo è il passaggio cruciale per far sì che il motore usi i valori corretti.
+                RegoleMIUManager.MaxProfonditaRicerca = maxDepth;
+                RegoleMIUManager.MassimoPassiRicerca = maxSteps;
+                _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Impostate proprietà statiche RegoleMIUManager: MaxProfonditaRicerca={RegoleMIUManager.MaxProfonditaRicerca}, MassimoPassiRicerca={RegoleMIUManager.MassimoPassiRicerca}.");
+
                 while (!cancellationToken.IsCancellationRequested) // The outer loop (implicitly) continues until cancelled
                 {
                     // --- CONTROLLO PAUSA ALL'INIZIO DEL CICLO ESTERNO ---
@@ -569,9 +605,13 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
             ExplorationError?.Invoke(this, e);
         }
 
-        protected virtual void OnNewMiuStringFound(NewMiuStringFoundEventArgs e)
+        //protected virtual void OnNewMiuStringFound(NewMiuStringFoundEventArgs e)
+        //{
+        //    NewMiuStringFound?.Invoke(this, e);
+        //}
+        protected virtual void OnNewMiuStringDiscovered(NewMiuStringDiscoveredEventArgs e) // MODIFIED: Usa il nuovo EventArgs
         {
-            NewMiuStringFound?.Invoke(this, e);
+            NewMiuStringDiscovered?.Invoke(this, e); // MODIFIED: Invoca il nuovo evento
         }
     }
 }

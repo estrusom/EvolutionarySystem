@@ -175,6 +175,7 @@ namespace MIU.Core
         // Events to notify when a solution is found or a rule is applied.
         public static event EventHandler<SolutionFoundEventArgs> OnSolutionFound;
         public static event EventHandler<RuleAppliedEventArgs> OnRuleApplied;
+        public static event EventHandler<NewMiuStringDiscoveredEventArgs> OnNewMiuStringDiscoveredInternal; // NEW EVENT: Per notificare la scoperta di nuove stringhe
 
         /// <summary>
         /// Loads MIU rules from a list of strings formatted as SQLiteSelect output.
@@ -295,7 +296,7 @@ namespace MIU.Core
         /// Uses the static property MaxProfonditaRicerca for the depth limit.
         /// </summary>
         /// <param name="searchId">The ID of the current search for persistence.</param>
-        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed)
+        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed, IMIUDataManager dataManager) // MODIFIED SIGNATURE
         {
             // Decompress initial and target strings for internal search
             string startStringStandard = MIUStringConverter.InflateMIUString(startStringCompressed);
@@ -418,9 +419,21 @@ namespace MIU.Core
                             CurrentDepth = currentPath.Count - 1 // Current depth
                         });
 
+                        // NEW: Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
+                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUState(MIUStringConverter.DeflateMIUString(newStringStandard));
+                        long newStateId = upsertResult.Item1;
+                        bool isNewToDatabase = upsertResult.Item2;
+
                         if (!visitedStandard.Contains(newStringStandard))
                         {
                             visitedStandard.Add(newStringStandard);
+                            OnNewMiuStringDiscoveredInternal?.Invoke(null, new NewMiuStringDiscoveredEventArgs
+                            {
+                                SearchID = searchId,
+                                DiscoveredString = newStringStandard, // La stringa standard scoperta
+                                IsTrulyNewToDatabase = isNewToDatabase, // <- errore cs103 Indica se è anche nuova per il DB
+                                StateID = newStateId // <- errore cs103  L'ID assegnato dal database
+                            });
                             // Create a new step for the path
                             var newPathStep = new PathStepInfo
                             {
@@ -478,7 +491,7 @@ namespace MIU.Core
         /// <param name="targetStringCompressed">The compressed target string.</param>
         /// <param name="cancellationToken">A cancellation token for early termination.</param>
         /// <returns>The list of PathStepInfo that constitutes the solution, or null if not found.</returns>
-        public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken)
+        public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken, IMIUDataManager dataManager) // MODIFIED SIGNATURE
         {
             string startStringStandard = MIUStringConverter.InflateMIUString(startStringCompressed);
             string targetStringStandard = MIUStringConverter.InflateMIUString(targetStringCompressed);
@@ -504,7 +517,7 @@ namespace MIU.Core
                 StateStringStandard = startStringStandard,
                 AppliedRuleID = null, // No rule applied for initial state
                 ParentStateStringStandard = null, // No parent for initial state
-                StateID = -1, // Verrà aggiornato dal repository
+                StateID = dataManager.UpsertMIUState(startStringCompressed).Item1, // NEW: Ottieni l'ID dal DB per la stringa iniziale
                 ParentStateID = null, // Verrà aggiornato dal repository
                 Depth = 0,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
@@ -604,6 +617,11 @@ namespace MIU.Core
                             CurrentDepth = currentPath.Count - 1 // Profondità della stringa originale
                         });
 
+                        // NEW: Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
+                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUState(MIUStringConverter.DeflateMIUString(newStringStandard));
+                        long newStateId = upsertResult.Item1;
+                        bool isNewToDatabase = upsertResult.Item2;
+
                         // Se la stringa è già stata visitata, salta.
                         // In un A* completo, qui si dovrebbe verificare se il nuovo percorso per lo stato visitato
                         // è migliore (ha un costo cumulativo inferiore) rispetto a quello già trovato,
@@ -611,13 +629,21 @@ namespace MIU.Core
                         if (!visitedStandard.Contains(newStringStandard))
                         {
                             visitedStandard.Add(newStringStandard);
+                            // NEW: Scatena l'evento per contare le "nuove stringhe scoperte"
+                            OnNewMiuStringDiscoveredInternal?.Invoke(null, new NewMiuStringDiscoveredEventArgs
+                            {
+                                SearchID = searchId,
+                                DiscoveredString = newStringStandard, // La stringa standard scoperta
+                                IsTrulyNewToDatabase = isNewToDatabase, // Indica se è anche nuova per il DB
+                                StateID = newStateId // L'ID assegnato dal database
+                            });
                             // Crea un nuovo passo per il percorso
                             var newPathStep = new PathStepInfo
                             {
                                 StateStringStandard = newStringStandard,
                                 AppliedRuleID = rule.ID,
                                 ParentStateStringStandard = currentStandard,
-                                StateID = -1, // Verrà aggiornato dal repository
+                                StateID = dataManager.UpsertMIUState(startStringCompressed).Item1, // NEW: Ottieni l'ID dal DB per la stringa iniziale
                                 ParentStateID = (currentPath.LastOrDefault()?.StateID), // Inizializza con l'ID dello stato genitore
                                 Depth = currentPath.Count, // La profondità è la dimensione del percorso (0-indexed)
                                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
@@ -769,7 +795,7 @@ namespace MIU.Core
         /// <param name="targetStringCompressed">The compressed target string.</param>
         /// <param name="cancellationToken"> Un token di cancellazione che può essere usato per richiedere l'interruzione anticipata della ricerca.</param>
         /// <returns>The list of PathStepInfo that constitutes the solution, or null if not found.</returns>
-        public static List<PathStepInfo> TrovaDerivazioneAutomatica(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken)
+        public static List<PathStepInfo> TrovaDerivazioneAutomatica(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken, IMIUDataManager dataManager) // MODIFIED: Usa IMIUDataManager - MODIFIED SIGNATURE: Aggiunto dataManager
         {
             LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Automatic search requested from '{startStringCompressed}' to '{targetStringCompressed}'.");
 
@@ -787,13 +813,13 @@ namespace MIU.Core
             {
                 chosenAlgorithm = "DFS (Automatic)";
                 LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Target string is longer. Chosen algorithm DFS.");
-                resultPath = TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed);
+                resultPath = TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed, dataManager); // <- error cs1501  NEW: Passa dataManager
             }
             else
             {
                 chosenAlgorithm = "BFS (Automatic)";
                 LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Target string is not significantly longer. Chosen algorithm BFS.");
-                resultPath = TrovaDerivazioneBFS(searchId, startStringCompressed, targetStringCompressed, cancellationToken);
+                resultPath = TrovaDerivazioneBFS(searchId, startStringCompressed, targetStringCompressed, cancellationToken, dataManager); // <- error cs1501  NEW: Passa dataManager
             }
 
             // The OnSolutionFound event is already invoked by the BFS/DFS methods,

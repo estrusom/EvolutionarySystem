@@ -7,6 +7,7 @@
 using AsyncSocketServer;
 using CommandHandlers.Properties;
 using EvolutiveSystem.Automation;
+using EvolutiveSystem.Common;
 using EvolutiveSystem.Engine;
 using EvolutiveSystem.SQL.Core;
 using MasterLog;
@@ -839,7 +840,7 @@ namespace CommandHandlers
             SocketCommand DvCmd,
             XElement Param,
             AsyncSocketListener asl,
-            IMIUDataManager miuDataManager,
+            IMIUDataManager miuDataManager, 
             IMIURepository miuRepositoryInstance,
             Dictionary<string, string> configParam,
             out MiuContinuousExplorerScheduler continuousScheduler // Questo è il pezzo chiave per avviare lo scheduler
@@ -859,7 +860,7 @@ namespace CommandHandlers
                 int dbstat = CheckDbExistAndOpen();
                 if (dbstat == 0)
                 {
-                    continuousScheduler = new MiuContinuousExplorerScheduler(
+                    continuousScheduler = new MiuContinuousExplorerScheduler( // <- errore cs0012 
                                        _miuDerivationEngine,
                                        miuDataManager,
                                        miuRepositoryInstance,

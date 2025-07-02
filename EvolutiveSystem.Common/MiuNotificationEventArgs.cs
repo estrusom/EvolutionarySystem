@@ -48,4 +48,11 @@ namespace EvolutiveSystem.Common // Namespace per le utilità comuni MIU-specifi
             DerivationPath = derivationPath;
         }
     }
+    public class NewMiuStringDiscoveredEventArgs : EventArgs
+    {
+        public long SearchID { get; set; } // L'ID della ricerca corrente
+        public string DiscoveredString { get; set; } // La stringa MIU standard scoperta
+        public bool IsTrulyNewToDatabase { get; set; } // Indica se è anche nuova al DB (risultato di UpsertMIUState)
+        public long StateID { get; set; } // L'ID assegnato o recuperato dal DB
+    }
 }

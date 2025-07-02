@@ -47,7 +47,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IMIUDataManager.cs" />
     <Compile Include="IMIURepository.cs" />
     <Compile Include="IMIUTopologyService.cs" />
     <Compile Include="InflateDeflateMIUstring.cs" />

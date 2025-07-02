@@ -237,7 +237,7 @@ namespace FormalSystem.Worker // Nuovo namespace per il progetto wrapper generic
                 // RegoleMIUManager userà i suoi eventi (OnRuleApplied, OnSolutionFound) per notificare
                 // il FormalSystemManager di questo Task che gestirà l'aggiornamento delle statistiche in memoria
                 // e la persistenza sul DB tramite il suo taskRepository.
-                List<PathStepInfo> resultPath = RegoleMIUManager.TrovaDerivazioneAutomatica(searchId, startCompressed, targetCompressed, CancellationToken.None); 
+                List<PathStepInfo> resultPath = RegoleMIUManager.TrovaDerivazioneAutomatica(searchId, startCompressed, targetCompressed, CancellationToken.None, taskDataManager); // MODIFIED: Passa taskDataManager
 
                 token.ThrowIfCancellationRequested(); // Controlla se è stata richiesta la cancellazione
 
