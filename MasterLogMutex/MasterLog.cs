@@ -1,4 +1,5 @@
 // 29.04.2021 aggiunta la proprietà SeparatoreCampi, definisce il carattere che è messo come separatori nel messaggio di log
+// 04/07/2025 aggiunto overload all metodo log per impostare la lunghezza massima del log
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -323,7 +324,7 @@ namespace MasterLog
         }
         #endregion
 
-        #region Private
+        #region Private Helper Method
         /// <summary>
         /// Restituisce lo stream del file
         /// </summary>
@@ -378,6 +379,25 @@ namespace MasterLog
             {
                 throw;
             }
+        }
+        /// <summary>
+        /// Tronca una stringa per scopi di logging, aggiungendo "..." al centro se troppo lunga.
+        /// Metodo interno, chiamato solo dal metodo Log.
+        /// </summary>
+        /// <param name="s">La stringa da troncare.</param>
+        /// <param name="maxLength">La lunghezza massima desiderata per la stringa troncata.</param>
+        /// <returns>La stringa troncata o la stringa originale se non supera maxLength.</returns>
+        private string TruncateForLogInternal(string s, int maxLength)
+        {
+            if (string.IsNullOrEmpty(s) || s.Length <= maxLength)
+                return s;
+
+            if (maxLength < 5) maxLength = 5; // Assicura che ci sia spazio per "a...b"
+
+            int halfLength = (maxLength - 3) / 2; // -3 è per i puntini di sospensione "..."
+            if (halfLength < 1) halfLength = 1; // Assicura almeno 1 carattere per lato
+
+            return s.Substring(0, halfLength) + "..." + s.Substring(s.Length - halfLength);
         }
         #endregion
 
@@ -540,11 +560,22 @@ namespace MasterLog
             }
         }
         /// <summary>
-        /// Scrive la riga nel file di log
+        /// Scrive la riga nel file di log. Questa è la firma "classica" per mantenere la compatibilità.
+        /// Non tronca automaticamente il messaggio.
         /// </summary>
         /// <param name="livello">Livello del messaggio di log</param>
         /// <param name="message">Contenuto da scrivere</param>
         public void Log(LogLevel livello, string message)
+        {
+            // Chiama l'overload più completo, impostando truncateLongStrings a false di default.
+            Log(livello, message, false);
+        }
+        /// <summary>
+        /// Scrive la riga nel file di log
+        /// </summary>
+        /// <param name="livello">Livello del messaggio di log</param>
+        /// <param name="message">Contenuto da scrivere</param>
+        public void Log(LogLevel livello, string message, bool truncateLongStrings, int maxLength = 100)
         {
             DateTime myDate = DateTime.Now;
             // myDate = myDate.AddDays(1);
@@ -557,6 +588,47 @@ namespace MasterLog
             var v = LogLevelList.Find(A => A.LogIndex == livello);
             if (((this.swLogLevel & v.LogLevelToShow) == v.LogLevelToShow) || (livello == LogLevel.ERROR) || livello == LogLevel.WARNING)
             {
+                string finalMessage = message;
+                if (truncateLongStrings)
+                {
+                    finalMessage = TruncateForLogInternal(message, maxLength);
+                }
+                string logEntry = string.Format("{0} {1} {2} {3} {4}",
+                                                DateTime.Now.ToString("HH:mm:ss.fffffff"),
+                                                this.separatoreCampi,
+                                                livello.ToString(),
+                                                this.separatoreCampi,
+                                                finalMessage);
+                if (this.mtxEnabled && this.syncLogMutex != null) // Aggiunto controllo null per sicurezza
+                {
+                    try
+                    {
+                        this.syncLogMutex.WaitOne();
+                        using (StreamWriter writer = getStream())
+                        {
+                            writer.WriteLine(logEntry);
+                        }
+                    }
+                    finally
+                    {
+                        this.syncLogMutex.ReleaseMutex();
+                    }
+                }
+                else // Nessun mutex abilitato o mutex è null
+                {
+                    using (StreamWriter writer = getStream())
+                    {
+                        writer.WriteLine(logEntry);
+                    }
+                }
+                // Log per EventLog di Windows se isAdmin è true
+                if (this.isAdmin)
+                {
+                    string myMessage = string.Format("{0} {1} {2} {3} {4}", DateTime.Now.ToString("HH:mm:ss.fffffff"), this.separatoreCampi, livello.ToString(), this.separatoreCampi, message);
+                    this.evLog.WriteEntry(myMessage, this.LogEventEntryType, this.applicationEventId, this.applicationCategoryId, this.RawData);
+                }
+
+                /*
                 if (this.mtxEnabled)
                 {
                     this.syncLogMutex.WaitOne();
@@ -574,6 +646,7 @@ namespace MasterLog
                     string myMessage = string.Format("{0} {1} {2} {3} {4}", DateTime.Now.ToString("HH:mm:ss.fffffff"), this.separatoreCampi, livello.ToString(), this.separatoreCampi, message);
                     this.evLog.WriteEntry(myMessage, this.LogEventEntryType, this.applicationEventId, this.applicationCategoryId, this.RawData);
                 }
+                */
             }
         }
         #endregion
