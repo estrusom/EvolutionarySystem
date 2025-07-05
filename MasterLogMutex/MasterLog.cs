@@ -577,6 +577,7 @@ namespace MasterLog
         /// <param name="message">Contenuto da scrivere</param>
         public void Log(LogLevel livello, string message, bool truncateLongStrings, int maxLength = 100)
         {
+            if (!truncateLongStrings) maxLength = 100000;
             DateTime myDate = DateTime.Now;
             // myDate = myDate.AddDays(1);
             //int i = (int) livello;
