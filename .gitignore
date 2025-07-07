@@ -361,9 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-/CommandHandling
-"Database/miu_data.db" 
-Database/miu_data.db
-"Database/miu_data.db" 
+
+# Ignora i file di database SQLite e i log
+*.db
+*.log
+Database/*.db
+logs/
+
 /EvolutiveSystem.Common/Class1.cs
 /Doc/nuovo 5.xml
