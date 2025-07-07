@@ -369,11 +369,11 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                         {
                             ruleStats.SuccessfulCount++;
                             ruleStats.RecalculateEffectiveness();
-                            _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Learning] Rule {ruleId} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == ruleId)?.Nome ?? "Unknown"}) SuccessfulCount incremented to {ruleStats.SuccessfulCount}. Effectiveness: {ruleStats.EffectivenessScore:F4}");
+                            _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Learning] Rule {ruleId} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == ruleId)?.Nome ?? "Unknown"}) SuccessfulCount incremented to {ruleStats.SuccessfulCount}. Effectiveness: {ruleStats.EffectivenessScore:F4}", true);
                         }
                         else
                         {
-                            _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Rule {ruleId} in successful path not found in _ruleStatistics. This should not happen if HandleRuleApplied works correctly.");
+                            _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Rule {ruleId} in successful path not found in _ruleStatistics. This should not happen if HandleRuleApplied works correctly.", true);
                             // Questo caso indica una potenziale incongruenza, la regola dovrebbe essere stata aggiunta in HandleRuleApplied.
                         }
 
@@ -387,11 +387,11 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                             {
                                 transitionStats.SuccessfulCount++;
                                 // SuccessRate viene ricalcolato automaticamente dalla proprietà get
-                                _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {ruleId} SuccessfulCount incremented.");
+                                _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {ruleId} SuccessfulCount incremented.", true);
                             }
                             else
                             {
-                                _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {ruleId} in successful path not found in _transitionStatistics. This should not happen.");
+                                _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {ruleId} in successful path not found in _transitionStatistics. This should not happen.", true);
                                 // Anche qui, potenziale incongruenza
                             }
                         }

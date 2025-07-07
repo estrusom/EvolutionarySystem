@@ -479,7 +479,7 @@ namespace SemanticProcessor
             try
             {
                 swWatchDog(false, IntervalMilliSeconds);
-                if (this.logMainCounter > 3) this.logMainCounter = 0;
+                if (this.logMainCounter > 10) this.logMainCounter = 0;
 #if DEBUG
                     if (!firstInDebug)
                 {

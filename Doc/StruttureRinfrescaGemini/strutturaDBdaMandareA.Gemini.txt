@@ -9,7 +9,6 @@ CREATE TABLE RegoleMIU (
                             NOT NULL ON CONFLICT ROLLBACK,
     Descrizione  TEXT (512) 
 );
-
 CREATE TABLE MIUParameterConfigurator (
     ID              INTEGER PRIMARY KEY ON CONFLICT ROLLBACK AUTOINCREMENT
                             UNIQUE ON CONFLICT ROLLBACK
@@ -19,7 +18,6 @@ CREATE TABLE MIUParameterConfigurator (
     ValoreParametro TEXT    NOT NULL,
     Descrizione     TEXT
 );
-
 CREATE TABLE MIU_States (
     StateID            INTEGER PRIMARY KEY AUTOINCREMENT,
     CurrentString      TEXT    UNIQUE
@@ -29,13 +27,13 @@ CREATE TABLE MIU_States (
     Hash               TEXT,
     DiscoveryTime_Int  INTEGER,
     DiscoveryTime_Text TEXT,
-    UsageCount         INTEGER DEFAULT 0
+    UsageCount         INTEGER DEFAULT 0,
+    SeedingType        INTEGER
 );
-
 CREATE TABLE MIU_Searches (
     SearchID            INTEGER  PRIMARY KEY AUTOINCREMENT,
     InitialString       TEXT     NOT NULL,
-    TargetString        TEXT     NOT NULL,
+    TargetString        TEXT,
     SearchAlgorithm     TEXT,
     StartTime           DATETIME,
     EndTime             DATETIME,
@@ -51,7 +49,15 @@ CREATE TABLE MIU_Searches (
     TargetStringLength  INTEGER,
     InitialStringLength INTEGER
 );
-
+CREATE TABLE MIU_Rules (
+    RuleID      INTEGER PRIMARY KEY AUTOINCREMENT,
+    RuleName    TEXT    NOT NULL
+                        UNIQUE,
+    Description TEXT,
+    Pattern     TEXT    NOT NULL,
+    Replacement TEXT    NOT NULL,
+    RuleType    INTEGER NOT NULL
+);
 CREATE TABLE MIU_RuleApplications (
     ApplicationID INTEGER PRIMARY KEY AUTOINCREMENT,
     SearchID      INTEGER NOT NULL,
@@ -77,7 +83,6 @@ CREATE TABLE MIU_RuleApplications (
     )
     REFERENCES RegoleMIU (ID) 
 );
-
 CREATE TABLE MIU_Paths (
     PathStepID    INTEGER PRIMARY KEY AUTOINCREMENT,
     SearchID      INTEGER NOT NULL,
@@ -105,7 +110,6 @@ CREATE TABLE MIU_Paths (
     )
     REFERENCES RegoleMIU (ID) 
 );
-
 CREATE TABLE MIU_Actions (
     ID                 INTEGER PRIMARY KEY AUTOINCREMENT,
     OperationID        INTEGER,
@@ -114,7 +118,6 @@ CREATE TABLE MIU_Actions (
     OperationTime_Int  INTEGER,
     OperationTime_Text TEXT
 );
-
 CREATE TABLE Learning_TransitionStatistics (
     ParentStringCompressed TEXT    NOT NULL,
     AppliedRuleID          INTEGER NOT NULL,
@@ -132,7 +135,6 @@ CREATE TABLE Learning_TransitionStatistics (
     )
     REFERENCES RegoleMIU (ID) 
 );
-
 CREATE TABLE Learning_RuleStatistics (
     RuleID             INTEGER PRIMARY KEY,
     ApplicationCount   INTEGER NOT NULL

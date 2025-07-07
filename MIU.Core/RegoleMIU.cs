@@ -328,6 +328,8 @@ namespace MIU.Core
             int nodesExplored = 0;
             int maxDepthReached = 0;
 
+            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max Depth: {MaxProfonditaRicerca})", true); // truncate = true
+            
             while (stack.Count > 0)
             {
                 nodesExplored++;
@@ -353,12 +355,15 @@ namespace MIU.Core
                         MaxDepthReached = maxDepthReached,
                         SearchAlgorithmUsed = "DFS" // Specify the algorithm used
                     });
-                    LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Solution found: '{startStringCompressed}' -> '{targetStringCompressed}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+                    LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Solution found: '{startStringCompressed}' -> '{targetStringCompressed}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}. Time: {stopwatch.ElapsedMilliseconds} ms.", true);
                     return currentPath; // Returns path in PathStepInfo
                 }
 
-                if (currentPath.Count - 1 >= MaxProfonditaRicerca) continue; // Maximum depth reached
-
+                if (currentPath.Count - 1 >= MaxProfonditaRicerca)
+                {
+                    LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Maximum depth reached ({MaxProfonditaRicerca}) for '{currentStandard}'. Pruning this branch.", true);
+                    continue; // Maximum depth reached
+                }
                 // MODIFICA CRUCIALE: Ordina le regole prima di applicarle,
                 // dando priorità alle statistiche di transizione specifiche,
                 // poi alle statistiche generali della regola.
@@ -450,11 +455,11 @@ namespace MIU.Core
                             };
                             System.Collections.Generic.List<PathStepInfo> newPath = new System.Collections.Generic.List<PathStepInfo>(currentPath) { newPathStep };
                             stack.Push((newStringStandard, newPath));
-                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{(rule.Nome)}'). Depth: {currentPath.Count}. Stack: {stack.Count}");
+                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{(rule.Nome)}'). Depth: {currentPath.Count}. Stack: {stack.Count}", true);
                         }
                         else
                         {
-                            // LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] State '{newStringStandard}' already visited. Skipping.");
+                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] State '{newStringStandard}' already visited. Skipping.", true);
                         }
                     }
                 }
@@ -476,7 +481,7 @@ namespace MIU.Core
                 MaxDepthReached = maxDepthReached,
                 SearchAlgorithmUsed = "DFS" // Specify the algorithm used
             });
-            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] No solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] No solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.", true);
             return null; // No derivation found
         }
 
@@ -535,7 +540,7 @@ namespace MIU.Core
             int nodesExplored = 0;
             int maxDepthReached = 0;
 
-            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max steps: {MassimoPassiRicerca}, Max Depth: {MaxProfonditaRicerca})");
+            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max steps: {MassimoPassiRicerca}, Max Depth: {MaxProfonditaRicerca})", true);
 
             while (priorityQueue.Count > 0) // Il ciclo ora opera sulla nostra lista a priorità
             {
@@ -577,7 +582,7 @@ namespace MIU.Core
                         MaxDepthReached = maxDepthReached,
                         SearchAlgorithmUsed = "BFS-Intelligent" // Aggiorna il nome dell'algoritmo
                     });
-                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.", true);
                     return currentPath;
                 }
 
@@ -591,7 +596,7 @@ namespace MIU.Core
                 // Limite di profondità raggiunto
                 if (currentPath.Count - 1 >= MaxProfonditaRicerca)
                 {
-                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Maximum depth reached ({MaxProfonditaRicerca}) for '{currentStandard}'. Pruning this branch.");
+                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Maximum depth reached ({MaxProfonditaRicerca}) for '{currentStandard}'. Pruning this branch.", true);
                     continue; // Salta l'esplorazione di questo ramo troppo profondo
                 }
 
@@ -658,11 +663,11 @@ namespace MIU.Core
                             priorityQueue.Add(new BFSQueueItem(newStringStandard, newPath, newPriority));
                             // **********************************************************************************************
 
-                            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{rule.Nome}'). Depth: {newPathStep.Depth}. Priority: {newPriority:F4}. Queue Size: {priorityQueue.Count}");
+                            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{rule.Nome}'). Depth: {newPathStep.Depth}. Priority: {newPriority:F4}. Queue Size: {priorityQueue.Count}", true);
                         }
                         else
                         {
-                            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] State '{newStringStandard}' already visited. Skipping.");
+                            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] State '{newStringStandard}' already visited. Skipping.", true);
                         }
                     }
                 }
