@@ -16,6 +16,7 @@ using System.Text.RegularExpressions;
 using MasterLog; // Necessary for your Logger class
 using EvolutiveSystem.Common;
 using System.Threading; // Added for model classes (RegolaMIU, RuleStatistics, TransitionStatistics)
+using Priority_Queue; // Aggiungi questo namespace all'inizio del file
 // DO NOT use 'using MIU.Core;' here because we are already in the MIU.Core namespace
 
 namespace MIU.Core
@@ -100,45 +101,29 @@ namespace MIU.Core
     /// <summary>
     /// NUOVA CLASSE: BFSQueueItem
     /// Rappresenta un elemento nella coda di ricerca, includendo lo stato, il percorso e la sua priorità calcolata.
-    /// Viene usata per implementare una "coda a priorità" nella BFS intelligente.  
+    /// Viene usata per implementare una "coda a priorità" nella BFS intelligente.
     /// </summary>
-    public class BFSQueueItem : IComparable<BFSQueueItem>
+    public class BFSQueueItem : FastPriorityQueueNode // Eredita da FastPriorityQueueNode (rimuovendo IComparable<BFSQueueItem>)
     {
         public string CurrentStandard { get; }
         public List<PathStepInfo> CurrentPath { get; }
-        public double Priority { get; } // Priorità: valore più alto = priorità più alta
+        // La proprietà Priority è ereditata da FastPriorityQueueNode, quindi non la dichiariamo più qui.
 
         public BFSQueueItem(string currentStandard, List<PathStepInfo> currentPath, double priority)
         {
             CurrentStandard = currentStandard;
             CurrentPath = currentPath;
-            Priority = priority;
-        }
-
-        // Implementazione di IComparable per ordinare gli elementi nella coda a priorità.
-        // Ordina in ordine decrescente di priorità (il più promettente prima).
-        // Se le priorità sono uguali, favorisce percorsi più brevi.
-        public int CompareTo(BFSQueueItem other)
-        {
-            if (other == null) return 1;
-
-            // Confronta per priorità (decrescente: il più alto punteggio viene prima)
-            int result = other.Priority.CompareTo(this.Priority);
-            if (result == 0)
-            {
-                // Se le priorità sono uguali, usa la profondità del percorso (crescente: percorsi più brevi prima)
-                result = this.CurrentPath.Count.CompareTo(other.CurrentPath.Count);
-                if (result == 0)
-                {
-                    // Ulteriore tie-breaker: confronto lessicografico delle stringhe per garantire un ordine deterministico
-                    result = string.Compare(this.CurrentStandard, other.CurrentStandard, StringComparison.Ordinal);
-                }
-            }
-            return result;
+            // Imposta la proprietà Priority ereditata.
+            // Ricorda che FastPriorityQueue è una min-heap (estrae il valore più basso).
+            // Se la tua logica di CalculatePriority assegna un un valore più ALTO per le priorità migliori,
+            // allora dovrai negare il valore qui per far sì che la coda lo tratti come "più basso".
+            this.Priority = (float)-priority; // Negiamo la priorità e facciamo il cast a float
         }
     }
     public static class RegoleMIUManager
     {
+        private const int MAX_STRING_LENGTH = 1000;
+
         // Static property for the logger instance
         public static Logger LoggerInstance { get; set; }
 
@@ -296,7 +281,7 @@ namespace MIU.Core
         /// Uses the static property MaxProfonditaRicerca for the depth limit.
         /// </summary>
         /// <param name="searchId">The ID of the current search for persistence.</param>
-        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed, IMIUDataManager dataManager) // MODIFIED SIGNATURE
+        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed, IMIUDataManager dataManager, CancellationToken cancellationToken) // MODIFIED SIGNATURE
         {
             // Decompress initial and target strings for internal search
             string startStringStandard = MIUStringConverter.InflateMIUString(startStringCompressed);
@@ -314,8 +299,8 @@ namespace MIU.Core
                 StateStringStandard = startStringStandard,
                 AppliedRuleID = null, // No rule applied for initial state
                 ParentStateStringStandard = null, // No parent for initial state
-                // Inizializzazione delle nuove proprietà per il passo iniziale
-                StateID = -1, // Verrà aggiornato dal repository
+                // Inizializzazione delle nuove proprietà per il passo inizialecv 
+                StateID = dataManager.UpsertMIUState(startStringCompressed).Item1,
                 ParentStateID = null, // Verrà aggiornato dal repository
                 Depth = 0,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
@@ -332,6 +317,9 @@ namespace MIU.Core
             
             while (stack.Count > 0)
             {
+                // Controlla la richiesta di cancellazione
+                cancellationToken.ThrowIfCancellationRequested();
+
                 nodesExplored++;
                 var (currentStandard, currentPath) = stack.Pop();
                 maxDepthReached = Math.Max(maxDepthReached, currentPath.Count - 1); // Depth is path length - 1
@@ -356,6 +344,7 @@ namespace MIU.Core
                         SearchAlgorithmUsed = "DFS" // Specify the algorithm used
                     });
                     LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Solution found: '{startStringCompressed}' -> '{targetStringCompressed}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}. Time: {stopwatch.ElapsedMilliseconds} ms.", true);
+                    LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Soluzione trovata per ricerca ID: {searchId}. Restituisco percorso.");
                     return currentPath; // Returns path in PathStepInfo
                 }
 
@@ -414,6 +403,11 @@ namespace MIU.Core
                     // TryApply operates on STANDARD strings
                     if (rule.TryApply(currentStandard, out string newStringStandard))
                     {
+                        if (newStringStandard.Length > MAX_STRING_LENGTH)
+                        {
+                            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Stringa '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...' troppo lunga ({newStringStandard.Length} > {MAX_STRING_LENGTH}). Saltata.", true);
+                            continue; // Salta questa stringa e passa alla prossima regola/iterazione
+                        }
                         OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs
                         {
                             SearchID = searchId, // <<-- QUESTA RIGA È DA AGGIUNGERE/CORREGGERE QUI!
@@ -446,7 +440,7 @@ namespace MIU.Core
                                 AppliedRuleID = rule.ID,
                                 ParentStateStringStandard = currentStandard,
                                 // Inizializzazione delle nuove proprietà per ogni nuovo passo
-                                StateID = -1, // Verrà aggiornato dal repository
+                                StateID = newStateId, // Verrà aggiornato dal repository
                                 ParentStateID = (currentPath.LastOrDefault()?.StateID), // Inizializza con l'ID dello stato genitore se PathStepInfo ha ElapsedMilliseconds
                                 Depth = currentPath.Count, // La profondità è la dimensione del percorso (0-indexed)
                                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
@@ -482,6 +476,7 @@ namespace MIU.Core
                 SearchAlgorithmUsed = "DFS" // Specify the algorithm used
             });
             LoggerInstance?.Log(LogLevel.INFO, $"[DFS] No solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.", true);
+            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Nessuna soluzione trovata o limiti raggiunti per ricerca ID: {searchId}. Restituisco null."); // Log di terminazione
             return null; // No derivation found
         }
 
@@ -503,7 +498,7 @@ namespace MIU.Core
 
             // *** MODIFICA A: Sostituisci Queue con List<BFSQueueItem> per simulare una coda a priorità ***
             // Questa lista conterrà gli elementi da esplorare, ordinati per priorità.
-            List<BFSQueueItem> priorityQueue = new List<BFSQueueItem>();
+            FastPriorityQueue<BFSQueueItem> priorityQueue = new FastPriorityQueue<BFSQueueItem>(100000); // Puoi variare la capacità iniziale
             // ********************************************************************************************
 
             HashSet<string> visitedStandard = new HashSet<string>(); // Per tracciare gli stati già visitati
@@ -522,7 +517,7 @@ namespace MIU.Core
                 StateStringStandard = startStringStandard,
                 AppliedRuleID = null, // No rule applied for initial state
                 ParentStateStringStandard = null, // No parent for initial state
-                StateID = dataManager.UpsertMIUState(startStringCompressed).Item1, // NEW: Ottieni l'ID dal DB per la stringa iniziale
+                StateID = dataManager.UpsertMIUState(startStringCompressed).Item1,
                 ParentStateID = null, // Verrà aggiornato dal repository
                 Depth = 0,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
@@ -533,7 +528,7 @@ namespace MIU.Core
             // *** MODIFICA B: Calcola la priorità iniziale e aggiungi a priorityQueue ***
             // Per lo stato iniziale, non c'è una regola applicata o un genitore, quindi passiamo null/-1.
             double initialPriority = CalculatePriority(null, -1, 0); // La funzione CalculatePriority verrà aggiunta al passo 3
-            priorityQueue.Add(new BFSQueueItem(startStringStandard, new List<PathStepInfo> { initialPathStep }, initialPriority));
+            priorityQueue.Enqueue(new BFSQueueItem(startStringStandard, new List<PathStepInfo> { initialPathStep }, initialPriority), (float)-initialPriority);
             visitedStandard.Add(startStringStandard);
             // *****************************************************************************
 
@@ -546,15 +541,8 @@ namespace MIU.Core
             {
                 // Controlla la richiesta di cancellazione
                 cancellationToken.ThrowIfCancellationRequested();
-
-                // *** MODIFICA C: Estrai l'elemento con la priorità più alta dalla lista ***
-                // Questo ordina la lista ad ogni iterazione per simulare il comportamento di una coda a priorità.
-                // In un'implementazione reale ad alte prestazioni, useresti una vera struttura dati PriorityQueue ottimizzata.
-                // Ordiniamo per priorità decrescente, poi per profondità crescente (percorsi più brevi a parità di priorità).
-                BFSQueueItem bestItem = priorityQueue.OrderByDescending(item => item.Priority).ThenBy(item => item.CurrentPath.Count).FirstOrDefault();
-                if (bestItem == null) break; // Non dovrebbe accadere se Count > 0
-
-                priorityQueue.Remove(bestItem); // Rimuovi l'elemento estratto dalla lista
+                LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Inizio iterazione ciclo while. SearchID: {searchId}, Nodi esplorati: {nodesExplored}, Profondità Max: {maxDepthReached}, Coda: {priorityQueue.Count}.");
+                BFSQueueItem bestItem = priorityQueue.Dequeue(); //25.07.08
 
                 string currentStandard = bestItem.CurrentStandard;
                 List<PathStepInfo> currentPath = bestItem.CurrentPath;
@@ -583,6 +571,7 @@ namespace MIU.Core
                         SearchAlgorithmUsed = "BFS-Intelligent" // Aggiorna il nome dell'algoritmo
                     });
                     LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Steps: {currentPath.Count - 1}, Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.", true);
+                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Soluzione trovata per ricerca ID: {searchId}. Restituisco percorso."); // 25.07.08
                     return currentPath;
                 }
 
@@ -611,6 +600,12 @@ namespace MIU.Core
                     // Tenta di applicare la regola
                     if (rule.TryApply(currentStandard, out string newStringStandard))
                     {
+                        if (newStringStandard.Length > MAX_STRING_LENGTH)
+                        {
+                            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Stringa '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...' troppo lunga ({newStringStandard.Length} > {MAX_STRING_LENGTH}). Saltata.", true);
+                            continue; // Salta questa stringa e passa alla prossima regola/iterazione
+                        }
+
                         // Invoca l'evento OnRuleApplied per la persistenza e l'aggiornamento delle statistiche
                         OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs
                         {
@@ -621,7 +616,6 @@ namespace MIU.Core
                             NewString = newStringStandard,
                             CurrentDepth = currentPath.Count - 1 // Profondità della stringa originale
                         });
-
                         // NEW: Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
                         Tuple<long, bool> upsertResult = dataManager.UpsertMIUState(MIUStringConverter.DeflateMIUString(newStringStandard));
                         long newStateId = upsertResult.Item1;
@@ -648,7 +642,7 @@ namespace MIU.Core
                                 StateStringStandard = newStringStandard,
                                 AppliedRuleID = rule.ID,
                                 ParentStateStringStandard = currentStandard,
-                                StateID = dataManager.UpsertMIUState(startStringCompressed).Item1, // NEW: Ottieni l'ID dal DB per la stringa iniziale
+                                StateID = newStateId,  // NEW: Ottieni l'ID dal DB per la stringa iniziale
                                 ParentStateID = (currentPath.LastOrDefault()?.StateID), // Inizializza con l'ID dello stato genitore
                                 Depth = currentPath.Count, // La profondità è la dimensione del percorso (0-indexed)
                                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
@@ -660,7 +654,7 @@ namespace MIU.Core
 
                             // *** MODIFICA D: Calcola la priorità per il nuovo stato e aggiungilo alla coda a priorità ***
                             double newPriority = CalculatePriority(currentStandard, rule.ID, newPathStep.Depth); // La funzione CalculatePriority verrà aggiunta al passo 3
-                            priorityQueue.Add(new BFSQueueItem(newStringStandard, newPath, newPriority));
+                            priorityQueue.Enqueue(new BFSQueueItem(newStringStandard, newPath, newPriority), (float)-newPriority); //25.07.08
                             // **********************************************************************************************
 
                             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{rule.Nome}'). Depth: {newPathStep.Depth}. Priority: {newPriority:F4}. Queue Size: {priorityQueue.Count}", true);
@@ -690,6 +684,7 @@ namespace MIU.Core
                 SearchAlgorithmUsed = "BFS-Intelligent"
             });
             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] No solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.");
+            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Nessuna soluzione trovata o limiti raggiunti per ricerca ID: {searchId}. Restituisco null."); // 25.07.08
             return null;
         }
         /// <summary>
@@ -787,7 +782,7 @@ namespace MIU.Core
             // }
 
 
-            LoggerInstance?.Log(LogLevel.INFO, $"[CalculatePriority] Calculated priority for state at depth {newDepth} from '{parentStandardString}' via Rule {appliedRuleId}: Total Priority = {priority:F4}");
+            LoggerInstance?.Log(LogLevel.INFO, $"[CalculatePriority] Calculated priority for state at depth {newDepth} from '{parentStandardString}' via Rule {appliedRuleId}: Total Priority = {priority:F4}", true, 250);
 
             return priority;
         }
@@ -818,7 +813,7 @@ namespace MIU.Core
             {
                 chosenAlgorithm = "DFS (Automatic)";
                 LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Target string is longer. Chosen algorithm DFS.");
-                resultPath = TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed, dataManager); // <- error cs1501  NEW: Passa dataManager
+                resultPath = TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed, dataManager, cancellationToken); // <- error cs1501  NEW: Passa dataManager
             }
             else
             {

@@ -29,6 +29,7 @@ namespace EvolutiveSystem_02
         private ToolTip toolTip;
         private string xmlSv = "";
         private string _connectionString = "";
+        private string SelectCommand = "";
         public FrmSocketClient(Logger logger, AsyncSocketListener Asl,string ConnectionString)
         {
             InitializeComponent();
@@ -160,7 +161,7 @@ namespace EvolutiveSystem_02
                         tssComStatus.Text = "Close";
                         tssComStatus.ForeColor = Color.Blue;
                         tssComStatus.ToolTipText = "Close";
-
+                        rtbListaComandi.AppendText(this.SelectCommand + Environment.NewLine);
                     }
                     else
                     {
@@ -214,6 +215,7 @@ namespace EvolutiveSystem_02
             if (setTelegram.DialogResult == DialogResult.OK)
             {
                 txtSendData.Text = setTelegram.TxtSendData;
+                this.SelectCommand = setTelegram.SelectCommand;
             }
         }
 
@@ -222,6 +224,12 @@ namespace EvolutiveSystem_02
             Point p = PointToScreen(new Point(pnlCmdSocket.Left + btnAttrezzi.Left + btnAttrezzi.Width, btnAttrezzi.Top + btnAttrezzi.Height));
             ctxTools.Show(p);
         }
+
+        private void btnClrListCmd_Click(object sender, EventArgs e)
+        {
+            rtbListaComandi.Clear();
+        }
+
         #endregion
         #region textbox events
         private void txtIPaddress_Enter(object sender, EventArgs e)

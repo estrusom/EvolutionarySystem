@@ -174,7 +174,7 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
             // Se vuoi contare solo quelle *veramente nuove per il DB*, aggiungi '&& e.IsTrulyNewToDatabase'
             _totalNewMiuStringsFound++;
             OnNewMiuStringDiscovered(e); // MODIFIED: Solleva il nuovo evento pubblico dello scheduler
-            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Nuova stringa MIU scoperta dal motore: '{e.DiscoveredString}'. (Totale: {_totalNewMiuStringsFound}). Nuova per DB: {e.IsTrulyNewToDatabase}");
+            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Nuova stringa MIU scoperta dal motore: '{e.DiscoveredString}'. (Totale: {_totalNewMiuStringsFound}). Nuova per DB: {e.IsTrulyNewToDatabase}", true, 200);
         }
         /// <summary>
         /// Gestisce l'evento OnExplorationStatusChanged dal MIUDerivationEngine.
@@ -415,7 +415,7 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
                         currentTargetId = parsedTargetId;
                     }
 
-                    _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Resuming from SourceId: {currentSourceId}, TargetId: {currentTargetId}");
+                    _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Resuming from SourceId: {currentSourceId}, TargetId: {currentTargetId}", true);
 
                     bool completedAllPairsInThisPass = true; // Flag to track if all pairs were processed in this pass
 
@@ -448,7 +448,7 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
                         _configParam[ContinuousExplorerTargetIdKey] = currentTargetId.ToString();
                         _miuRepositoryInstance.SaveMIUParameterConfigurator(_configParam); // Persist the updated dictionary
 
-                        _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Outer loop: Exploring from SOURCE: '{sourceState.CurrentString}' (ID: {sourceState.StateID}).");
+                        _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Outer loop: Exploring from SOURCE: '{sourceState.CurrentString}' (ID: {sourceState.StateID}).", true);
 
                         // Inner loop: selects the TARGET string
                         foreach (var targetState in allMiuStates)
@@ -472,8 +472,12 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
                             }
 
                             completedAllPairsInThisPass = false; // We are processing a pair, so not all pairs are finished yet
+                            
+                            int outerIndex = allMiuStates.IndexOf(sourceState);
+                            int innerIndex = allMiuStates.IndexOf(targetState);
+                            Console.WriteLine($"OuterIndex: {outerIndex}, InnerIndex: {innerIndex}");
 
-                            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Inner loop: Exploring from '{sourceState.CurrentString}' (ID: {sourceState.StateID}) to TARGET: '{targetState.CurrentString}' (ID: {targetState.StateID}).");
+                            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Inner loop: Exploring from '{sourceState.CurrentString}' (ID: {sourceState.StateID}) to TARGET: '{targetState.CurrentString}' (ID: {targetState.StateID}).", true);
 
                             // 1. Check if the MIU engine is busy from another exploration (e.g., launched by CmdMIUexploration)
                             while (_miuDerivationEngine.IsExplorationRunning && !cancellationToken.IsCancellationRequested)
@@ -488,7 +492,7 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
                             cancellationToken.ThrowIfCancellationRequested();
 
                             // 2. Start MIU exploration and await its completion
-                            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Starting MIU DerivationEngine for '{sourceState.CurrentString}' -> '{targetState.CurrentString}'.");
+                            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Starting MIU DerivationEngine for '{sourceState.CurrentString}' -> '{targetState.CurrentString}'.", true);
 
                             // *** Qui dovresti sottoscrivere agli eventi del MIUDerivationEngine se vuoi ricevere notifiche
                             //     specifiche dall'esplorazione di una singola coppia (es. NewMiuStringFound) ***
@@ -496,12 +500,12 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
                             // di questo scheduler e poi sollevare l'evento NewMiuStringFound dello scheduler.
 
                             await _miuDerivationEngine.StartExplorationAsync(sourceState.CurrentString, targetState.CurrentString);
-                            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Exploration wave completed for '{sourceState.CurrentString}' -> '{targetState.CurrentString}'.");
+                            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Exploration wave completed for '{sourceState.CurrentString}' -> '{targetState.CurrentString}'.", true);
 
                             // Aggiorna i contatori per l'evento di progresso
                             _totalExploredPairs++; // Incrementa il contatore delle coppie esplorate
 
-                            // Se _miuDerivationEngine.StartExplorationAsync restituisce il numero di nuove stringhe trovate, aggiorna _totalNewMiuStringsFound
+                            // Se _miuDerivationEngine.StartExplorationAsyncStartExplorationAsync restituisce il numero di nuove stringhe trovate, aggiorna _totalNewMiuStringsFound
                             // O se MIUDerivationEngine solleva un evento NewStringDiscovered, il contatore _totalNewMiuStringsFound
                             // verrà aggiornato dal metodo HandleNewStringDiscoveredByEngine (se implementato e sottoscritto).
                             // Esempio: int newStringsThisWave = _miuDerivationEngine.GetNewStringsCountFromLastExploration();
@@ -536,7 +540,7 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
                             // Small pause between derivations
                             await Task.Delay(1000, cancellationToken); // 1 second pause
                         }
-                        _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] All targets explored for SOURCE: '{sourceState.CurrentString}'.");
+                        _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] All targets explored for SOURCE: '{sourceState.CurrentString}'.", true);
                         // L'evento di progresso per la sorgente è già stato sollevato dopo ogni coppia.
                         // Puoi aggiungere qui un log o una notifica specifica se desideri un riepilogo per ogni sorgente completata.
                     }

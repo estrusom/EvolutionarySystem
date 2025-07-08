@@ -61,6 +61,10 @@
             this.tsmClrTx = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.tsmDeserializzaComandoClose = new System.Windows.Forms.ToolStripMenuItem();
+            this.gbListaComandi = new System.Windows.Forms.GroupBox();
+            this.pnlClr = new System.Windows.Forms.Panel();
+            this.rtbListaComandi = new System.Windows.Forms.RichTextBox();
+            this.btnClrListCmd = new System.Windows.Forms.Button();
             this.pnlCommand.SuspendLayout();
             this.pnlCmdSocket.SuspendLayout();
             this.pnlGestSocket.SuspendLayout();
@@ -74,8 +78,11 @@
             this.gbConnectTo.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.spcOutput)).BeginInit();
             this.spcOutput.Panel1.SuspendLayout();
+            this.spcOutput.Panel2.SuspendLayout();
             this.spcOutput.SuspendLayout();
             this.ctxTools.SuspendLayout();
+            this.gbListaComandi.SuspendLayout();
+            this.pnlClr.SuspendLayout();
             this.SuspendLayout();
             // 
             // pnlCommand
@@ -327,6 +334,10 @@
             // spcOutput.Panel1
             // 
             this.spcOutput.Panel1.Controls.Add(this.richTextBoxDebug);
+            // 
+            // spcOutput.Panel2
+            // 
+            this.spcOutput.Panel2.Controls.Add(this.gbListaComandi);
             this.spcOutput.Size = new System.Drawing.Size(442, 817);
             this.spcOutput.SplitterDistance = 386;
             this.spcOutput.TabIndex = 0;
@@ -352,7 +363,7 @@
             this.toolStripSeparator3,
             this.tsmDeserializzaComandoClose});
             this.ctxTools.Name = "ctxTools";
-            this.ctxTools.Size = new System.Drawing.Size(251, 164);
+            this.ctxTools.Size = new System.Drawing.Size(251, 136);
             // 
             // tsmDecodificaComando
             // 
@@ -398,6 +409,48 @@
             this.tsmDeserializzaComandoClose.Size = new System.Drawing.Size(250, 24);
             this.tsmDeserializzaComandoClose.Text = "Close";
             // 
+            // gbListaComandi
+            // 
+            this.gbListaComandi.Controls.Add(this.rtbListaComandi);
+            this.gbListaComandi.Controls.Add(this.pnlClr);
+            this.gbListaComandi.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gbListaComandi.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.gbListaComandi.Location = new System.Drawing.Point(0, 0);
+            this.gbListaComandi.Name = "gbListaComandi";
+            this.gbListaComandi.Size = new System.Drawing.Size(442, 427);
+            this.gbListaComandi.TabIndex = 0;
+            this.gbListaComandi.TabStop = false;
+            this.gbListaComandi.Text = "Lista comandi";
+            // 
+            // pnlClr
+            // 
+            this.pnlClr.Controls.Add(this.btnClrListCmd);
+            this.pnlClr.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.pnlClr.Location = new System.Drawing.Point(3, 382);
+            this.pnlClr.Name = "pnlClr";
+            this.pnlClr.Size = new System.Drawing.Size(436, 42);
+            this.pnlClr.TabIndex = 0;
+            // 
+            // rtbListaComandi
+            // 
+            this.rtbListaComandi.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.rtbListaComandi.Location = new System.Drawing.Point(3, 18);
+            this.rtbListaComandi.Name = "rtbListaComandi";
+            this.rtbListaComandi.Size = new System.Drawing.Size(436, 364);
+            this.rtbListaComandi.TabIndex = 1;
+            this.rtbListaComandi.Text = "";
+            // 
+            // btnClrListCmd
+            // 
+            this.btnClrListCmd.Dock = System.Windows.Forms.DockStyle.Left;
+            this.btnClrListCmd.Location = new System.Drawing.Point(0, 0);
+            this.btnClrListCmd.Name = "btnClrListCmd";
+            this.btnClrListCmd.Size = new System.Drawing.Size(149, 42);
+            this.btnClrListCmd.TabIndex = 0;
+            this.btnClrListCmd.Text = "Clear list command";
+            this.btnClrListCmd.UseVisualStyleBackColor = true;
+            this.btnClrListCmd.Click += new System.EventHandler(this.btnClrListCmd_Click);
+            // 
             // FrmSocketClient
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -429,9 +482,12 @@
             this.gbConnectTo.ResumeLayout(false);
             this.gbConnectTo.PerformLayout();
             this.spcOutput.Panel1.ResumeLayout(false);
+            this.spcOutput.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.spcOutput)).EndInit();
             this.spcOutput.ResumeLayout(false);
             this.ctxTools.ResumeLayout(false);
+            this.gbListaComandi.ResumeLayout(false);
+            this.pnlClr.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -470,5 +526,9 @@
         private System.Windows.Forms.ToolStripMenuItem tsmClrTx;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripMenuItem tsmDeserializzaComandoClose;
+        private System.Windows.Forms.GroupBox gbListaComandi;
+        private System.Windows.Forms.RichTextBox rtbListaComandi;
+        private System.Windows.Forms.Panel pnlClr;
+        private System.Windows.Forms.Button btnClrListCmd;
     }
 }

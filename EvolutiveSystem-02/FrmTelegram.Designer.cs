@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmTelegram));
             this.btnAnnullaSend = new System.Windows.Forms.Button();
             this.gbSelCmd = new System.Windows.Forms.GroupBox();
+            this.gbConfigFunzione = new System.Windows.Forms.GroupBox();
+            this.lblTitle = new System.Windows.Forms.Label();
             this.lblDb = new System.Windows.Forms.Label();
             this.lblDenDb = new System.Windows.Forms.Label();
             this.chkbCRC = new System.Windows.Forms.CheckBox();
@@ -46,12 +48,10 @@
             this.btnSendMsg = new System.Windows.Forms.Button();
             this.gbCompilaBufferTx = new System.Windows.Forms.GroupBox();
             this.rtxtBuffer = new System.Windows.Forms.RichTextBox();
-            this.gbConfigFunzione = new System.Windows.Forms.GroupBox();
-            this.lblTitle = new System.Windows.Forms.Label();
             this.gbSelCmd.SuspendLayout();
+            this.gbConfigFunzione.SuspendLayout();
             this.pnlbtn.SuspendLayout();
             this.gbCompilaBufferTx.SuspendLayout();
-            this.gbConfigFunzione.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnAnnullaSend
@@ -87,6 +87,26 @@
             this.gbSelCmd.TabIndex = 36;
             this.gbSelCmd.TabStop = false;
             this.gbSelCmd.Text = "Seezione comandi e parametri di trasmissione";
+            // 
+            // gbConfigFunzione
+            // 
+            this.gbConfigFunzione.Controls.Add(this.lblTitle);
+            this.gbConfigFunzione.Location = new System.Drawing.Point(50, 173);
+            this.gbConfigFunzione.Name = "gbConfigFunzione";
+            this.gbConfigFunzione.Size = new System.Drawing.Size(938, 231);
+            this.gbConfigFunzione.TabIndex = 49;
+            this.gbConfigFunzione.TabStop = false;
+            this.gbConfigFunzione.Text = "Configurazione comando";
+            // 
+            // lblTitle
+            // 
+            this.lblTitle.AutoSize = true;
+            this.lblTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTitle.Location = new System.Drawing.Point(7, 24);
+            this.lblTitle.Name = "lblTitle";
+            this.lblTitle.Size = new System.Drawing.Size(46, 18);
+            this.lblTitle.TabIndex = 0;
+            this.lblTitle.Text = "label1";
             // 
             // lblDb
             // 
@@ -246,26 +266,6 @@
             this.rtxtBuffer.TabIndex = 0;
             this.rtxtBuffer.Text = "";
             // 
-            // gbConfigFunzione
-            // 
-            this.gbConfigFunzione.Controls.Add(this.lblTitle);
-            this.gbConfigFunzione.Location = new System.Drawing.Point(50, 173);
-            this.gbConfigFunzione.Name = "gbConfigFunzione";
-            this.gbConfigFunzione.Size = new System.Drawing.Size(938, 231);
-            this.gbConfigFunzione.TabIndex = 49;
-            this.gbConfigFunzione.TabStop = false;
-            this.gbConfigFunzione.Text = "Configurazione comando";
-            // 
-            // lblTitle
-            // 
-            this.lblTitle.AutoSize = true;
-            this.lblTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTitle.Location = new System.Drawing.Point(7, 24);
-            this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(46, 18);
-            this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "label1";
-            // 
             // FrmTelegram
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -286,10 +286,10 @@
             this.Load += new System.EventHandler(this.FrmTelegram_Load);
             this.gbSelCmd.ResumeLayout(false);
             this.gbSelCmd.PerformLayout();
-            this.pnlbtn.ResumeLayout(false);
-            this.gbCompilaBufferTx.ResumeLayout(false);
             this.gbConfigFunzione.ResumeLayout(false);
             this.gbConfigFunzione.PerformLayout();
+            this.pnlbtn.ResumeLayout(false);
+            this.gbCompilaBufferTx.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }

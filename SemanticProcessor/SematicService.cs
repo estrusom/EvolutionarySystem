@@ -1204,7 +1204,7 @@ _logger.Log(LogLevel.INFO, "[SemanticProcessorService] SetEventAutomation chiama
         /// </summary>
         private void _continuousScheduler_NewMiuStringFound(object sender, NewMiuStringDiscoveredEventArgs e) // MODIFIED: Ora accetta NewMiuStringDiscoveredEventArgs
         {
-            _logger.Log(LogLevel.INFO, $"[SemanticProcessorService] Nuova stringa MIU scoperta dallo scheduler: '{e.DiscoveredString}'. StateID: {e.StateID}, IsTrulyNewToDatabase: {e.IsTrulyNewToDatabase}");
+            _logger.Log(LogLevel.INFO, $"[SemanticProcessorService] Nuova stringa MIU scoperta dallo scheduler: '{e.DiscoveredString}'. StateID: {e.StateID}, IsTrulyNewToDatabase: {e.IsTrulyNewToDatabase}", true);
             // Se hai logica che usa e.NewMiuString, cambiala in e.DiscoveredString
 
             // Esempio: Notifica i client UI

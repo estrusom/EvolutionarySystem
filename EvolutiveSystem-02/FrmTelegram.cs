@@ -377,5 +377,6 @@ namespace EvolutiveSystem_02
 
         #endregion
         public string TxtSendData { get { return this.txtSendData; } }
+        public string SelectCommand { get { return telegramma.Command; } }
     }
 }

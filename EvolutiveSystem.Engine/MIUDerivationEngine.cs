@@ -134,37 +134,46 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     RegoleMIUManager.OnSolutionFound += HandleSolutionFound;
 
                     // 4. Carica il cursore di esplorazione esistente o inizializza
+                    long initialStringStateId;
+                    string actualInitialString = initialString; // Useremo questa stringa per la ricerca
+
+                    // Carica il cursore di esplorazione esistente del motore
                     MIUExplorerCursor cursor = await _dataManager.LoadExplorerCursorAsync();
                     _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine] Cursore caricato: Source={cursor.CurrentSourceIndex}, Target={cursor.CurrentTargetIndex}, LastTimestamp={cursor.LastExplorationTimestamp}");
 
-                    long initialStringStateId = -1;
-
                     // Se non ci sono ID salvati nel cursore, persistiamo la stringa iniziale
-                    if (cursor.CurrentSourceIndex <= 0)
+                    if (!string.IsNullOrEmpty(initialString)) // Se lo scheduler ha fornito una stringa iniziale valida
                     {
                         Tuple<long, bool> result = _dataManager.UpsertMIUState(initialString);
                         initialStringStateId = result.Item1;
+                        actualInitialString = initialString; // Assicurati che sia la stringa passata
 
-                        cursor.CurrentSourceIndex = initialStringStateId;
-                        _logger.Log(LogLevel.INFO, $"[MIUDerivationEngine] Inizializzato stato di partenza: '{initialString}' (ID: {initialStringStateId}).");
+                        _logger.Log(LogLevel.INFO, $"[MIUDerivationEngine] Usando stringa iniziale da scheduler: '{actualInitialString}' (ID: {initialStringStateId}).", true, 250);
                     }
-                    else // Se c'è un cursore salvato, usiamo la sua stringa iniziale
+                    else if (cursor.CurrentSourceIndex > 0)// Se c'è un cursore salvato, usiamo la sua stringa iniziale
                     {
                         var states = await _dataManager.LoadMIUStatesAsync();
                         var sourceStateInfo = states.FirstOrDefault(s => s.StateID == cursor.CurrentSourceIndex);
                         if (sourceStateInfo != null)
                         {
-                            initialString = sourceStateInfo.CurrentString;
+                            actualInitialString = sourceStateInfo.CurrentString; // Usa la variabile 'actualInitialString'
                             initialStringStateId = sourceStateInfo.StateID;
-                            _logger.Log(LogLevel.INFO, $"[MIUDerivationEngine] Ripresa esplorazione da stato salvato: '{initialString}' (ID: {initialStringStateId}).");
+                            _logger.Log(LogLevel.INFO, $"[MIUDerivationEngine] Ripresa esplorazione da stato salvato: '{actualInitialString}' (ID: {initialStringStateId}).", true, 250);
                         }
                         else
                         {
                             _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine] Impossibile trovare stato con ID {cursor.CurrentSourceIndex}. Riavvio da '{initialString}'.");
-                            Tuple<long, bool> result = _dataManager.UpsertMIUState(initialString);
+                            Tuple<long, bool> result = _dataManager.UpsertMIUState(string.Empty);
                             initialStringStateId = result.Item1;
-                            cursor.CurrentSourceIndex = initialStringStateId;
+                            actualInitialString = string.Empty;
                         }
+                    }
+                    else
+                    {
+                        _logger.Log(LogLevel.INFO, "[MIUDerivationEngine] Inizializzato stato di partenza (nessun input/cursore). Inizio da stringa vuota.", true, 250);
+                        Tuple<long, bool> result = _dataManager.UpsertMIUState(string.Empty); // Inizia con stringa vuota
+                        initialStringStateId = result.Item1;
+                        actualInitialString = string.Empty;
                     }
 
                     // 5. Inserisci la ricerca nel database e ottieni l'ID corrente
@@ -331,7 +340,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                         SuccessfulCount = 0,
                         LastUpdated = DateTime.Now
                     };
-                    _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {e.AppliedRuleID} not found in _transitionStatistics. Creating new entry.");
+                    _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {e.AppliedRuleID} not found in _transitionStatistics. Creating new entry.", true, 250);
                 }
                 _transitionStatistics[transitionKey].ApplicationCount++;
                 _transitionStatistics[transitionKey].LastUpdated = DateTime.Now;
@@ -369,11 +378,11 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                         {
                             ruleStats.SuccessfulCount++;
                             ruleStats.RecalculateEffectiveness();
-                            _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Learning] Rule {ruleId} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == ruleId)?.Nome ?? "Unknown"}) SuccessfulCount incremented to {ruleStats.SuccessfulCount}. Effectiveness: {ruleStats.EffectivenessScore:F4}", true);
+                            _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Learning] Rule {ruleId} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == ruleId)?.Nome ?? "Unknown"}) SuccessfulCount incremented to {ruleStats.SuccessfulCount}. Effectiveness: {ruleStats.EffectivenessScore:F4}", true, 250);
                         }
                         else
                         {
-                            _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Rule {ruleId} in successful path not found in _ruleStatistics. This should not happen if HandleRuleApplied works correctly.", true);
+                            _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Rule {ruleId} in successful path not found in _ruleStatistics. This should not happen if HandleRuleApplied works correctly.", true, 250);
                             // Questo caso indica una potenziale incongruenza, la regola dovrebbe essere stata aggiunta in HandleRuleApplied.
                         }
 
@@ -387,11 +396,11 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                             {
                                 transitionStats.SuccessfulCount++;
                                 // SuccessRate viene ricalcolato automaticamente dalla proprietà get
-                                _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {ruleId} SuccessfulCount incremented.", true);
+                                _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {ruleId} SuccessfulCount incremented.", true, 250);
                             }
                             else
                             {
-                                _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {ruleId} in successful path not found in _transitionStatistics. This should not happen.", true);
+                                _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine - Learning] Transition {parentCompressed} -> Rule {ruleId} in successful path not found in _transitionStatistics. This should not happen.", true, 250);
                                 // Anche qui, potenziale incongruenza
                             }
                         }
