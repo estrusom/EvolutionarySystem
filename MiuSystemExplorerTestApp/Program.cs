@@ -20,7 +20,8 @@ using MasterLog; // Required for your Logger class
 using EvolutiveSystem.Common; // For RegolaMIU, RuleStatistics, TransitionStatistics, MIUExplorerCursor, MIUStringTopologyData
 using EvolutiveSystem.Learning; // For LearningStatisticsManager
 using EvolutiveSystem.Engine; // For IMIUDataProcessingService, MIUDerivationEngine
-using EvolutiveSystem.Services; // For IMIUTopologyService, MIUTopologyService
+using EvolutiveSystem.Services;
+using System.Configuration; // For IMIUTopologyService, MIUTopologyService
 
 namespace MiuSystemExplorerTestApp // Your specific test app namespace
 {
@@ -63,7 +64,7 @@ namespace MiuSystemExplorerTestApp // Your specific test app namespace
             {
                 // Common repository initialization and statistics loading
                 //string databaseFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "miudb.sqlite"); // Modified path to be more flexible
-                string databaseFilePath = @"C:\Progetti\EvolutiveSystem\Database\miu_data.db";
+                string databaseFilePath = ConfigurationManager.AppSettings["FolderDBFile"];
                 SQLiteSchemaLoader _schemaLoader = new SQLiteSchemaLoader(databaseFilePath, _logger);
                 _schemaLoader.InitializeDatabase();
                 _logger.Log(LogLevel.INFO, "Database initialized via SQLiteSchemaLoader.");

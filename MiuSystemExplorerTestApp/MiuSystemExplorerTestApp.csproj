@@ -33,7 +33,35 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EvolutiveSystem.Common">
+      <HintPath>..\EvolutiveSystem.Common\bin\Release\EvolutiveSystem.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="EvolutiveSystem.Engine">
+      <HintPath>..\EvolutiveSystem.Engine\bin\Release\EvolutiveSystem.Engine.dll</HintPath>
+    </Reference>
+    <Reference Include="EvolutiveSystem.Learning">
+      <HintPath>..\EvolutiveSystem.Learning\bin\Release\EvolutiveSystem.Learning.dll</HintPath>
+    </Reference>
+    <Reference Include="EvolutiveSystem.Services">
+      <HintPath>..\EvolutiveSystem.Services\bin\Release\EvolutiveSystem.Services.dll</HintPath>
+    </Reference>
+    <Reference Include="EvolutiveSystem.SQL.Core">
+      <HintPath>..\EvolutiveSystem.SQL.Core\bin\Release\EvolutiveSystem.SQL.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="FormalSystem.Worker">
+      <HintPath>..\FormalSystem.Worker\bin\Release\FormalSystem.Worker.dll</HintPath>
+    </Reference>
+    <Reference Include="MasterLog">
+      <HintPath>..\MasterLogMutex\bin\Release\MasterLog.dll</HintPath>
+    </Reference>
+    <Reference Include="MIU.Core">
+      <HintPath>..\MIU.Core\bin\Release\MIU.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="MiuSystemWorker">
+      <HintPath>..\MiuSystemWorker\bin\Release\MiuSystemWorker.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -48,44 +76,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\EvolutiveSystem.Common\EvolutiveSystem.Common.csproj">
-      <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
-      <Name>EvolutiveSystem.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\EvolutiveSystem.Engine\EvolutiveSystem.Engine.csproj">
-      <Project>{0f8a47f7-fdfa-4ada-b372-b0636f2b16f8}</Project>
-      <Name>EvolutiveSystem.Engine</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\EvolutiveSystem.Learning\EvolutiveSystem.Learning.csproj">
-      <Project>{65834756-c570-4269-afec-759b174fc02e}</Project>
-      <Name>EvolutiveSystem.Learning</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\EvolutiveSystem.Services\EvolutiveSystem.Services.csproj">
-      <Project>{ae2b69fa-9233-411f-98bc-5fd45af24167}</Project>
-      <Name>EvolutiveSystem.Services</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
-      <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
-      <Name>EvolutiveSystem.SQL.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\FormalSystem.Worker\FormalSystem.Worker.csproj">
-      <Project>{a2ab32c2-867f-4118-a2f8-887cf5a38856}</Project>
-      <Name>FormalSystem.Worker</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
-      <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
-      <Name>MasterLogMutex</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
-      <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
-      <Name>MIU.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\MiuSystemWorker\MiuSystemWorker.csproj">
-      <Project>{84f2986b-2cad-4580-950c-ff7b8f0b598b}</Project>
-      <Name>MiuSystemWorker</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Data.SQLite.Core">
