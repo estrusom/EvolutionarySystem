@@ -52,11 +52,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="System.Data.SQLite">
-      <Version>1.0.119</Version>
-    </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="RRU_EvolutiveSystem.pfx" />
   </ItemGroup>
   <ItemGroup>
@@ -72,6 +67,11 @@
       <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
       <Name>MIU.Core</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Data.SQLite">
+      <Version>1.0.119</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

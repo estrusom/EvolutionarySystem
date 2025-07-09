@@ -1,0 +1,4 @@
+1,Regola 1,I$,$0U,"Se termina con 'I', aggiunge 'U'."
+2,Regola 2,^M(.*)$,M$1$1,Raddoppia la stringa dopo 'M'.	
+3,Regola 3,III,U,Sostituisce 'III' con 'U'.
+4,Regola 4,UU, ,Omette 'UU'.
