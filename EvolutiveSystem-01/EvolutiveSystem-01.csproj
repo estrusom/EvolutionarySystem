@@ -160,6 +160,10 @@
     <None Include="Resources\businessapplication_database_database_accepteitheracceptthedatabase_connect_connectdatabase_negocios_aplicacion_basededato_2310 %281%29.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj">
+      <Project>{c56b8471-e33b-463a-b0a5-90a7d8a20ddb}</Project>
+      <Name>AsyncSocketServer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.Core\EvolutiveSystem.Core.csproj">
       <Project>{a193e8c9-5afa-4d49-adfa-f25891b1a8eb}</Project>
       <Name>EvolutiveSystem.Core</Name>
