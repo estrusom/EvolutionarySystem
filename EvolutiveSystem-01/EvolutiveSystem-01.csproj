@@ -161,7 +161,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj">
-      <Project>{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}</Project>
+      <Project>{c56b8471-e33b-463a-b0a5-90a7d8a20ddb}</Project>
       <Name>AsyncSocketServer</Name>
     </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.Core\EvolutiveSystem.Core.csproj">
