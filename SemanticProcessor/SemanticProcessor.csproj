@@ -111,6 +111,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj">
+      <Project>{c56b8471-e33b-463a-b0a5-90a7d8a20ddb}</Project>
+      <Name>AsyncSocketServer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CommandHandlers\CommandHandlers.csproj">
       <Project>{78F37CCC-727B-4FDF-BC20-8F51F2DFAE88}</Project>
       <Name>CommandHandlers</Name>
