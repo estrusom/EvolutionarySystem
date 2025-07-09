@@ -118,6 +118,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj">
+      <Project>{c56b8471-e33b-463a-b0a5-90a7d8a20ddb}</Project>
+      <Name>AsyncSocketServer</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
       <Project>{59F3126F-6FED-40D0-AB71-5439FE3F161F}</Project>
       <Name>EvolutiveSystem.SQL.Core</Name>
