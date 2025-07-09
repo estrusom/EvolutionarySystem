@@ -15,8 +15,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketManagerInfo", "Socket
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MasterLogMutex", "MasterLogMutex\MasterLogMutex.csproj", "{D990905E-13C5-40E4-95C0-B16737834777}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncSocketServer", "AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj", "{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MessaggiErrore", "MessaggiErrore\MessaggiErrore.csproj", "{C4BE31BA-71EC-420F-AD75-58C661011B5A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SocketManager", "SocketManager\SocketManager.csproj", "{D628C45F-2369-4E52-9CB6-EF7D6E1888DD}"
@@ -48,6 +46,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Services", "EvolutiveSystem.Services\EvolutiveSystem.Services.csproj", "{AE2B69FA-9233-411F-98BC-5FD45AF24167}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Automation", "EvolutiveSystem.Automation\EvolutiveSystem.Automation.csproj", "{96899867-986F-4BC2-A86A-7763F2F894D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncSocketServer", "AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj", "{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -105,14 +105,6 @@ Global
 		{D990905E-13C5-40E4-95C0-B16737834777}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D990905E-13C5-40E4-95C0-B16737834777}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{D990905E-13C5-40E4-95C0-B16737834777}.Release|ARM64.Build.0 = Release|Any CPU
-		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Debug|ARM64.ActiveCfg = Debug|Any CPU
-		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Debug|ARM64.Build.0 = Debug|Any CPU
-		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|ARM64.ActiveCfg = Release|Any CPU
-		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|ARM64.Build.0 = Release|Any CPU
 		{C4BE31BA-71EC-420F-AD75-58C661011B5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C4BE31BA-71EC-420F-AD75-58C661011B5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4BE31BA-71EC-420F-AD75-58C661011B5A}.Debug|ARM64.ActiveCfg = Debug|Any CPU
@@ -241,6 +233,14 @@ Global
 		{96899867-986F-4BC2-A86A-7763F2F894D5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{96899867-986F-4BC2-A86A-7763F2F894D5}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{96899867-986F-4BC2-A86A-7763F2F894D5}.Release|ARM64.Build.0 = Release|Any CPU
+		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
