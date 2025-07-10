@@ -122,8 +122,21 @@ namespace MIU.Core
     }
     public static class RegoleMIUManager
     {
-        private const int MAX_STRING_LENGTH = 1000;
-
+        private static int _MAX_STRING_LENGTH = 1000;
+        private static int _STRING_LENGTH_PENALTY_THRESHOLD = 20; // Soglia arbitraria: oltre 20 caratteri, inizia la penalità. Puoi calibrare.
+        private static double _STRING_LENGTH_PENALTY_FACTOR = 5.0; // Quanto penalizzare per ogni carattere oltre la soglia. Valore più alto = penalità più aggressiva.
+        /// <summary>
+        /// imposta la lunghezza massima delle stringhe di ricerca
+        /// </summary>
+        public static int MAX_STRING_LENGTH { get {  return _MAX_STRING_LENGTH; } set { _MAX_STRING_LENGTH = value; } }
+        /// <summary>
+        /// Soglia arbitraria: oltre 20 caratteri, inizia la penalità. Puoi calibrare.
+        /// </summary>
+        public static int STRING_LENGTH_PENALTY_THRESHOLD { get { return _STRING_LENGTH_PENALTY_THRESHOLD; } set { _STRING_LENGTH_PENALTY_THRESHOLD = value; } }
+        /// <summary>
+        /// Quanto penalizzare per ogni carattere oltre la soglia. Valore più alto = penalità più aggressiva.
+        /// </summary>
+        public static double STRING_LENGTH_PENALTY_FACTOR { get { return _STRING_LENGTH_PENALTY_FACTOR; } set { _STRING_LENGTH_PENALTY_FACTOR = value; } }
         // Static property for the logger instance
         public static Logger LoggerInstance { get; set; }
 
@@ -398,58 +411,85 @@ namespace MIU.Core
                 })
                 .ToList();
 
+                LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DFS-Rules] Rules in orderedRules (IDs): {string.Join(", ", orderedRules.Select(r => r.ID))}. Total: {orderedRules.Count}");
+
                 foreach (var rule in orderedRules) // Use sorted rules
                 {
-                    // TryApply operates on STANDARD strings
-                    if (rule.TryApply(currentStandard, out string newStringStandard))
+                    string newStringStandard; // Dichiarazione della variabile qui
+
+                    // Log generico per vedere tutte le iterazioni delle regole
+                    LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[RULE-ITERATION] Processing Rule ID: {rule.ID} ('{rule.Nome}') on string: '{currentStandard.Substring(0, Math.Min(currentStandard.Length, 50))}...'.", true, 250);
+
+                    // Tenta di applicare la regola UNA SOLA VOLTA
+                    bool applySuccess = rule.TryApply(currentStandard, out newStringStandard);
+
+                    // Log del risultato di TryApply per RuleID 1
+                    if (rule.ID == 1)
                     {
+                        LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY-RESULT] TryApply for Rule ID 1 on '{currentStandard.Substring(0, Math.Min(currentStandard.Length, 50))}...' {(applySuccess ? "SUCCEEDED" : "FAILED")}.", true, 250);
+                    }
+
+                    // Se la regola è stata applicata con successo, procedi con la logica successiva
+                    if (applySuccess)
+                    {
+                        // Log che la regola è stata applicata
+                        LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
+
+                        // Controllo della lunghezza della stringa generata
                         if (newStringStandard.Length > MAX_STRING_LENGTH)
                         {
                             LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Stringa '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...' troppo lunga ({newStringStandard.Length} > {MAX_STRING_LENGTH}). Saltata.", true);
                             continue; // Salta questa stringa e passa alla prossima regola/iterazione
                         }
+
+                        // Invoca l'evento OnRuleApplied per la persistenza e l'aggiornamento delle statistiche
                         OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs
                         {
-                            SearchID = searchId, // <<-- QUESTA RIGA È DA AGGIUNGERE/CORREGGERE QUI!
+                            SearchID = searchId,
                             AppliedRuleID = rule.ID,
                             AppliedRuleName = rule.Nome,
-                            OriginalString = currentStandard, // STANDARD string
-                            NewString = newStringStandard,    // STANDARD string
-                            CurrentDepth = currentPath.Count - 1 // Current depth
+                            OriginalString = currentStandard,
+                            NewString = newStringStandard,
+                            CurrentDepth = currentPath.Count - 1 // Profondità della stringa originale
                         });
 
-                        // NEW: Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
+                        // Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
                         Tuple<long, bool> upsertResult = dataManager.UpsertMIUState(MIUStringConverter.DeflateMIUString(newStringStandard));
                         long newStateId = upsertResult.Item1;
                         bool isNewToDatabase = upsertResult.Item2;
 
+                        // Se la stringa è già stata visitata, salta.
                         if (!visitedStandard.Contains(newStringStandard))
                         {
                             visitedStandard.Add(newStringStandard);
+                            // Scatena l'evento per contare le "nuove stringhe scoperte"
                             OnNewMiuStringDiscoveredInternal?.Invoke(null, new NewMiuStringDiscoveredEventArgs
                             {
                                 SearchID = searchId,
                                 DiscoveredString = newStringStandard, // La stringa standard scoperta
-                                IsTrulyNewToDatabase = isNewToDatabase, // <- errore cs103 Indica se è anche nuova per il DB
-                                StateID = newStateId // <- errore cs103  L'ID assegnato dal database
+                                IsTrulyNewToDatabase = isNewToDatabase, // Indica se è anche nuova per il DB
+                                StateID = newStateId // L'ID assegnato dal database
                             });
-                            // Create a new step for the path
+                            // Crea un nuovo passo per il percorso
                             var newPathStep = new PathStepInfo
                             {
                                 StateStringStandard = newStringStandard,
                                 AppliedRuleID = rule.ID,
                                 ParentStateStringStandard = currentStandard,
-                                // Inizializzazione delle nuove proprietà per ogni nuovo passo
-                                StateID = newStateId, // Verrà aggiornato dal repository
-                                ParentStateID = (currentPath.LastOrDefault()?.StateID), // Inizializza con l'ID dello stato genitore se PathStepInfo ha ElapsedMilliseconds
-                                Depth = currentPath.Count, // La profondità è la dimensione del percorso (0-indexed)
+                                StateID = newStateId,
+                                ParentStateID = (currentPath.LastOrDefault()?.StateID),
+                                Depth = currentPath.Count,
                                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
                                 NodesExplored = nodesExplored,
                                 MaxDepthReached = maxDepthReached
                             };
-                            System.Collections.Generic.List<PathStepInfo> newPath = new System.Collections.Generic.List<PathStepInfo>(currentPath) { newPathStep };
+
+                            List<PathStepInfo> newPath = new List<PathStepInfo>(currentPath) { newPathStep };
+
+                            // Aggiungi il nuovo stato allo stack per DFS
                             stack.Push((newStringStandard, newPath));
-                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{(rule.Nome)}'). Depth: {currentPath.Count}. Stack: {stack.Count}", true);
+
+                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{(rule.Nome)}'). Depth: {newPathStep.Depth}. Stack: {stack.Count}", true);
                         }
                         else
                         {
@@ -480,8 +520,6 @@ namespace MIU.Core
             return null; // No derivation found
         }
 
-
-        /// <summary>
         /// Implementation of Breadth-First Search (BFS) to find the shortest derivation,
         /// enhanced with heuristic pruning and priority queue based on learning statistics.
         /// Operates on STANDARD strings internally.
@@ -499,7 +537,7 @@ namespace MIU.Core
             // *** MODIFICA A: Sostituisci Queue con List<BFSQueueItem> per simulare una coda a priorità ***
             // Questa lista conterrà gli elementi da esplorare, ordinati per priorità.
             FastPriorityQueue<BFSQueueItem> priorityQueue = new FastPriorityQueue<BFSQueueItem>(100000); // Puoi variare la capacità iniziale
-            // ********************************************************************************************
+                                                                                                         // ********************************************************************************************
 
             HashSet<string> visitedStandard = new HashSet<string>(); // Per tracciare gli stati già visitati
                                                                      // La dictionary `paths` non è più strettamente necessaria qui come per il BFS puro,
@@ -597,12 +635,31 @@ namespace MIU.Core
                 // complessiva del grafo sarà decisa dalla coda. Per ora, iteriamo sulle regole nell'ordine predefinito.
                 foreach (var rule in Regole)
                 {
-                    // Tenta di applicare la regola
-                    if (rule.TryApply(currentStandard, out string newStringStandard))
+                    string newStringStandard; // Dichiarazione della variabile qui
+
+                    // Log generico per vedere tutte le iterazioni delle regole
+                    LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[RULE-ITERATION] Processing Rule ID: {rule.ID} ('{rule.Nome}') on string: '{currentStandard.Substring(0, Math.Min(currentStandard.Length, 50))}...'.", true, 250);
+
+                    // Tenta di applicare la regola UNA SOLA VOLTA
+                    bool applySuccess = rule.TryApply(currentStandard, out newStringStandard);
+
+                    // Log del risultato di TryApply per RuleID 1
+                    if (rule.ID == 1)
                     {
+                        LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY-RESULT] TryApply for Rule ID 1 on '{currentStandard.Substring(0, Math.Min(currentStandard.Length, 50))}...' {(applySuccess ? "SUCCEEDED" : "FAILED")}.", true, 250);
+                    }
+
+                    // Se la regola è stata applicata con successo, procedi con la logica successiva
+                    if (applySuccess)
+                    {
+                        // Log che la regola è stata applicata (POSIZIONAMENTO CORRETTO: qui, indipendentemente dalla lunghezza)
+                        LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
+
+                        // Controllo della lunghezza della stringa generata
                         if (newStringStandard.Length > MAX_STRING_LENGTH)
                         {
-                            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Stringa '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...' troppo lunga ({newStringStandard.Length} > {MAX_STRING_LENGTH}). Saltata.", true);
+                            // Questo log indica che la stringa è stata scartata DOPO essere stata generata
+                            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Stringa '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...' troppo lunga ({newStringStandard.Length} > {MAX_STRING_LENGTH}). Saltata. (Generated by Rule {rule.ID})", true); // Added rule ID for clarity
                             continue; // Salta questa stringa e passa alla prossima regola/iterazione
                         }
 
@@ -616,19 +673,17 @@ namespace MIU.Core
                             NewString = newStringStandard,
                             CurrentDepth = currentPath.Count - 1 // Profondità della stringa originale
                         });
-                        // NEW: Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
+
+                        // Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
                         Tuple<long, bool> upsertResult = dataManager.UpsertMIUState(MIUStringConverter.DeflateMIUString(newStringStandard));
                         long newStateId = upsertResult.Item1;
                         bool isNewToDatabase = upsertResult.Item2;
 
                         // Se la stringa è già stata visitata, salta.
-                        // In un A* completo, qui si dovrebbe verificare se il nuovo percorso per lo stato visitato
-                        // è migliore (ha un costo cumulativo inferiore) rispetto a quello già trovato,
-                        // e aggiornare il percorso se necessario. Per ora, manteniamo la logica di non riesplorazione.
                         if (!visitedStandard.Contains(newStringStandard))
                         {
                             visitedStandard.Add(newStringStandard);
-                            // NEW: Scatena l'evento per contare le "nuove stringhe scoperte"
+                            // Scatena l'evento per contare le "nuove stringhe scoperte"
                             OnNewMiuStringDiscoveredInternal?.Invoke(null, new NewMiuStringDiscoveredEventArgs
                             {
                                 SearchID = searchId,
@@ -642,20 +697,19 @@ namespace MIU.Core
                                 StateStringStandard = newStringStandard,
                                 AppliedRuleID = rule.ID,
                                 ParentStateStringStandard = currentStandard,
-                                StateID = newStateId,  // NEW: Ottieni l'ID dal DB per la stringa iniziale
-                                ParentStateID = (currentPath.LastOrDefault()?.StateID), // Inizializza con l'ID dello stato genitore
-                                Depth = currentPath.Count, // La profondità è la dimensione del percorso (0-indexed)
+                                StateID = newStateId,
+                                ParentStateID = (currentPath.LastOrDefault()?.StateID),
+                                Depth = currentPath.Count,
                                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
-                                NodesExplored = nodesExplored, // Questo conteggio è per l'evento, non per il passo singolo
-                                MaxDepthReached = maxDepthReached // Questo conteggio è per l'evento, non per il passo singolo
+                                NodesExplored = nodesExplored,
+                                MaxDepthReached = maxDepthReached
                             };
 
                             List<PathStepInfo> newPath = new List<PathStepInfo>(currentPath) { newPathStep };
 
-                            // *** MODIFICA D: Calcola la priorità per il nuovo stato e aggiungilo alla coda a priorità ***
-                            double newPriority = CalculatePriority(currentStandard, rule.ID, newPathStep.Depth); // La funzione CalculatePriority verrà aggiunta al passo 3
-                            priorityQueue.Enqueue(new BFSQueueItem(newStringStandard, newPath, newPriority), (float)-newPriority); //25.07.08
-                            // **********************************************************************************************
+                            // Calcola la priorità per il nuovo stato e aggiungilo alla coda a priorità
+                            double newPriority = CalculatePriority(currentStandard, rule.ID, newPathStep.Depth);
+                            priorityQueue.Enqueue(new BFSQueueItem(newStringStandard, newPath, newPriority), (float)-newPriority);
 
                             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{rule.Nome}'). Depth: {newPathStep.Depth}. Priority: {newPriority:F4}. Queue Size: {priorityQueue.Count}", true);
                         }
@@ -687,6 +741,7 @@ namespace MIU.Core
             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Nessuna soluzione trovata o limiti raggiunti per ricerca ID: {searchId}. Restituisco null."); // 25.07.08
             return null;
         }
+
         /// <summary>
         /// Calcola la priorità di un nuovo stato da esplorare.
         /// Utilizza le statistiche di apprendimento per informare l'euristica.
@@ -758,17 +813,17 @@ namespace MIU.Core
 
             // --- PENALITÀ CRUCIALE PER LA LUNGHEZZA DELLA STRINGA (LA "NATURA ABBORRISCE L'INFINITO") ---
             // Questa è la potatura più diretta per controllare la crescita delle stringhe e la loro complessità.
-            const int STRING_LENGTH_PENALTY_THRESHOLD = 20; // Soglia arbitraria: oltre 20 caratteri, inizia la penalità. Puoi calibrare.
-            const double STRING_LENGTH_PENALTY_FACTOR = 5.0; // Quanto penalizzare per ogni carattere oltre la soglia. Valore più alto = penalità più aggressiva.
+            //const int STRING_LENGTH_PENALTY_THRESHOLD = 20; // Soglia arbitraria: oltre 20 caratteri, inizia la penalità. Puoi calibrare.
+            //const double STRING_LENGTH_PENALTY_FACTOR = 5.0; // Quanto penalizzare per ogni carattere oltre la soglia. Valore più alto = penalità più aggressiva.
 
             if (parentStandardString != null) // Non applicare al nodo iniziale
             {
                 // Usiamo la lunghezza della stringa STANDARD, non compressa, perché è quella che conta per la complessità.
                 int currentStringLength = parentStandardString.Length;
-                if (currentStringLength > STRING_LENGTH_PENALTY_THRESHOLD)
+                if (currentStringLength > _STRING_LENGTH_PENALTY_THRESHOLD)
                 {
-                    priority -= (currentStringLength - STRING_LENGTH_PENALTY_THRESHOLD) * STRING_LENGTH_PENALTY_FACTOR;
-                    LoggerInstance?.Log(LogLevel.INFO, $"[CalculatePriority] Penalized long string (len: {currentStringLength}) at depth {newDepth} with penalty: {(currentStringLength - STRING_LENGTH_PENALTY_THRESHOLD) * STRING_LENGTH_PENALTY_FACTOR:F2}");
+                    priority -= (currentStringLength - _STRING_LENGTH_PENALTY_THRESHOLD) * _STRING_LENGTH_PENALTY_FACTOR;
+                    LoggerInstance?.Log(LogLevel.INFO, $"[CalculatePriority] Penalized long string (len: {currentStringLength}) at depth {newDepth} with penalty: {(currentStringLength - _STRING_LENGTH_PENALTY_THRESHOLD) * _STRING_LENGTH_PENALTY_FACTOR:F2}");
                 }
             }
 
@@ -797,7 +852,7 @@ namespace MIU.Core
         /// <returns>The list of PathStepInfo that constitutes the solution, or null if not found.</returns>
         public static List<PathStepInfo> TrovaDerivazioneAutomatica(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken, IMIUDataManager dataManager) // MODIFIED: Usa IMIUDataManager - MODIFIED SIGNATURE: Aggiunto dataManager
         {
-            LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Automatic search requested from '{startStringCompressed}' to '{targetStringCompressed}'.");
+            LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Automatic search requested from '{startStringCompressed}' to '{targetStringCompressed}'.", true, 250);
 
             string startStringStandard = MIUStringConverter.InflateMIUString(startStringCompressed);
             string targetStringStandard = MIUStringConverter.InflateMIUString(targetStringCompressed);

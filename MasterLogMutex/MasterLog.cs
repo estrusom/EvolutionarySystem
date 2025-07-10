@@ -128,8 +128,8 @@ namespace MasterLog
         /// bit log 14 INTERNAL_TEST 
         /// 16.04.2021 Log per test interni
         /// </summary>
-        [LogLevels(LevelName = "INTERNAL_TEST", LogLevelToShow = 0x2000, LogIndex = (LogLevel)8)]
-        public int LOG_INTERNAL_TEST { get { return 0x2000; } }
+        [LogLevels(LevelName = "INTERNAL_TEST", LogLevelToShow = 0x4000, LogIndex = (LogLevel)8)]
+        public int LOG_INTERNAL_TEST { get { return 0x4000; } }
         /// <summary>
         /// Determina il livello dei log da visualizzare
         /// </summary>

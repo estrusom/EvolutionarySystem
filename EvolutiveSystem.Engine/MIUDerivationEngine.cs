@@ -105,7 +105,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                 return Task.CompletedTask;
             }
 
-            _logger.Log(LogLevel.INFO, $"[MIUDerivationEngine] Avvio esplorazione da '{initialString}' verso '{targetString ?? "ignoto"}'...");
+            _logger.Log(LogLevel.INFO, $"[MIUDerivationEngine] Avvio esplorazione da '{initialString}' verso '{targetString ?? "ignoto"}'...", true, 250);
             OnExplorationStatusChanged?.Invoke(this, "Avvio esplorazione...");
 
             _cancellationTokenSource = new CancellationTokenSource();
@@ -360,7 +360,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
             }
 
             string message = $"SearchID: {e.SearchID} Success: {e.Success} InitialString: {e.InitialString} TargetString: {e.TargetString} ElapsedMilliseconds: {e.ElapsedMilliseconds} StepsTaken: {e.StepsTaken} NodesExplored: {e.NodesExplored} MaxDepthReached: {e.MaxDepthReached} Algorithm: {e.SearchAlgorithmUsed} Path: {pathString}";
-            _logger.Log(e.Success ? LogLevel.INFO : LogLevel.WARNING, $"[MIUDerivationEngine - Solution Found] {message}");
+            _logger.Log(e.Success ? LogLevel.INFO : LogLevel.WARNING, $"[MIUDerivationEngine - Solution Found] {message}", true, 250);
             OnExplorationStatusChanged?.Invoke(this, e.Success ? "Soluzione trovata!" : "Soluzione non trovata.");
 
 

@@ -25,7 +25,7 @@ if %uninst% == 1 (
 if %uninst% == 0 (echo Install SemanticProcessor Windows Service ...)
 
 
-InstallUtil.exe %1 SemanticProcessor.exe
+InstallUtil.exe %1 C:\progetti\EvolutionarySystem\SemanticProcessor\bin\Release\SemanticProcessor.exe
 if %ERRORLEVEL%==0 goto wintab_config
 pause
 goto installutil_error

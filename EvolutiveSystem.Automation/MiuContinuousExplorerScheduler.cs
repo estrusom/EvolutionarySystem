@@ -475,8 +475,12 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
                             
                             int outerIndex = allMiuStates.IndexOf(sourceState);
                             int innerIndex = allMiuStates.IndexOf(targetState);
+#if DEBUG
                             Console.WriteLine($"OuterIndex: {outerIndex}, InnerIndex: {innerIndex}");
-
+#else   
+                            // Log the indices in release mode for debugging purposes
+                            _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] OuterIndex: {outerIndex}, InnerIndex: {innerIndex} for SourceID: {sourceState.StateID}, TargetID: {targetState.StateID}");
+#endif
                             _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Inner loop: Exploring from '{sourceState.CurrentString}' (ID: {sourceState.StateID}) to TARGET: '{targetState.CurrentString}' (ID: {targetState.StateID}).", true);
 
                             // 1. Check if the MIU engine is busy from another exploration (e.g., launched by CmdMIUexploration)

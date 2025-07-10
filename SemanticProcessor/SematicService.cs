@@ -164,6 +164,9 @@ namespace SemanticProcessor
         #region *** CAMPO PER L'ISTANZA DEL NUOVO SCHEDULER CONTINUO (NUOVA CLASSE) ***
         private MiuContinuousExplorerScheduler _continuousScheduler; // <--- QUESTA MANCAVA: Istanza creata e gestita
         #endregion
+        private int MAX_STRING_LENGTH = 1000;
+        private int STRING_LENGTH_PENALTY_THRESHOLD = 20;
+        private double STRING_LENGTH_PENALTY_FACTOR = 5.0;
 #if DEBUG
         private bool firstInDebug = false;
 #endif
@@ -195,13 +198,22 @@ namespace SemanticProcessor
                 this.CanHandleSessionChangeEvent = false; // Non necessario per ora
                 this.CanHandlePowerEvent = false; // Non necessario per ora
 
-                swDebug = Convert.ToInt32(ConfigurationManager.AppSettings["DebugLev"]); ;
+                swDebug = Convert.ToInt32(ConfigurationManager.AppSettings["DebugLev"]);
                 _path = ConfigurationManager.AppSettings["FolderLOG"];
                 _logger = new Logger(_path, "SemanticProcessor", SyncMtxLogger);
                 _logger.SwLogLevel = swDebug;
                 _logger.Log(LogLevel.INFO, string.Format("Log path:{0}", _logger.GetPercorsoCompleto()));
                 today = DateTime.Now;
+                this.MAX_STRING_LENGTH = Convert.ToInt32(ConfigurationManager.AppSettings["MAX_STRING_LENGTH"]);
+                this.STRING_LENGTH_PENALTY_THRESHOLD = Convert.ToInt32(ConfigurationManager.AppSettings["STRING_LENGTH_PENALTY_THRESHOLD"]);
+                this.STRING_LENGTH_PENALTY_FACTOR = Convert.ToDouble(ConfigurationManager.AppSettings["STRING_LENGTH_PENALTY_FACTOR"]);
 
+                if (this.MAX_STRING_LENGTH < 1000) this.MAX_STRING_LENGTH = 1000;
+                if (this.STRING_LENGTH_PENALTY_THRESHOLD == 0) this.STRING_LENGTH_PENALTY_THRESHOLD = 20;
+                if (this.STRING_LENGTH_PENALTY_FACTOR == 0) this.STRING_LENGTH_PENALTY_FACTOR = 5.0;
+                RegoleMIUManager.MAX_STRING_LENGTH = this.MAX_STRING_LENGTH;
+                RegoleMIUManager.STRING_LENGTH_PENALTY_THRESHOLD = this.STRING_LENGTH_PENALTY_THRESHOLD;
+                RegoleMIUManager.STRING_LENGTH_PENALTY_FACTOR = this.STRING_LENGTH_PENALTY_FACTOR;
                 _connectedUiClients = new ConcurrentDictionary<string, SocketManager.SemanticClientSocket>(); // serve per memorizzare le UI collegate
 
                 commandHandlers = new ClsCommandHandlers(_logger);
@@ -692,13 +704,10 @@ namespace SemanticProcessor
             if (scs.Any())
             {
                 ServiceController sc = scs.First();
-                //if ((swDebug & _logger.LOG_SERVICE) == _logger.LOG_SERVICE)
-                {
-                    _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgSrvcStatus, sc.Status));
-                    _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgPauseCont, sc.CanPauseAndContinue));
-                    _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgCanShutDwn, sc.CanShutdown));
-                    _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgCanStop, sc.CanStop));
-                }
+                _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgSrvcStatus, sc.Status));
+                _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgPauseCont, sc.CanPauseAndContinue));
+                _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgCanShutDwn, sc.CanShutdown));
+                _logger.Log(LogLevel.SERVICE, string.Format(SemSerRes.logMsgCanStop, sc.CanStop));
 #if DEBUG
                 Console.WriteLine(string.Format("Status = {0}", sc.Status));
                 Console.WriteLine(string.Format("Can Pause and Continue = {0}", sc.CanPauseAndContinue));
@@ -1007,7 +1016,7 @@ namespace SemanticProcessor
                                 this.configParam = parameters[4] as Dictionary<string, string>;
                                 if (cmdCom.MethoToBeExecute.Length > 0)
                                 {
-
+                                    
                                 }
                             }
                             else

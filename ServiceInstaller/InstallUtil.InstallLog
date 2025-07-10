@@ -1,0 +1,14 @@
+﻿
+Esecuzione di un'installazione transazionale.
+
+Inizio della fase di installazione.
+Vedere il contenuto del file di log per informazioni sullo stato dell'assembly C:\progetti\EvolutionarySystem\SemanticProcessor\bin\Release\SemanticProcessor.exe.
+Il file si trova in C:\progetti\EvolutionarySystem\SemanticProcessor\bin\Release\SemanticProcessor.InstallLog.
+
+La fase di installazione è stata completata. Sta iniziando la fase di commit.
+Vedere il contenuto del file di log per informazioni sullo stato dell'assembly C:\progetti\EvolutionarySystem\SemanticProcessor\bin\Release\SemanticProcessor.exe.
+Il file si trova in C:\progetti\EvolutionarySystem\SemanticProcessor\bin\Release\SemanticProcessor.InstallLog.
+
+Fase di commit completata.
+
+Installazione transazionale completata.

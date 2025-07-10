@@ -672,6 +672,12 @@ namespace SocketManager
             //_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="ipAddress"></param>
+        /// <param name="port"></param>
+        /// <param name="Log"></param>
         public SemanticClientSocket(string ipAddress, int port, Logger Log)
         {
             _ipAddress = ipAddress;
@@ -1072,10 +1078,18 @@ namespace SocketManager
         /// </summary>
         public class MessageSentEventArgs : EventArgs
         {
+            /// <summary>
+            /// 
+            /// </summary>
             public string MessageType { get; }
             public string Token { get; }
             public string Endpoint { get; }
-
+            /// <summary>
+            /// /
+            /// </summary>
+            /// <param name="messageType"></param>
+            /// <param name="token"></param>
+            /// <param name="endpoint"></param>
             public MessageSentEventArgs(string messageType, string token, string endpoint)
             {
                 MessageType = messageType;
