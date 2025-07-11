@@ -49,6 +49,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Automation"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AsyncSocketServer", "AsyncSocketServer\AsyncSocketServer\AsyncSocketServer.csproj", "{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Taxonomy", "EvolutiveSystem.Taxonomy\EvolutiveSystem.Taxonomy.csproj", "{A8026815-12AE-4CD2-9D45-CF663A76C1C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -241,6 +243,14 @@ Global
 		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{C56B8471-E33B-463A-B0A5-90A7D8A20DDB}.Release|ARM64.Build.0 = Release|Any CPU
+		{A8026815-12AE-4CD2-9D45-CF663A76C1C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8026815-12AE-4CD2-9D45-CF663A76C1C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8026815-12AE-4CD2-9D45-CF663A76C1C1}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{A8026815-12AE-4CD2-9D45-CF663A76C1C1}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{A8026815-12AE-4CD2-9D45-CF663A76C1C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8026815-12AE-4CD2-9D45-CF663A76C1C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8026815-12AE-4CD2-9D45-CF663A76C1C1}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{A8026815-12AE-4CD2-9D45-CF663A76C1C1}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -28,7 +28,7 @@ namespace EvolutiveSystem.SQL.Core
     /// garantendo il controllo delle transazioni e l'uso di query parametrizzate.
     /// Implementa l'interfaccia IMIUDataManager.
     /// </summary>
-    public class MIUDatabaseManager : IMIUDataManager  // <- errore cs0738
+    public class MIUDatabaseManager : IMIUDataManager  // <- errore cs09535
     {
         private readonly SQLiteSchemaLoader _schemaLoader;
         private readonly Logger _logger;
@@ -1049,6 +1049,118 @@ namespace EvolutiveSystem.SQL.Core
                 _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager ERROR] Errore durante il reset dei dati di esplorazione: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
                 throw; // Rilancia l'eccezione
             }
+        }
+        /// <summary>
+        /// Inserisce o aggiorna un record di ExplorationAnomaly nel database.
+        /// Se l'anomalia esiste già (stesso Type, RuleId, ContextPatternHash), viene aggiornata.
+        /// Altrimenti, viene inserita come nuovo record.
+        /// </summary>
+        /// <param name="anomaly">L'oggetto ExplorationAnomaly da salvare.</param>
+        public void UpsertExplorationAnomaly(ExplorationAnomaly anomaly)
+        {
+            // La query INSERT OR REPLACE è specifica di SQLite e gestisce l'upsert.
+            // Se un record con la stessa combinazione di (Type, RuleId, ContextPatternHash) esiste,
+            // viene rimpiazzato. Altrimenti, viene inserito un nuovo record.
+            string sql = @"
+            INSERT OR REPLACE INTO ExplorationAnomalies (
+                Id, Type, RuleId, ContextPatternHash, ContextPatternSample,
+                Count, AverageValue, AverageDepth, LastDetected, Description, IsNewCategory, CreatedDate
+            ) VALUES (
+                -- Se l'anomalia ha già un Id (cioè è stata letta dal DB), lo usiamo.
+                -- Altrimenti, passiamo NULL per far sì che AUTOINCREMENT generi un nuovo Id.
+                (SELECT Id FROM ExplorationAnomalies WHERE Type = @Type AND RuleId = @RuleId AND ContextPatternHash = @ContextPatternHash),
+                @Type, @RuleId, @ContextPatternHash, @ContextPatternSample,
+                @Count, @AverageValue, @AverageDepth, @LastDetected, @Description, @IsNewCategory, @CreatedDate
+            );";
+
+            try // Inizio blocco try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString)) // Inizio using (connection)
+                {
+                    connection.Open();
+                    using (var command = new SQLiteCommand(sql, connection)) // Inizio using (command)
+                    {
+                        // Gestione dei valori nullable (RuleId, ContextPatternHash, ContextPatternSample)
+                        // e conversione dei tipi per il database.
+                        command.Parameters.AddWithValue("@Id", anomaly.Id == 0 ? (object)DBNull.Value : anomaly.Id);
+                        command.Parameters.AddWithValue("@Type", (int)anomaly.Type);
+                        command.Parameters.AddWithValue("@RuleId", anomaly.RuleId.HasValue ? (object)anomaly.RuleId.Value : DBNull.Value);
+                        command.Parameters.AddWithValue("@ContextPatternHash", anomaly.ContextPatternHash.HasValue ? (object)anomaly.ContextPatternHash.Value : DBNull.Value);
+                        command.Parameters.AddWithValue("@ContextPatternSample", anomaly.ContextPatternSample ?? (object)DBNull.Value);
+                        command.Parameters.AddWithValue("@Count", anomaly.Count);
+                        command.Parameters.AddWithValue("@AverageValue", anomaly.AverageValue);
+                        command.Parameters.AddWithValue("@AverageDepth", anomaly.AverageDepth);
+                        // Formato ISO 8601 con millisecondi per precisione e compatibilità SQLite
+                        command.Parameters.AddWithValue("@LastDetected", anomaly.LastDetected.ToString("yyyy-MM-dd HH:mm:ss.ffffff", CultureInfo.InvariantCulture));
+                        command.Parameters.AddWithValue("@Description", anomaly.Description);
+                        command.Parameters.AddWithValue("@IsNewCategory", anomaly.IsNewCategory ? 1 : 0); // SQLite usa 0/1 per booleani
+                        command.Parameters.AddWithValue("@CreatedDate", anomaly.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss.ffffff", CultureInfo.InvariantCulture));
+
+                        command.ExecuteNonQuery();
+
+                        // Se l'anomalia era nuova (Id == 0 prima dell'insert), aggiorniamo l'Id dell'oggetto C#
+                        // con quello generato dal database. Questo è utile se l'oggetto viene riutilizzato in memoria.
+                        if (anomaly.Id == 0)
+                        {
+                            anomaly.Id = connection.LastInsertRowId;
+                        }
+                    } // Fine using (command)
+                } // Fine using (connection)
+            } // Fine blocco try
+            catch (Exception ex) // Inizio blocco catch
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore durante l'upsert dell'anomalia di esplorazione: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                // Non rilanciamo l'eccezione qui per permettere al chiamante di continuare,
+                // ma il log è essenziale per il debug.
+            } // Fine blocco catch
+        } // Fine del metodo UpsertExplorationAnomaly
+        /// <summary>
+        /// Recupera tutte le anomalie di esplorazione persistite nel database.
+        /// </summary>
+        /// <returns>Una lista di oggetti ExplorationAnomaly.</returns>
+        public List<ExplorationAnomaly> GetAllExplorationAnomalies()
+        {
+            List<ExplorationAnomaly> anomalies = new List<ExplorationAnomaly>();
+            string sql = "SELECT Id, Type, RuleId, ContextPatternHash, ContextPatternSample, Count, AverageValue, AverageDepth, LastDetected, Description, IsNewCategory, CreatedDate FROM ExplorationAnomalies;";
+
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                anomalies.Add(new ExplorationAnomaly
+                                {
+                                    Id = reader.GetInt64(reader.GetOrdinal("Id")),
+                                    Type = (AnomalyType)reader.GetInt32(reader.GetOrdinal("Type")),
+                                    RuleId = reader.IsDBNull(reader.GetOrdinal("RuleId")) ? (long?)null : reader.GetInt64(reader.GetOrdinal("RuleId")),
+                                    ContextPatternHash = reader.IsDBNull(reader.GetOrdinal("ContextPatternHash")) ? (int?)null : reader.GetInt32(reader.GetOrdinal("ContextPatternHash")),
+                                    ContextPatternSample = reader.IsDBNull(reader.GetOrdinal("ContextPatternSample")) ? null : reader.GetString(reader.GetOrdinal("ContextPatternSample")),
+                                    Count = reader.GetInt32(reader.GetOrdinal("Count")),
+                                    AverageValue = reader.GetDouble(reader.GetOrdinal("AverageValue")),
+                                    AverageDepth = reader.GetDouble(reader.GetOrdinal("AverageDepth")),
+                                    // Usa CultureInfo.InvariantCulture e DateTimeStyles.None per un parsing robusto
+                                    LastDetected = DateTime.Parse(reader.GetString(reader.GetOrdinal("LastDetected")), CultureInfo.InvariantCulture, DateTimeStyles.None),
+                                    Description = reader.GetString(reader.GetOrdinal("Description")),
+                                    IsNewCategory = reader.GetInt32(reader.GetOrdinal("IsNewCategory")) == 1, // Converti 0/1 in bool
+                                    CreatedDate = DateTime.Parse(reader.GetString(reader.GetOrdinal("CreatedDate")), CultureInfo.InvariantCulture, DateTimeStyles.None)
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore durante il recupero delle anomalie di esplorazione: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                return new List<ExplorationAnomaly>(); // Restituisce una lista vuota in caso di errore
+            }
+            return anomalies;
         }
     }
 }

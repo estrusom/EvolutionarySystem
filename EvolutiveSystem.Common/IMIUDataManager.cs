@@ -113,5 +113,18 @@ namespace EvolutiveSystem.Common
         /// nel database, ma mantiene le regole base, i parametri di configurazione e gli stati MIU generati.
         /// </summary>
         Task ResetExplorationDataAsync();
+        /// <summary>
+        /// Inserisce o aggiorna un record di ExplorationAnomaly nel database.
+        /// Se l'anomalia esiste già (stesso Type, RuleId, ContextPatternHash), viene aggiornata.
+        /// Altrimenti, viene inserita come nuovo record.
+        /// </summary>
+        /// <param name="anomaly">L'oggetto ExplorationAnomaly da salvare.</param>
+        void UpsertExplorationAnomaly(ExplorationAnomaly anomaly);
+
+        /// <summary>
+        /// Recupera tutte le anomalie di esplorazione persistite nel database.
+        /// </summary>
+        /// <returns>Una lista di oggetti ExplorationAnomaly.</returns>
+        List<ExplorationAnomaly> GetAllExplorationAnomalies();
     }
 }
