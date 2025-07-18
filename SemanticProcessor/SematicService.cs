@@ -31,9 +31,12 @@ using System.Data.SQLite;
 using EvolutiveSystem.SQL.Core;
 using MIU.Core;
 using EvolutiveSystem.Learning;
+using EvolutiveSystem.Taxonomy;
+using EvolutiveSystem.TaxonomyOrchestration; 
 using EvolutiveSystem.Engine;
 using EvolutiveSystem.Automation;
 using EvolutiveSystem.Common; // Necessario per IMIUDataManager e NewMiuStringDiscoveredEventArgs
+
 
 namespace SemanticProcessor
 {
@@ -155,6 +158,7 @@ namespace SemanticProcessor
         #region *** NUOVI CAMPI PER LE DIPENDENZE DEL MOTORE MIU ***
         private LearningStatisticsManager _learningStatisticsManager;
         private MIUDerivationEngine _miuDerivationEngine;
+        private TaxonomyOrchestrator _taxonomyOrchestrator; // 25.07.11
         private CancellationTokenSource _miuExplorationCancellationTokenSource;
         private IMIUDataManager miuDataManagerInstance; 
         // Task per tenere traccia dell'esplorazione MIU, se in background
@@ -167,6 +171,9 @@ namespace SemanticProcessor
         private int MAX_STRING_LENGTH = 1000;
         private int STRING_LENGTH_PENALTY_THRESHOLD = 20;
         private double STRING_LENGTH_PENALTY_FACTOR = 5.0;
+        #region Gestione tassonomia
+        private readonly EventBus _eventBus; // 25.07.11 NUOVO: Campo per l'EventBus
+        #endregion
 #if DEBUG
         private bool firstInDebug = false;
 #endif
@@ -204,6 +211,8 @@ namespace SemanticProcessor
                 _logger.SwLogLevel = swDebug;
                 _logger.Log(LogLevel.INFO, string.Format("Log path:{0}", _logger.GetPercorsoCompleto()));
                 today = DateTime.Now;
+                _eventBus = new EventBus(_logger); // <--- NUOVO: Istanzia EventBus
+                this.configParam = new Dictionary<string, string>(); // 25.07.11
                 this.MAX_STRING_LENGTH = Convert.ToInt32(ConfigurationManager.AppSettings["MAX_STRING_LENGTH"]);
                 this.STRING_LENGTH_PENALTY_THRESHOLD = Convert.ToInt32(ConfigurationManager.AppSettings["STRING_LENGTH_PENALTY_THRESHOLD"]);
                 this.STRING_LENGTH_PENALTY_FACTOR = Convert.ToDouble(ConfigurationManager.AppSettings["STRING_LENGTH_PENALTY_FACTOR"]);
@@ -1043,8 +1052,22 @@ namespace SemanticProcessor
                                     this.miuDataManagerInstance = new EvolutiveSystem.SQL.Core.MIUDatabaseManager(schemaLoader, _logger);
                                     this.miuRepositoryInstance = new MIU.Core.MIURepository(miuDataManagerInstance, _logger);
                                     this._learningStatisticsManager = new LearningStatisticsManager(miuDataManagerInstance, _logger);
-                                    this._miuDerivationEngine = new MIUDerivationEngine(miuDataManagerInstance, this._learningStatisticsManager, _logger);
+                                    this._miuDerivationEngine = new MIUDerivationEngine(miuDataManagerInstance, this._learningStatisticsManager, _logger, _eventBus);
                                     commandHandlers.MiuDerivationEngine = this._miuDerivationEngine;
+
+                                    // 25.07.11 Inizializzazione del TaxonomyOrchestrator ---
+                                    var taxonomyGenerator = new RuleTaxonomyGenerator(miuDataManagerInstance, _logger); // Istanzia RuleTaxonomyGenerator
+                                    _taxonomyOrchestrator = new TaxonomyOrchestrator(taxonomyGenerator, _eventBus, _logger); // Istanzia TaxonomyOrchestrator
+                                    _logger.Log(LogLevel.INFO, "[SemanticProcessorService] TaxonomyOrchestrator inizializzato e sottoscritto agli eventi.");
+                                    _logger.Log(LogLevel.INFO, "[SemanticProcessorService] TaxonomyOrchestrator inizializzato con default.");
+
+                                    _taxonomyOrchestrator.RuleAppThreshold = GetConfigValue(this.configParam, "RuleAppThreshold", 500);
+                                    _taxonomyOrchestrator.SuccessSearchThreshold = GetConfigValue(this.configParam, "SuccessSearchThreshold", 20);
+                                    _taxonomyOrchestrator.FailedSearchThreshold = GetConfigValue(this.configParam, "FailedSearchThreshold", 50);
+                                    _taxonomyOrchestrator.AnomalyThreshold = GetConfigValue(this.configParam, "AnomalyThreshold", 5);
+                                    _taxonomyOrchestrator.NewMiuStringThreshold = GetConfigValue(this.configParam, "NewMiuStringThreshold", 100);
+                                    _taxonomyOrchestrator.TimeThresholdHours = GetConfigValue(this.configParam, "TimeThresholdHours", 24.0);
+                                    _logger.Log(LogLevel.INFO, "[SemanticProcessorService] TaxonomyOrchestrator soglie caricate da configurazione.");
                                     if (cmdCom.MethoToBeExecute.Length > 0)
                                     {
 
@@ -1178,6 +1201,34 @@ namespace SemanticProcessor
                 this.myStart();
                 // swWatchDog(true, IntervalMilliSeconds);
             }
+        }
+        // Metodo helper per ottenere valori dalla configurazione
+        /// <summary>
+        /// Ottiene un valore dal dizionario di configurazione, convertendolo al tipo specificato.
+        /// Se la chiave non esiste o la conversione fallisce, restituisce il valore di default.
+        /// </summary>
+        /// <typeparam name="T">Il tipo di dato desiderato per il valore di configurazione.</typeparam>
+        /// <param name="config">Il dizionario di configurazione (es. this.configParam).</param>
+        /// <param name="key">La chiave del parametro da cercare nel dizionario.</param>
+        /// <param name="defaultValue">Il valore da restituire se la chiave non viene trovata o la conversione fallisce.</param>
+        /// <returns>Il valore di configurazione convertito o il valore di default.</returns>
+        private T GetConfigValue<T>(Dictionary<string, string> config, string key, T defaultValue)
+        {
+            if (config.TryGetValue(key, out string valueStr))
+            {
+                try
+                {
+                    return (T)Convert.ChangeType(valueStr, typeof(T));
+                }
+                catch (Exception ex)
+                {
+                    // Logga l'errore se la conversione fallisce, ma continua usando il default
+                    _logger.Log(LogLevel.WARNING, $"[SemanticProcessorService] Errore nel parsing del parametro '{key}' dalla configurazione: {ex.Message}. Usando valore di default: {defaultValue}");
+                    return defaultValue;
+                }
+            }
+            // Se la chiave non è presente nel dizionario, restituisce il valore di default
+            return defaultValue;
         }
         public void SetEventAutomation()
         {

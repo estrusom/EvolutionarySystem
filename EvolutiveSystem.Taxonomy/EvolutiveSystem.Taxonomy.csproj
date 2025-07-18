@@ -30,6 +30,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>RRU_EvolutiveSystem.pfx</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="EvolutiveSystem.Common">
       <HintPath>..\EvolutiveSystem.Common\bin\Release\EvolutiveSystem.Common.dll</HintPath>
@@ -51,6 +57,9 @@
     <Compile Include="RuleTaxonomy.cs" />
     <Compile Include="RuleTaxonomyGenerator.cs" />
     <Compile Include="RuleTaxonomyNode.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="RRU_EvolutiveSystem.pfx" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

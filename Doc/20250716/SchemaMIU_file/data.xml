@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VisioDocument>
+	<DocumentProperties>
+		<Title></Title>
+		<HyperlinkBase href=""></HyperlinkBase>
+	</DocumentProperties>
+	<Pages>
+		<Page ID="0" Name="Pagina 1" NameU="Page-1">
+			<PageProps>
+				<PageScale Unit="MM">0.039370078740157</PageScale>
+				<DrawingScale Unit="MM">0.039370078740157</DrawingScale>
+			</PageProps>
+			<Layer IX="0">
+				<Name>Connettore</Name>
+				<NameUniv>Connector</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Shapes>
+				<Shape ID="1" UniqueID="{6F541DF8-8EB1-4035-A704-4C1B7223B944}" Name="Rettangolo" NameU="Rectangle" Master="2">
+					<Text>Input Utente/Scheduler (Tesi)  - Stringa Iniziale - Stringa Iniziale</Text>
+					<XForm>
+						<PinX Unit="MM">1.870078838457662</PinX>
+						<PinY Unit="MM">10.531496159814100</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="2" UniqueID="{3313108B-9E4A-4026-888F-F3D041ADDEC6}" Name="Rettangolo.2" NameU="Rectangle.2" Master="2">
+					<Text>IMIUDataManager  (Persistenza: MIU_States, RegoleMIU, Statistiche)</Text>
+					<XForm>
+						<PinX Unit="MM">5.314960909300725</PinX>
+						<PinY Unit="MM">10.531496159814100</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="4" UniqueID="{1CE219D0-3C4F-4094-B119-8510E6797577}" Name="Connettore dinamico" NameU="Dynamic connector" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.592519873879193</PinX>
+						<PinY Unit="MM">10.531496159814100</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="6" UniqueID="{362C84F0-62E8-41CF-91AF-556FCA764999}" Name="Rettangolo.6" NameU="Rectangle.6" Master="2">
+					<Text>EvolutiveSystem.Engine
+(Il Motore di Derivazione - Esecutore)</Text>
+					<XForm>
+						<PinX Unit="MM">3.585489271526121</PinX>
+						<PinY Unit="MM">8.558773680552669</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="7" UniqueID="{73F53797-B6CB-4553-9D6D-BE2266FB5AE3}" Name="Rettangolo.7" NameU="Rectangle.7" Master="2">
+					<Text>MIUDerivationEngine
+(Orchestra Ricerca) - Carica Regole/Stats - Avvia Esplorazione</Text>
+					<XForm>
+						<PinX Unit="MM">1.893700783955262</PinX>
+						<PinY Unit="MM">8.464566638805541</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="8" UniqueID="{59A375A2-E43C-4558-AC0B-179BBD750262}" Name="Rettangolo.8" NameU="Rectangle.8" Master="2">
+					<Text>RegoleMIUManager (Applica Regole, BFS/DFS Intelligente) - Usa Euristiche
+(CalculatePriority)</Text>
+					<XForm>
+						<PinX Unit="MM">5.202474638564725</PinX>
+						<PinY Unit="MM">8.464566730580154</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="13" UniqueID="{17FE0B48-994A-4F22-B330-4E16ABD5B4B8}" Name="Connettore dinamico.13" NameU="Dynamic connector.13" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.870078797081309</PinX>
+						<PinY Unit="MM">9.710348620508844</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="14" UniqueID="{7C97B403-5C1C-454C-911F-3D6FF2BA106B}" Name="Connettore dinamico.14" NameU="Dynamic connector.14" Master="4">
+					<XForm>
+						<PinX Unit="MM">5.314960791704775</PinX>
+						<PinY Unit="MM">9.710348620508844</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="16" UniqueID="{E6A246A9-228E-4DAB-B46D-8F18712C3C8D}" Name="Connettore dinamico.16" NameU="Dynamic connector.16" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.510686150993867</PinX>
+						<PinY Unit="MM">8.464566684692848</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="28" UniqueID="{432F89D7-72CA-40E8-A27E-59776131D706}" Name="Sheet.28" NameU="Sheet.28">
+					<Text>(Richiesta Esplorazione)</Text>
+					<XForm>
+						<PinX Unit="MM">2.755905534723095</PinX>
+						<PinY Unit="MM">9.710348637004630</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="32" UniqueID="{8DE90F5C-D5AE-42F2-BD8C-17821B94977A}" Name="Sheet.32" NameU="Sheet.32">
+					<Text>(Dati Aggregati, Regole Aggiornate)</Text>
+					<XForm>
+						<PinX Unit="MM">6.611564238832688</PinX>
+						<PinY Unit="MM">9.710348637004632</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="33" UniqueID="{D1C4AC3B-0988-44B5-8FBB-ED1746BEB869}" Name="Rettangolo.33" NameU="Rectangle.33" Master="2">
+					<Text> EvolutiveSystem.TaxonomyOrchestration (Il Coordinatore del Ciclo di Apprendimento)</Text>
+					<XForm>
+						<PinX Unit="MM">3.585489271526120</PinX>
+						<PinY Unit="MM">6.397637848464327</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="34" UniqueID="{1FCFF477-78B6-4BC9-B934-4110D8AFB476}" Name="Rettangolo.34" NameU="Rectangle.34" Master="2">
+					<Text>EventBus  
+(Canale Eventi) </Text>
+					<XForm>
+						<PinX Unit="MM">1.694319467607433</PinX>
+						<PinY Unit="MM">6.505905565899877</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="35" UniqueID="{13CA6877-5B3F-4F19-BA41-2410C93E4716}" Name="Rettangolo.35" NameU="Rectangle.35" Master="2">
+					<Text>TaxonomyOrchestrator
+(Monitora Eventi, Trigger Antitesi)</Text>
+					<XForm>
+						<PinX Unit="MM">4.921259883434098</PinX>
+						<PinY Unit="MM">6.505905565899877</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="36" UniqueID="{49A3B98D-0CA2-461A-9885-81B0E193922C}" Name="Connettore dinamico.36" NameU="Dynamic connector.36" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.160151879017743</PinX>
+						<PinY Unit="MM">6.505905565899877</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="39" UniqueID="{3CC9D4CF-E992-4C9D-BD9C-361D87C80301}" Name="Connettore dinamico.39" NameU="Dynamic connector.39" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.694319470880586</PinX>
+						<PinY Unit="MM">5.974409498488994</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="40" UniqueID="{23CEFC17-FAB1-448E-80C0-5B00B6993BAB}" Name="Sheet.40" NameU="Sheet.40">
+					<Text>(Richiesta Analisi/Generazione)</Text>
+					<XForm>
+						<PinX Unit="MM">2.864173252158645</PinX>
+						<PinY Unit="MM">5.968503986628873</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="44" UniqueID="{D5CD79C5-1BAC-4944-86E3-F0B85B0260ED}" Name="Rettangolo.44" NameU="Rectangle.44" Master="2">
+					<Text>EvolutiveSystem.Taxonomy 
+(Il Rivelatore delle discrepanze)</Text>
+					<XForm>
+						<PinX Unit="MM">3.585489271526121</PinX>
+						<PinY Unit="MM">4.291338613444802</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="45" UniqueID="{96F55B70-5A20-4E0A-AD96-D609884C274E}" Name="Connettore dinamico.45" NameU="Dynamic connector.45" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.694319474153739</PinX>
+						<PinY Unit="MM">5.413385866867777</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="47" UniqueID="{FA0365A4-AB37-4C11-A1E9-D64C8447EC2D}" Name="Sheet.47" NameU="Sheet.47">
+					<Text>(Richiesta Analisi/Rilevazione discrepanze)</Text>
+					<XForm>
+						<PinX Unit="MM">3.226940409280358</PinX>
+						<PinY Unit="MM">5.470541992603834</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="48" UniqueID="{0E0F083C-FB3D-46D6-9C61-A1CA7A315327}" Name="Rettangolo.48" NameU="Rectangle.48" Master="2">
+					<Text>Taxonomy (Analizza Dati,  - MiuPatternStatistics (Nodi Astratti) - Identifica Gap/Inefficienze)</Text>
+					<XForm>
+						<PinX Unit="MM">2.534448839968561</PinX>
+						<PinY Unit="MM">4.309617583635860</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="49" UniqueID="{9D984A5A-7013-46E0-80F7-6B0453E38598}" Name="Connettore dinamico.49" NameU="Dynamic connector.49" Master="4">
+					<XForm>
+						<PinX Unit="MM">2.097862785709989</PinX>
+						<PinY Unit="MM">3.415354359103264</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="50" UniqueID="{A894BC8A-3F13-41B7-B05B-276120973EA0}" Name="Sheet.50" NameU="Sheet.50">
+					<Text>(Discrepanze Rilevata: Gap/Inefficienze)</Text>
+					<XForm>
+						<PinX Unit="MM">3.571428601120745</PinX>
+						<PinY Unit="MM">3.190875402240178</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="52" UniqueID="{5A9D38D8-A4BC-4F9B-BCDF-1225C2EBCA1C}" Name="Rettangolo.52" NameU="Rectangle.52" Master="2">
+					<Text>Rule Generator/Learner (Futuro) (Il generatore di soluzioni)</Text>
+					<XForm>
+						<PinX Unit="MM">3.522215920523569</PinX>
+						<PinY Unit="MM">2.123875153355186</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="53" UniqueID="{033FC7D9-BCBF-4785-9BDE-8DFDEBD0CCE2}" Name="Rettangolo.53" NameU="Rectangle.53" Master="2">
+					<Text>Rule Generator (Formula Ipotesi Nuove Regole)  - Test e Validazione</Text>
+					<XForm>
+						<PinX Unit="MM">1.652137240035141</PinX>
+						<PinY Unit="MM">2.089426336626015</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="54" UniqueID="{813FA081-27DC-491C-AE61-F40673BA6912}" Name="Connettore dinamico.54" NameU="Dynamic connector.54" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.906777307047316</PinX>
+						<PinY Unit="MM">1.154386961228400</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="57" UniqueID="{C8B07AD0-0291-48B2-BC07-88A6713ABF23}" Name="Sheet.57" NameU="Sheet.57">
+					<Text>(Nuove Regole Validate - Aggiornamento)</Text>
+					<XForm>
+						<PinX Unit="MM">3.219910038018309</PinX>
+						<PinY Unit="MM">0.984251976686820</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="58" UniqueID="{D38E98D1-2E83-46ED-B00A-04920983719A}" Name="Sheet.58" NameU="Sheet.58">
+					<Text>(Torna a IMIUDataManager/RegoleMIUManager)</Text>
+					<XForm>
+						<PinX Unit="MM">6.433289637898695</PinX>
+						<PinY Unit="MM">0.872679187223977</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="60" UniqueID="{BAE3F0A4-6CA8-401F-BA80-AF3EB0890785}" Name="Connettore dinamico.60" NameU="Dynamic connector.60" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.846085089758408</PinX>
+						<PinY Unit="MM">7.596315995269328</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="61" UniqueID="{69674B5B-F814-4DD5-90EA-70E576952407}" Name="Sheet.61" NameU="Sheet.61">
+					<Text>(Eventi: RuleApplied, SolutionFound, NewMiuStringDiscovered)</Text>
+					<XForm>
+						<PinX Unit="MM">4.149426593921410</PinX>
+						<PinY Unit="MM">7.480315022819828</PinY>
+					</XForm>
+				</Shape>
+			</Shapes>
+		</Page>
+	</Pages>
+</VisioDocument>

@@ -16,6 +16,7 @@ using MasterLog; // Per il Logger
 using EvolutiveSystem.Common; // Per MIUExplorerCursor, RegolaMIU, RuleStatistics, TransitionStatistics, MiuStateInfo
 using MIU.Core; // Per IMIUDataManager, RegoleMIUManager, SolutionFoundEventArgs, RuleAppliedEventArgs, PathStepInfo, MIUStringConverter
 using EvolutiveSystem.Learning; // Per LearningStatisticsManager
+using EvolutiveSystem.Common.Events; // 25.07.11  Per SearchCompletedEvent e AnomalyDetectedEvent (anche se AnomalyDetectedEvent non è pubblicato qui)
 
 namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progetto
 {
@@ -61,6 +62,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
         public event EventHandler<int> OnNodesExploredCountChanged;
         // public event EventHandler<NewMiuStringFoundEventArgs> OnNewStringDiscovered;
         public event EventHandler<NewMiuStringDiscoveredEventArgs> OnNewStringDiscovered; // MODIFIED: Ora usa NewMiuStringDiscoveredEventArgs
+        private readonly EventBus _eventBus; // 25.07.11 Aggiunta la dipendenza EventBus
 
         /// <summary>
         /// Costruttore del motore di derivazione.
@@ -68,11 +70,12 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
         /// <param name="dataManager">L'istanza del gestore dati per la persistenza.</param>
         /// <param name="learningStatsManager">L'istanza del gestore delle statistiche di apprendimento.</param>
         /// <param name="logger">L'istanza del logger per la registrazione.</param>
-        public MIUDerivationEngine(IMIUDataManager dataManager, LearningStatisticsManager learningStatsManager, Logger logger)
+        public MIUDerivationEngine(IMIUDataManager dataManager, LearningStatisticsManager learningStatsManager, Logger logger, EventBus eventBus) // 25.07.11 Modificato costruttore
         {
             _dataManager = dataManager ?? throw new ArgumentNullException(nameof(dataManager));
             _learningStatsManager = learningStatsManager ?? throw new ArgumentNullException(nameof(learningStatsManager));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus)); // 25.07.11 Assegna l'EventBus iniettato
 
             IsExplorationRunning = false;
 
@@ -81,7 +84,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
             RegoleMIUManager.LoggerInstance = _logger;
 
             // NEW: Sottoscrivi all'evento di RegoleMIUManager per le nuove stringhe scoperte
-            RegoleMIUManager.OnNewMiuStringDiscoveredInternal += HandleNewMiuStringDiscoveredFromRegoleMIUManager; // <- errore cs0103
+            RegoleMIUManager.OnNewMiuStringDiscoveredInternal += HandleNewMiuStringDiscoveredFromRegoleMIUManager; 
 
             _logger.Log(LogLevel.INFO, "[MIUDerivationEngine] Motore di derivazione inizializzato.");
         }
@@ -259,6 +262,71 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     RegoleMIUManager.OnSolutionFound -= HandleSolutionFound;
                     RegoleMIUManager.OnNewMiuStringDiscoveredInternal -= HandleNewMiuStringDiscoveredFromRegoleMIUManager; // NEW: Disiscrizione per il nuovo evento
                     OnExplorationStatusChanged?.Invoke(this, "Motore inattivo.");
+
+                    // 25.07.11 Pubblica l'evento SearchCompletedEvent qui, nel blocco finally,
+                    // per assicurarti che venga sempre pubblicato alla fine della ricerca,
+                    // indipendentemente dall'esito (successo, fallimento, annullamento).
+                    // Dobbiamo recuperare i dati finali della ricerca dal database.
+                    // Questo garantisce che il TaxonomyOrchestrator riceva un segnale di chiusura per ogni ricerca.
+                    // Nota: Potrebbe essere necessario un modo per recuperare i dati finali della ricerca
+                    // se non sono già disponibili qui (es. dal _currentSearchId e dal DB).
+                    // Per semplicità, useremo i dati aggiornati dal DB.
+                    Task.Run(async () =>
+                    {
+                        try
+                        {
+                            // Recupera i dati della ricerca dal DB per popolare l'evento
+                            // Questo è un placeholder, dovrai implementare GetSearchById nel tuo IMIUDataManager
+                            // o passare più dati alla UpdateSearch in modo che possano essere recuperati.
+                            // Per ora, useremo i dati disponibili.
+                            // Se la ricerca è stata annullata o ha avuto un errore, l'outcome sarà già "Failed" o simile.
+                            // Altrimenti, se è arrivata a HandleSolutionFound, sarà "Success".
+                            // Se non è arrivata a HandleSolutionFound e non è stata annullata,
+                            // l'outcome sarà "Pending" o non aggiornato, quindi lo recuperiamo dal DB.
+
+                            // Per ora, useremo i parametri che abbiamo già qui,
+                            // ma idealmente si recupererebbe l'oggetto Search completo dal DB.
+                            string finalOutcome = "Unknown"; // Default
+                            int finalSteps = 0;
+                            int finalNodes = 0;
+                            double finalElapsed = 0.0;
+
+                            // Se la ricerca è stata gestita da HandleSolutionFound, i dati sono lì.
+                            // Se è stata annullata o ha avuto un errore, _dataManager.UpdateSearch l'avrà aggiornata.
+                            // Idealmente, qui si farebbe una query al DB per l'ID _currentSearchId
+                            // per ottenere lo stato finale completo della ricerca.
+                            // Per mantenere il codice semplice, useremo un placeholder.
+
+                            // Placeholder: se hai un metodo per ottenere i dettagli della ricerca per ID
+                            // var searchDetails = await _dataManager.GetSearchDetails(_currentSearchId);
+                            // if (searchDetails != null) { finalOutcome = searchDetails.Outcome; ... }
+
+                            // Per ora, assumiamo che _dataManager.UpdateSearch abbia aggiornato l'outcome.
+                            // Se la ricerca è stata annullata, l'outcome sarà "Failed" o "Cancelled".
+                            // Se c'è stato un errore, sarà "Failed".
+                            // Se è stato un successo, HandleSolutionFound avrà già aggiornato l'outcome.
+                            // L'importante è che questo evento venga sempre pubblicato.
+
+                            var searchCompletedEvent = new SearchCompletedEvent(
+                                _currentSearchId,
+                                initialString, // Stringa iniziale della ricerca
+                                targetString, // Stringa target della ricerca
+                                              // Questo 'Outcome' dovrebbe riflettere lo stato finale effettivo dal DB o dalla logica di chiusura
+                                              // Per ora, usiamo "Completed" come generico, ma idealmente sarebbe più specifico.
+                                              // Potresti voler recuperare l'outcome effettivo dal DB qui.
+                                "Completed", // Placeholder: idealmente recuperato dal DB o determinato più precisamente
+                                finalSteps, // Placeholder
+                                finalNodes, // Placeholder
+                                finalElapsed // Placeholder
+                            );
+                            await _eventBus.Publish(searchCompletedEvent);
+                            _logger.Log(LogLevel.INFO, $"[MIUDerivationEngine] Pubblicato SearchCompletedEvent per ricerca ID: {_currentSearchId}");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Log(LogLevel.ERROR, $"[MIUDerivationEngine] Errore durante la pubblicazione di SearchCompletedEvent nel finally: {ex.Message}");
+                        }
+                    });
                 }
             }, _cancellationTokenSource.Token);
 
@@ -345,6 +413,24 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                 _transitionStatistics[transitionKey].ApplicationCount++;
                 _transitionStatistics[transitionKey].LastUpdated = DateTime.Now;
             }
+            // NEW: Pubblica l'evento RuleAppliedEventArgs sull'EventBus
+            // Usiamo Task.Run per non bloccare il thread di HandleRuleApplied,
+            // dato che Publish è asincrono e non vogliamo attendere i sottoscrittori qui.
+            // Il flag 'IsSuccess' per RuleAppliedEventArgs non è presente nella tua classe esistente,
+            // quindi non lo passiamo. Il TaxonomyOrchestrator dovrà derivare la "successfulness"
+            // da altri segnali (es. SearchCompletedEvent) o dalla logica di RuleAppliedEventArgs stessa.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _eventBus.Publish(e); // Pubblica l'istanza RuleAppliedEventArgs esistente
+                    _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine] Pubblicato RuleAppliedEventArgs per regola ID: {e.AppliedRuleID}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.ERROR, $"[MIUDerivationEngine] Errore durante la pubblicazione di RuleAppliedEventArgs: {ex.Message}");
+                }
+            });
         }
 
         /// <summary>
@@ -428,6 +514,20 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
         {
             // Rilancia l'evento usando l'evento pubblico di MIUDerivationEngine
             OnNewStringDiscoveredInternal(e);
+
+            // 25.07.11 Pubblica l'evento sull'EventBus ---
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _eventBus.Publish(e); // Pubblica l'istanza NewMiuStringDiscoveredEventArgs esistente
+                    _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine] Pubblicato NewMiuStringDiscoveredEventArgs per stringa: {e.DiscoveredString}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Log(LogLevel.ERROR, $"[MIUDerivationEngine] Errore durante la pubblicazione di NewMiuStringDiscoveredEventArgs: {ex.Message}");
+                }
+            });
         }
     }
 }

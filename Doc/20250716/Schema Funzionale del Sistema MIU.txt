@@ -1,0 +1,76 @@
++---------------------+      +---------------------+
+|                     |      |                     |
+|  Input Utente/     |      |  IMIUDataManager    |
+|  Scheduler          |<---->|  (Persistenza:      |
+|  - Stringa Iniziale |      |   MIU_States,       |
+|  - Stringa Target   |      |   RegoleMIU,        |
+|                     |      |   Statistiche)      |
++----------+----------+      +----------+----------+
+           |                            ^
+           | (Richiesta Esplorazione)   |
+           v                            | (Dati Aggregati, Regole Aggiornate)
++--------------------------------------------------+
+|                                                  |
+|           EvolutiveSystem.Engine                 |
+|           (Il Motore di Derivazione - Esecutore) |
+|                                                  |
+| +-------------------+  +---------------------+   |
+| | MIUDerivationEngine |<->| RegoleMIUManager    |   |
+| | (Orchestra Ricerca) |  | (Applica Regole,     |   |
+| | - Carica Regole/Stats |  |   BFS/DFS Intelligente) |   |
+| | - Avvia Esplorazione|  | - Usa Euristiche    |   |
+| +-------------------+  |   (CalculatePriority) |   |
+|           ^            +---------------------+   |
+|           | (Eventi: RuleApplied, SolutionFound, NewMiuStringDiscovered)
++-----------|--------------------------------------+
+            |
+            |
+            v
++--------------------------------------------------+
+|                                                  |
+|           EvolutiveSystem.TaxonomyOrchestration  |
+|           (Il Coordinatore del Ciclo di Apprendimento)  |
+|                                                  |
+| +-------------------+  +---------------------+   |
+| | EventBus          |<->| TaxonomyOrchestrator|   |
+| | (Canale Eventi)   |  | (Monitora Eventi,    |   |
+| +-------------------+  |   Trigger Analisi)  |   |
+|           ^            +---------------------+   |
+|           | (Richiesta Analisi/Generazione)      |
+|           v                                      |
++--------------------------------------------------+
+            |
+            | (Richiesta Analisi/Rilevazione Discrepanze)
+            v
++--------------------------------------------------+
+|                                                  |
+|           EvolutiveSystem.Taxonomy               |
+|           (Il Rivelatore delle Discrepanze)      |
+|                                                  |
+| +-------------------+                            |
+| | Taxonomy          |                            |
+| | (Analizza Dati,   |                            |
+| |  - MiuPatternStatistics (Nodi Astratti)        |
+| |  - Identifica Gap/Inefficienze                 |
+| +-------------------+                            |
+|           |                                      |
++-----------|--------------------------------------+
+            |
+            | (Discrepanze Rilevate: Gap/Inefficienze)
+            v
++--------------------------------------------------+
+|                                                  |
+|           Rule Generator/Learner (Futuro)        |
+|           (Il Generatore di Soluzioni)           |
+|                                                  |
+| +-------------------+                            |
+| | Rule Generator    |                            |
+| | (Formula Ipotesi  |                            |
+| |  Nuove Regole)    |                            |
+| | - Test e Validazione                           |
+| +-------------------+                            |
+|           |                                      |
++-----------|--------------------------------------+
+            |
+            | (Nuove Regole Validate - Aggiornamento)
+            +-------------------------------------> (Torna a IMIUDataManager/RegoleMIUManager)

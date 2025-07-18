@@ -1021,7 +1021,9 @@ namespace EvolutiveSystem.SQL.Core
                             "MIU_Paths",
                             "MIU_Actions", // Inserita come richiesto, se esiste
                             "Learning_TransitionStatistics",
-                            "Learning_RuleStatistics"
+                            "Learning_RuleStatistics",
+                            "ExplorationAnomalies",
+                            "MIU_Searches"
                         };
 
                         foreach (var tableName in tablesToClear)
