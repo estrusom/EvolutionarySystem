@@ -335,7 +335,6 @@ namespace EvolutiveSystem.SQL.Core
             }
             return regole;
         }
-
         /// <summary>
         /// Inserisce o aggiorna un elenco di regole MIU nel database.
         /// Utilizza una transazione per garantire l'atomicità dell'operazione.
@@ -370,6 +369,39 @@ namespace EvolutiveSystem.SQL.Core
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, $"Errore salvataggio RegoleMIU: {ex.Message}");
+            }
+        }
+        /// <summary>
+        /// Aggiunge o aggiorna una singola regola MIU nel database in modo asincrono.
+        /// Se la regola esiste (stesso ID), viene aggiornata. Altrimenti, viene inserita.
+        /// </summary>
+        /// <param name="rule">La RegolaMIU da aggiungere o aggiornare.</param>
+        public async Task AddOrUpdateRegolaMIUAsync(RegolaMIU rule)
+        {
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    // Usiamo INSERT OR REPLACE per gestire sia l'inserimento che l'aggiornamento.
+                    // Se l'ID esiste, rimpiazza la riga esistente.
+                    string sql = "INSERT OR REPLACE INTO RegoleMIU (ID, Nome, Pattern, Sostituzione, Descrizione) VALUES (@id, @nome, @pattern, @sostituzione, @descrizione)";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@id", rule.ID);
+                        command.Parameters.AddWithValue("@nome", rule.Nome);
+                        command.Parameters.AddWithValue("@pattern", rule.Pattern);
+                        command.Parameters.AddWithValue("@sostituzione", rule.Sostituzione);
+                        command.Parameters.AddWithValue("@descrizione", rule.Descrizione);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+                _logger.Log(LogLevel.INFO, $"[MIUDatabaseManager] Regola '{rule.Nome}' (ID: {rule.ID}) aggiunta/aggiornata con successo.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager] Errore durante l'aggiunta/aggiornamento della regola '{rule.Nome}' (ID: {rule.ID}): {ex.Message}{Environment.NewLine}{ex.StackTrace}");
+                throw; // Rilancia l'eccezione per gestione a livello superiore
             }
         }
 

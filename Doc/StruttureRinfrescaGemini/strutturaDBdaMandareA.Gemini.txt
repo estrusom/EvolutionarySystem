@@ -1,88 +1,61 @@
-CREATE TABLE RegoleMIU (
-    ID           INTEGER    PRIMARY KEY ON CONFLICT ROLLBACK AUTOINCREMENT
-                            UNIQUE ON CONFLICT ROLLBACK
-                            NOT NULL ON CONFLICT ROLLBACK,
-    Nome         TEXT (16)  NOT NULL ON CONFLICT ROLLBACK,
-    Pattern      TEXT (16)  UNIQUE ON CONFLICT ROLLBACK
-                            NOT NULL ON CONFLICT ROLLBACK,
-    Sostituzione TEXT (12)  UNIQUE ON CONFLICT ROLLBACK
-                            NOT NULL ON CONFLICT ROLLBACK,
-    Descrizione  TEXT (512) 
-);
-CREATE TABLE MIUParameterConfigurator (
-    ID              INTEGER PRIMARY KEY ON CONFLICT ROLLBACK AUTOINCREMENT
-                            UNIQUE ON CONFLICT ROLLBACK
-                            NOT NULL ON CONFLICT ROLLBACK,
-    NomeParametro   TEXT    UNIQUE ON CONFLICT ROLLBACK
-                            NOT NULL ON CONFLICT ROLLBACK,
-    ValoreParametro TEXT    NOT NULL,
-    Descrizione     TEXT
-);
-CREATE TABLE MIU_States (
-    StateID            INTEGER PRIMARY KEY AUTOINCREMENT,
-    CurrentString      TEXT    UNIQUE
-                               NOT NULL,
-    StringLength       INTEGER,
-    DeflateString      TEXT,
-    Hash               TEXT,
-    DiscoveryTime_Int  INTEGER,
-    DiscoveryTime_Text TEXT,
-    UsageCount         INTEGER DEFAULT 0,
-    SeedingType        INTEGER
-);
-CREATE TABLE MIU_Searches (
-    SearchID            INTEGER  PRIMARY KEY AUTOINCREMENT,
-    InitialString       TEXT     NOT NULL,
-    TargetString        TEXT,
-    SearchAlgorithm     TEXT,
-    StartTime           DATETIME,
-    EndTime             DATETIME,
-    Outcome             TEXT,
-    StepsTaken          INTEGER,
-    MaxDepth            INTEGER,
-    NodesExplored       INTEGER,
-    ElapsedMilliseconds REAL,
-    TargetUcount        INTEGER,
-    TargetIcount        INTEGER,
-    InitialUcount       INTEGER,
-    InitialIcount       INTEGER,
-    TargetStringLength  INTEGER,
-    InitialStringLength INTEGER
-);
-CREATE TABLE MIU_Rules (
-    RuleID      INTEGER PRIMARY KEY AUTOINCREMENT,
-    RuleName    TEXT    NOT NULL
-                        UNIQUE,
-    Description TEXT,
-    Pattern     TEXT    NOT NULL,
-    Replacement TEXT    NOT NULL,
-    RuleType    INTEGER NOT NULL
-);
-CREATE TABLE MIU_RuleApplications (
-    ApplicationID INTEGER PRIMARY KEY AUTOINCREMENT,
-    SearchID      INTEGER NOT NULL,
-    ParentStateID INTEGER NOT NULL,
-    NewStateID    INTEGER NOT NULL,
-    AppliedRuleID INTEGER NOT NULL,
-    CurrentDepth  INTEGER NOT NULL,
-    Timestamp     TEXT    NOT NULL,
-    FOREIGN KEY (
-        SearchID
+CREATE TABLE ExplorationAnomalies (
+    Id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+    Type                 INTEGER NOT NULL,
+    RuleId               INTEGER,
+    ContextPatternHash   INTEGER,
+    ContextPatternSample TEXT,
+    Count                INTEGER NOT NULL,
+    AverageValue         REAL    NOT NULL,
+    AverageDepth         REAL    NOT NULL,
+    LastDetected         TEXT    NOT NULL,
+    Description          TEXT    NOT NULL,
+    IsNewCategory        INTEGER NOT NULL,
+    CreatedDate          TEXT    NOT NULL,
+    UNIQUE (
+        Type,
+        RuleId,
+        ContextPatternHash
     )
-    REFERENCES MIU_Searches (SearchID),
-    FOREIGN KEY (
-        ParentStateID
-    )
-    REFERENCES MIU_States (StateID),
-    FOREIGN KEY (
-        NewStateID
-    )
-    REFERENCES MIU_States (StateID),
+);
+
+CREATE TABLE Learning_RuleStatistics (
+    RuleID             INTEGER PRIMARY KEY,
+    ApplicationCount   INTEGER NOT NULL
+                               DEFAULT 0,
+    SuccessfulCount    INTEGER NOT NULL
+                               DEFAULT 0,
+    EffectivenessScore REAL    NOT NULL
+                               DEFAULT 0.0,
+    LastUpdated        TEXT    NOT NULL
+);
+
+CREATE TABLE Learning_TransitionStatistics (
+    ParentStringCompressed TEXT    NOT NULL,
+    AppliedRuleID          INTEGER NOT NULL,
+    ApplicationCount       INTEGER NOT NULL
+                                   DEFAULT 0,
+    SuccessfulCount        INTEGER NOT NULL
+                                   DEFAULT 0,
+    LastUpdated            TEXT    NOT NULL,
+    PRIMARY KEY (
+        ParentStringCompressed,
+        AppliedRuleID
+    ),
     FOREIGN KEY (
         AppliedRuleID
     )
     REFERENCES RegoleMIU (ID) 
 );
+
+CREATE TABLE MIU_Actions (
+    ID                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    OperationID        INTEGER,
+    OperationType      TEXT    NOT NULL,
+    OperationData      TEXT,
+    OperationTime_Int  INTEGER,
+    OperationTime_Text TEXT
+);
+
 CREATE TABLE MIU_Paths (
     PathStepID    INTEGER PRIMARY KEY AUTOINCREMENT,
     SearchID      INTEGER NOT NULL,
@@ -110,38 +83,112 @@ CREATE TABLE MIU_Paths (
     )
     REFERENCES RegoleMIU (ID) 
 );
-CREATE TABLE MIU_Actions (
-    ID                 INTEGER PRIMARY KEY AUTOINCREMENT,
-    OperationID        INTEGER,
-    OperationType      TEXT    NOT NULL,
-    OperationData      TEXT,
-    OperationTime_Int  INTEGER,
-    OperationTime_Text TEXT
-);
-CREATE TABLE Learning_TransitionStatistics (
-    ParentStringCompressed TEXT    NOT NULL,
-    AppliedRuleID          INTEGER NOT NULL,
-    ApplicationCount       INTEGER NOT NULL
-                                   DEFAULT 0,
-    SuccessfulCount        INTEGER NOT NULL
-                                   DEFAULT 0,
-    LastUpdated            TEXT    NOT NULL,
-    PRIMARY KEY (
-        ParentStringCompressed,
-        AppliedRuleID
-    ),
+
+CREATE TABLE MIU_RuleApplications (
+    ApplicationID INTEGER PRIMARY KEY AUTOINCREMENT,
+    SearchID      INTEGER NOT NULL,
+    ParentStateID INTEGER NOT NULL,
+    NewStateID    INTEGER NOT NULL,
+    AppliedRuleID INTEGER NOT NULL,
+    CurrentDepth  INTEGER NOT NULL,
+    Timestamp     TEXT    NOT NULL,
+    FOREIGN KEY (
+        SearchID
+    )
+    REFERENCES MIU_Searches (SearchID),
+    FOREIGN KEY (
+        ParentStateID
+    )
+    REFERENCES MIU_States (StateID),
+    FOREIGN KEY (
+        NewStateID
+    )
+    REFERENCES MIU_States (StateID),
     FOREIGN KEY (
         AppliedRuleID
     )
     REFERENCES RegoleMIU (ID) 
 );
-CREATE TABLE Learning_RuleStatistics (
-    RuleID             INTEGER PRIMARY KEY,
-    ApplicationCount   INTEGER NOT NULL
-                               DEFAULT 0,
-    SuccessfulCount    INTEGER NOT NULL
-                               DEFAULT 0,
-    EffectivenessScore REAL    NOT NULL
-                               DEFAULT 0.0,
-    LastUpdated        TEXT    NOT NULL
+
+CREATE TABLE MIU_Rules (
+    RuleID      INTEGER PRIMARY KEY AUTOINCREMENT,
+    RuleName    TEXT    NOT NULL
+                        UNIQUE,
+    Description TEXT,
+    Pattern     TEXT    NOT NULL,
+    Replacement TEXT    NOT NULL,
+    RuleType    INTEGER NOT NULL
 );
+
+CREATE TABLE MIU_Searches (
+    SearchID            INTEGER  PRIMARY KEY AUTOINCREMENT,
+    InitialString       TEXT     NOT NULL,
+    TargetString        TEXT,
+    SearchAlgorithm     TEXT,
+    StartTime           DATETIME,
+    EndTime             DATETIME,
+    Outcome             TEXT,
+    StepsTaken          INTEGER,
+    MaxDepth            INTEGER,
+    NodesExplored       INTEGER,
+    ElapsedMilliseconds REAL,
+    TargetUcount        INTEGER,
+    TargetIcount        INTEGER,
+    InitialUcount       INTEGER,
+    InitialIcount       INTEGER,
+    TargetStringLength  INTEGER,
+    InitialStringLength INTEGER
+);
+
+CREATE TABLE MIU_States (
+    StateID            INTEGER PRIMARY KEY AUTOINCREMENT,
+    CurrentString      TEXT    UNIQUE
+                               NOT NULL,
+    StringLength       INTEGER,
+    DeflateString      TEXT,
+    Hash               TEXT,
+    DiscoveryTime_Int  INTEGER,
+    DiscoveryTime_Text TEXT,
+    UsageCount         INTEGER DEFAULT 0,
+    SeedingType        INTEGER
+);
+
+CREATE TABLE MIUParameterConfigurator (
+    ID              INTEGER PRIMARY KEY ON CONFLICT ROLLBACK AUTOINCREMENT
+                            UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    NomeParametro   TEXT    UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    ValoreParametro TEXT    NOT NULL,
+    Descrizione     TEXT
+);
+
+CREATE TABLE RegoleMIU (
+    ID           INTEGER    PRIMARY KEY ON CONFLICT ROLLBACK AUTOINCREMENT
+                            UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    Nome         TEXT (16)  NOT NULL ON CONFLICT ROLLBACK,
+    Pattern      TEXT (16)  UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    Sostituzione TEXT (12)  UNIQUE ON CONFLICT ROLLBACK
+                            NOT NULL ON CONFLICT ROLLBACK,
+    Descrizione  TEXT (512) 
+);
+
+Come noterai le tabelle MIU_Rules e RegoleMIU sono simili, ciò è nato da una precedente incomprensione. La tabella usata è RegoleMIU. Per completezza ti mostro il contenuto di entrambe
+
+Tabella RegoleMIU
+ID;Nome;Pattern;Sostituzione;Descrizione
+1;Regola I;(.*)I$;$1IU;Sostituisce 'I' con 'IU' alla fine di una stringa
+2;Regola II (Hofstadter);^M(.*)$;M$1$1;Se la stringa è Mx, puoi formare Mxx (M seguita dalla stringa x ripetuta due volte).
+3;Regola III;III;U;Se 'III' appare, può essere sostituito con 'U'
+4;Regola IV;UU;;Rimuove due 'U' consecutive
+
+tabella MIU_Rules
+RuleID;RuleName;Description;Pattern;Replacement;RuleType
+1;Regola I;Add U to the end of a string ending with I.;(.*)I$;$1IU;1
+2;Regola II (Hofstadter);Double the string after M.;^M(.*)$;M$1$1;2
+3;Regola III;Replace III with U.;III;U;3
+4;Regola IV;Remove UU.;UU;;4
+
+Ti ricordo che la tabella MIU_States è pre compilata e contiene le 1000 righe circa di cui trovare la derivazione. Nelle 1000 righe ci sono almeno 30 combinazioni sicuramente derivabili e circa 300 "quasi" derivabili

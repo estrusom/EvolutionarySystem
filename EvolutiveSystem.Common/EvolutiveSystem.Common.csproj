@@ -57,12 +57,15 @@
     <Compile Include="MIUDerivationPath.cs" />
     <Compile Include="MIUExplorerCursor.cs" />
     <Compile Include="MiuNotificationEventArgs.cs" />
+    <Compile Include="MiuPatternDefinitions.cs" />
     <Compile Include="MIURule.cs" />
     <Compile Include="MIUState.cs" />
     <Compile Include="MiuStateInfo.cs" />
     <Compile Include="MIUStringTopologyDataModels.cs" />
+    <Compile Include="PIDParameterKeys.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegolaMIU.cs" />
+    <Compile Include="RulesEvolvedEvent.cs" />
     <Compile Include="RuleStatistics.cs" />
     <Compile Include="SearchCompletedEvent.cs" />
     <Compile Include="TransitionStatistics.cs" />

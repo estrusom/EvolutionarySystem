@@ -1,0 +1,24 @@
+Memo: Parallelismo e Molteplicità delle Soluzioni
+Ecco il memo per ricordarci le tue importantissime osservazioni sul parallelismo e sulla natura delle soluzioni:
+
+Parallelismo (QuantumSynthesisOrchestrator):
+
+Idea: Implementare il parallelismo (usando la TPL di C#) per permettere la proposta, simulazione e valutazione simultanea di più regole candidate.
+
+Vantaggi: Maggiore velocità di esplorazione, capacità di testare molteplici ipotesi contemporaneamente, emulazione di un "collasso di molteplici funzioni d'onda".
+
+Sfide: Aumento della complessità (thread safety, gestione risorse, criteri di "vittoria" tra regole), necessità di istanze isolate di MiuSimulationEnvironment per ogni thread.
+
+Prossimo Passo: Introduzione del parallelismo dopo aver verificato il corretto funzionamento del ciclo single-threaded.
+
+Molteplicità delle Soluzioni (RuleCandidateEvaluator):
+
+Tua Osservazione: È realistico aspettarsi di trovare difficilmente più di una regola che risolva un dato pattern o un'antitesi. Spesso, anche trovarne una è una sfida.
+
+Implicazione per l'Evaluator: La logica attuale dell'RuleCandidateEvaluator assume implicitamente che il sistema cerchi la migliore o una regola valida. Se in futuro il parallelismo dovesse portare a più regole "vincenti" simultaneamente, dovremo decidere:
+
+Criteri di Selezione: Quale criterio useremo per scegliere tra più regole valide? Quella con il punteggio più alto? La più semplice? La più veloce a completare la simulazione?
+
+Diversità delle Soluzioni: Potrebbe essere desiderabile accettare più di una soluzione valida se sono concettualmente diverse, per aumentare la robustezza o la versatilità del sistema.
+
+Riflessione: Questo punto ci spinge a considerare che il "collasso della funzione d'onda" potrebbe non essere un singolo evento binario, ma un processo di selezione e prioritizzazione tra più esiti promettenti (anche se rari).

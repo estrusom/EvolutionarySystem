@@ -73,7 +73,11 @@ namespace EvolutiveSystem.Common
         // Operazioni per RegoleMIU
         List<RegolaMIU> LoadRegoleMIU();
         void UpsertRegoleMIU(List<RegolaMIU> regole);
-
+        /// <summary>
+        /// Aggiunge o aggiorna una singola regola MIU nel database.
+        /// </summary>
+        /// <param name="rule">La RegolaMIU da aggiungere o aggiornare.</param>
+        Task AddOrUpdateRegolaMIUAsync(RegolaMIU rule);
         // Operazioni per MIUParameterConfigurator (Questi metodi sono ora ridondanti per i puntatori di esplorazione,
         // che vengono gestiti da MIUExplorerCursor, ma potrebbero essere usati per altri parametri generici)
         Dictionary<string, string> LoadMIUParameterConfigurator();

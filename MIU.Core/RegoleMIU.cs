@@ -468,7 +468,8 @@ namespace MIU.Core
                                 SearchID = searchId,
                                 DiscoveredString = newStringStandard, // La stringa standard scoperta
                                 IsTrulyNewToDatabase = isNewToDatabase, // Indica se è anche nuova per il DB
-                                StateID = newStateId // L'ID assegnato dal database
+                                StateID = newStateId, // L'ID assegnato dal database
+                                Depth = currentPath.Count // 2025.07.18 Passa la profondità corrente del percorso
                             });
                             // Crea un nuovo passo per il percorso
                             var newPathStep = new PathStepInfo
@@ -689,7 +690,8 @@ namespace MIU.Core
                                 SearchID = searchId,
                                 DiscoveredString = newStringStandard, // La stringa standard scoperta
                                 IsTrulyNewToDatabase = isNewToDatabase, // Indica se è anche nuova per il DB
-                                StateID = newStateId // L'ID assegnato dal database
+                                StateID = newStateId, // L'ID assegnato dal database
+                                Depth = currentPath.Count // 2025.07.18 Passa la profondità corrente del percorso
                             });
                             // Crea un nuovo passo per il percorso
                             var newPathStep = new PathStepInfo

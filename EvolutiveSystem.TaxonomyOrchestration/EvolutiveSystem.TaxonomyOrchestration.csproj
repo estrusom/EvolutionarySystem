@@ -55,6 +55,10 @@
       <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
       <Name>EvolutiveSystem.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.Taxonomy.Antithesis\EvolutiveSystem.Taxonomy.Antithesis.csproj">
+      <Project>{93957bf5-be0f-4fd2-9414-dc463aa9d30b}</Project>
+      <Name>EvolutiveSystem.Taxonomy.Antithesis</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.Taxonomy\EvolutiveSystem.Taxonomy.csproj">
       <Project>{a8026815-12ae-4cd2-9d45-cf663a76c1c1}</Project>
       <Name>EvolutiveSystem.Taxonomy</Name>

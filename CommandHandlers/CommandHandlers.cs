@@ -860,7 +860,7 @@ namespace CommandHandlers
                 int dbstat = CheckDbExistAndOpen();
                 if (dbstat == 0)
                 {
-                    continuousScheduler = new MiuContinuousExplorerScheduler( // <- errore cs0012 
+                    continuousScheduler = new MiuContinuousExplorerScheduler( 
                                        _miuDerivationEngine,
                                        miuDataManager,
                                        miuRepositoryInstance,

@@ -168,6 +168,7 @@ namespace SemanticProcessor
         #region *** CAMPO PER L'ISTANZA DEL NUOVO SCHEDULER CONTINUO (NUOVA CLASSE) ***
         private MiuContinuousExplorerScheduler _continuousScheduler; // <--- QUESTA MANCAVA: Istanza creata e gestita
         #endregion
+        private RuleTaxonomyGenerator _ruleTaxonomyGenerator; // 2025.07.18 Dichiarazione del generatore di tassonomie come campo
         private int MAX_STRING_LENGTH = 1000;
         private int STRING_LENGTH_PENALTY_THRESHOLD = 20;
         private double STRING_LENGTH_PENALTY_FACTOR = 5.0;
@@ -1049,15 +1050,15 @@ namespace SemanticProcessor
                                     this.dbConnection = (SQLiteConnection)parameters[3];
                                     this.schemaLoader = new EvolutiveSystem.SQL.Core.SQLiteSchemaLoader(this.dbConnection.FileName, _logger);
                                     this.schemaLoader.InitializeDatabase();
-                                    this.miuDataManagerInstance = new EvolutiveSystem.SQL.Core.MIUDatabaseManager(schemaLoader, _logger);
+                                   this.miuDataManagerInstance = new EvolutiveSystem.SQL.Core.MIUDatabaseManager(schemaLoader, _logger);
+                                    // aggiunto qua il 25.07.18 25.07.11 Inizializzazione del TaxonomyOrchestrator ---
+                                    this._ruleTaxonomyGenerator = new RuleTaxonomyGenerator(miuDataManagerInstance, _logger); // Istanzia RuleTaxonomyGenerator
+                                    _taxonomyOrchestrator = new TaxonomyOrchestrator(this.miuDataManagerInstance, this._ruleTaxonomyGenerator, _eventBus, _logger); // Correzione: Aggiunto this.miuDataManagerInstance e riordinati i parametri
                                     this.miuRepositoryInstance = new MIU.Core.MIURepository(miuDataManagerInstance, _logger);
                                     this._learningStatisticsManager = new LearningStatisticsManager(miuDataManagerInstance, _logger);
                                     this._miuDerivationEngine = new MIUDerivationEngine(miuDataManagerInstance, this._learningStatisticsManager, _logger, _eventBus);
                                     commandHandlers.MiuDerivationEngine = this._miuDerivationEngine;
 
-                                    // 25.07.11 Inizializzazione del TaxonomyOrchestrator ---
-                                    var taxonomyGenerator = new RuleTaxonomyGenerator(miuDataManagerInstance, _logger); // Istanzia RuleTaxonomyGenerator
-                                    _taxonomyOrchestrator = new TaxonomyOrchestrator(taxonomyGenerator, _eventBus, _logger); // Istanzia TaxonomyOrchestrator
                                     _logger.Log(LogLevel.INFO, "[SemanticProcessorService] TaxonomyOrchestrator inizializzato e sottoscritto agli eventi.");
                                     _logger.Log(LogLevel.INFO, "[SemanticProcessorService] TaxonomyOrchestrator inizializzato con default.");
 
