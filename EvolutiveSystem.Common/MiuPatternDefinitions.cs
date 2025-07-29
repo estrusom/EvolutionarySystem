@@ -14,6 +14,12 @@ namespace EvolutiveSystem.Common
     /// </summary>
     public abstract class MiuAbstractPattern
     {
+        /// <summary>
+        /// Ottiene o imposta un identificatore unico per il pattern.
+        /// Questo ID può essere utilizzato per riferimenti univoci del pattern.
+        /// È un Guid per garantire unicità globale.
+        /// </summary>
+        public Guid ID { get; set; }
         public string Type { get; set; } // Esempio: "StringLength", "ICountParity", "ContainsMIU"
         public string Value { get; set; } // Esempio: "100" (per lunghezza), "Even" (per parità), "True" (per contiene)
         /// <summary>
@@ -24,6 +30,7 @@ namespace EvolutiveSystem.Common
         public string Nome { get; set; } // <--- NUOVA PROPRIETÀ AGGIUNTA
         public MiuAbstractPattern(string type, string value, string nome)
         {
+            ID = Guid.NewGuid(); // Genera un nuovo ID unico per ogni pattern
             Type = type;
             Value = value;
             Nome = nome;

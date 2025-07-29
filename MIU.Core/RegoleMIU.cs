@@ -125,6 +125,8 @@ namespace MIU.Core
         private static int _MAX_STRING_LENGTH = 1000;
         private static int _STRING_LENGTH_PENALTY_THRESHOLD = 20; // Soglia arbitraria: oltre 20 caratteri, inizia la penalità. Puoi calibrare.
         private static double _STRING_LENGTH_PENALTY_FACTOR = 5.0; // Quanto penalizzare per ogni carattere oltre la soglia. Valore più alto = penalità più aggressiva.
+        
+
         /// <summary>
         /// imposta la lunghezza massima delle stringhe di ricerca
         /// </summary>
@@ -174,6 +176,7 @@ namespace MIU.Core
         public static event EventHandler<SolutionFoundEventArgs> OnSolutionFound;
         public static event EventHandler<RuleAppliedEventArgs> OnRuleApplied;
         public static event EventHandler<NewMiuStringDiscoveredEventArgs> OnNewMiuStringDiscoveredInternal; // NEW EVENT: Per notificare la scoperta di nuove stringhe
+
 
         /// <summary>
         /// Loads MIU rules from a list of strings formatted as SQLiteSelect output.
@@ -225,6 +228,31 @@ namespace MIU.Core
             LoggerInstance?.Log(LogLevel.DEBUG, $"[RegoleMIUManager DEBUG] Loaded {Regole.Count} rules from Repository object.");
         }
 
+        /// <summary>
+        /// 2025.07.28
+        /// Aggiunge una NUOVA regola MIU all'insieme delle regole disponibili in memoria.
+        /// Questo metodo viene chiamato quando una nuova regola (immutabile) è stata creata e persistita nel database.
+        /// </summary>
+        /// <param name="newRule">La nuova regola MIU da aggiungere.</param>
+        // --- NUOVO METODO: Per aggiungere una singola regola MIU a runtime ---
+        public static void AddNewRule(EvolutiveSystem.Common.RegolaMIU newRule)
+        {
+            // Controlla se la regola esiste già in memoria per evitare duplicati,
+            // basandosi sull'ID che è univoco una volta persistito nel DB.
+            if (!Regole.Any(r => r.ID == newRule.ID))
+            {
+                Regole.Add(newRule);
+                LoggerInstance?.Log(LogLevel.INFO, $"[RegoleMIUManager] Added new rule '{newRule.Nome}' (ID: {newRule.ID}) to in-memory set. Total rules: {Regole.Count}.");
+                // Se l'ordine delle regole è importante per le tue euristiche (es. in ApplicaRegole),
+                // potresti voler riordinare la lista qui dopo l'aggiunta.
+                // Esempio: Regole = Regole.OrderByDescending(r => /* your ordering criteria */).ToList();
+            }
+            else
+            {
+                LoggerInstance?.Log(LogLevel.WARNING, $"[RegoleMIUManager] Attempted to add existing rule '{newRule.Nome}' (ID: {newRule.ID}). Skipping addition to in-memory set.");
+                LoggerInstance?.Log(LogLevel.WARNING, $"[RegoleMIUManager] Attempted to add existing rule '{newRule.Nome}' (ID: {newRule.ID}). Skipping addition to in-memory set.");
+            }
+        }
 
         /// <summary>
         /// Applies MIU rules to a given string in a loop, showing all steps.

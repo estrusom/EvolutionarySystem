@@ -294,7 +294,7 @@ namespace EvolutiveSystem.SQL.Core
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
                     connection.Open();
-                    string sql = "SELECT ID, Nome, Pattern, Sostituzione, Descrizione FROM RegoleMIU";
+                    string sql = "SELECT ID, Nome, Pattern, Sostituzione, Descrizione, StimaProfonditaMedia FROM RegoleMIU"; // 2025.07.28
                     using (var command = new SQLiteCommand(sql, connection))
                     using (var reader = command.ExecuteReader())
                     {
@@ -307,8 +307,9 @@ namespace EvolutiveSystem.SQL.Core
                                 string pattern = reader.GetString(reader.GetOrdinal("Pattern"));
                                 string sostituzione = reader.GetString(reader.GetOrdinal("Sostituzione"));
                                 string descrizione = reader.GetString(reader.GetOrdinal("Descrizione"));
+                                double stimaProfonditaMedia = reader.IsDBNull(reader.GetOrdinal("StimaProfonditaMedia")) ? 0.0 : reader.GetDouble(reader.GetOrdinal("StimaProfonditaMedia"));
 
-                                regole.Add(new RegolaMIU(id, nome, descrizione, pattern, sostituzione));
+                                regole.Add(new RegolaMIU(id, nome, descrizione, pattern, sostituzione, stimaProfonditaMedia)); //2025.07.28
                             }
                             catch (InvalidCastException ex)
                             {
@@ -350,7 +351,9 @@ namespace EvolutiveSystem.SQL.Core
                     {
                         foreach (var regola in regole)
                         {
-                            string sql = "INSERT OR REPLACE INTO RegoleMIU (ID, Nome, Pattern, Sostituzione, Descrizione) VALUES (@id, @nome, @pattern, @sostituzione, @descrizione)";
+                            var existingRule = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == regola.ID);
+
+                            string sql = "INSERT OR REPLACE INTO RegoleMIU (ID, Nome, Pattern, Sostituzione, Descrizione, StimaProfonditaMedia) VALUES (@id, @nome, @pattern, @sostituzione, @descrizione, @stimaProfonditaMedia)"; // 2025.28.07
                             using (var command = new SQLiteCommand(sql, connection, transaction))
                             {
                                 command.Parameters.AddWithValue("@id", regola.ID);
@@ -358,6 +361,7 @@ namespace EvolutiveSystem.SQL.Core
                                 command.Parameters.AddWithValue("@pattern", regola.Pattern);
                                 command.Parameters.AddWithValue("@sostituzione", regola.Sostituzione);
                                 command.Parameters.AddWithValue("@descrizione", regola.Descrizione);
+                                command.Parameters.AddWithValue("@stimaProfonditaMedia", regola.StimaProfonditaMedia);
                                 command.ExecuteNonQuery();
                             }
                         }
@@ -378,6 +382,7 @@ namespace EvolutiveSystem.SQL.Core
         /// <param name="rule">La RegolaMIU da aggiungere o aggiornare.</param>
         public async Task AddOrUpdateRegolaMIUAsync(RegolaMIU rule)
         {
+            /*
             try
             {
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
@@ -393,6 +398,7 @@ namespace EvolutiveSystem.SQL.Core
                         command.Parameters.AddWithValue("@pattern", rule.Pattern);
                         command.Parameters.AddWithValue("@sostituzione", rule.Sostituzione);
                         command.Parameters.AddWithValue("@descrizione", rule.Descrizione);
+                        command.Parameters.AddWithValue("@stimaProfonditaMedia", rule.StimaProfonditaMedia);
                         await command.ExecuteNonQueryAsync();
                     }
                 }
@@ -403,6 +409,8 @@ namespace EvolutiveSystem.SQL.Core
                 _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager] Errore durante l'aggiunta/aggiornamento della regola '{rule.Nome}' (ID: {rule.ID}): {ex.Message}{Environment.NewLine}{ex.StackTrace}");
                 throw; // Rilancia l'eccezione per gestione a livello superiore
             }
+            */
+            await Task.Run(() => UpsertRegoleMIU(new List<RegolaMIU> { rule }));
         }
 
         /// <summary>

@@ -14,18 +14,50 @@ using EvolutiveSystem.Common; // Aggiunto per le classi modello spostate
 
 namespace MIU.Core
 {
-    public class MIURepository : IMIURepository  // <- errore cd0738
+    public class MIURepository : IMIURepository  
     {
         private readonly IMIUDataManager _dataManager;
         private readonly Logger _logger;
+        // NEW: Un flag per assicurarsi che le regole vengano caricate una sola volta all'avvio
+        private bool _areRulesLoadedIntoManager = false;
 
         public MIURepository(IMIUDataManager dataManager, Logger logger)
         {
             _dataManager = dataManager;
             _logger = logger;
             _logger.Log(LogLevel.DEBUG, "[Repository DEBUG] MIURepository istanziato con IMIUDataManager.");
-        }
 
+            // *** NUOVO PASSO CRUCIALE: Carica le regole nel manager statica all'istanziazione del repository ***
+            // Questo assicura che RegoleMIUManager.Regole sia popolato all'avvio del sistema
+            InitializeRulesInManager();
+        }
+        /// Metodo privato per gestire il caricamento iniziale delle regole
+        private void InitializeRulesInManager()
+        {
+            if (_areRulesLoadedIntoManager)
+            {
+                _logger.Log(LogLevel.DEBUG, "[MIURepository] RegoleMIUManager già popolato, salto il caricamento iniziale.");
+                return;
+            }
+
+            try
+            {
+                // Carica le regole dal database
+                List<RegolaMIU> regoleDalDB = _dataManager.LoadRegoleMIU();
+
+                // Popola la lista statica in RegoleMIUManager
+                RegoleMIUManager.Regole.Clear();
+                RegoleMIUManager.Regole.AddRange(regoleDalDB);
+
+                _areRulesLoadedIntoManager = true; // Imposta il flag a true
+                _logger.Log(LogLevel.INFO, $"[MIURepository INFO] Caricamento iniziale regole completato. Regole in memoria: {RegoleMIUManager.Regole.Count}");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIURepository ERROR] Errore durante il caricamento iniziale delle regole: {ex.Message}");
+                // Potresti voler gestire questo errore in modo più robusto (es. avvertire l'utente, terminare l'app se critico)
+            }
+        }
         /// <summary>
         /// Inserisce una nuova entry nella tabella MIU_Searches.
         /// Accetta tutti i parametri, inclusi i dati di lunghezza e conteggio,

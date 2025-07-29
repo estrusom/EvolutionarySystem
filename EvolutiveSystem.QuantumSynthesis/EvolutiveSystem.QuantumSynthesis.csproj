@@ -46,6 +46,7 @@
     <Compile Include="IRuleCandidateProposer.cs" />
     <Compile Include="MiuSimulationEnvironment.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="QuantumSynthesisOrchestrator.cs" />
     <Compile Include="RuleCandidateEvaluator.cs" />
     <Compile Include="RuleCandidateProposer.cs" />
   </ItemGroup>
@@ -62,13 +63,17 @@
       <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
       <Name>EvolutiveSystem.SQL.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.Taxonomy.Antithesis\EvolutiveSystem.Taxonomy.Antithesis.csproj">
+      <Project>{93957bf5-be0f-4fd2-9414-dc463aa9d30b}</Project>
+      <Name>EvolutiveSystem.Taxonomy.Antithesis</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.Taxonomy\EvolutiveSystem.Taxonomy.csproj">
       <Project>{a8026815-12ae-4cd2-9d45-cf663a76c1c1}</Project>
       <Name>EvolutiveSystem.Taxonomy</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj">
-      <Project>{c4be31ba-71ec-420f-ad75-58c661011b5a}</Project>
-      <Name>MessaggiErrore</Name>
+    <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
+      <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
+      <Name>MasterLogMutex</Name>
     </ProjectReference>
     <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
       <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
