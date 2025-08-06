@@ -1056,14 +1056,18 @@ namespace EvolutiveSystem.SQL.Core
                         // Array delle tabelle da pulire
                         string[] tablesToClear = new string[]
                         {
-                            "MIU_Searches",
-                            "MIU_RuleApplications",
-                            "MIU_Paths",
-                            "MIU_Actions", // Inserita come richiesto, se esiste
-                            "Learning_TransitionStatistics",
-                            "Learning_RuleStatistics",
+                            "AntithesisEvent",
                             "ExplorationAnomalies",
-                            "MIU_Searches"
+                            "Learning_RuleStatistics",
+                            "Learning_TransitionStatistics",
+                            "LlmArchitectureLog",
+                            "LlmSemanticInterpretation",
+                            "MIU_Actions", // Inserita come richiesto, se esiste
+                            "MIU_Paths",
+                            "MIU_RuleApplications",
+                            "MIU_Searches",
+                            "MiuPattern",
+                            "PatternStatistics"
                         };
 
                         foreach (var tableName in tablesToClear)
