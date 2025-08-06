@@ -45,6 +45,7 @@ namespace MiuSystemExplorerTestApp // Your specific test app namespace
         private static IMIUDataProcessingService _miuDerivationEngine; // Derivation engine instance
         private static IMIUTopologyService _miuTopologyService; // Topology service instance
         private static IMIUDataManager _dataManager; // Reference to the data manager for reset functionality
+        private static EventBus eventBus = null;
 
         static async Task Main(string[] args) // Main made asynchronous
         {
@@ -73,6 +74,7 @@ namespace MiuSystemExplorerTestApp // Your specific test app namespace
                 _dataManager = _dbManager; // Assign to static field for broader access
                 _repository = new MIURepository(_dataManager, _logger);
                 _logger.Log(LogLevel.INFO, "MIUDatabaseManager and MIURepository instantiated.");
+                eventBus = new EventBus(_logger);
 
                 // LearningStatisticsManager Initialization
                 _learningStatsManager = new LearningStatisticsManager(_dataManager, _logger);
@@ -127,7 +129,7 @@ namespace MiuSystemExplorerTestApp // Your specific test app namespace
                 }
 
                 // Derivation Engine Initialization
-                _miuDerivationEngine = new MIUDerivationEngine(_dataManager, _learningStatsManager, _logger);
+                _miuDerivationEngine = new MIUDerivationEngine(_dataManager, _learningStatsManager, _logger, eventBus);
 
                 // Subscribe to engine events for console feedback
                 _miuDerivationEngine.OnExplorationStatusChanged += MiuDerivationEngine_OnExplorationStatusChanged;
