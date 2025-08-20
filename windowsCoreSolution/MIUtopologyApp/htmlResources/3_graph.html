@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualizzazione Grafo 3D</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+    <!-- Carica le librerie 3D -->
+    <script src="//unpkg.com/three"></script>
+    <script src="//unpkg.com/3d-force-graph"></script>
+    <script src="//unpkg.com/d3"></script>
+</head>
+<body>
+    <script>
+        // Dichiarazione di una variabile globale per il grafo
+        let Graph;
+
+        // Funzione per generare un colore in base a una stringa
+        function stringToColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            let color = '#';
+            for (let i = 0; i < 3; i++) {
+                const value = (hash >> (i * 8)) & 0xFF;
+                color += ('00' + value.toString(16)).substr(-2);
+            }
+            return color;
+        }
+
+        /**
+         * Funzione per aggiornare il grafo. Viene chiamata dal codice C# tramite WebView2.
+         * @param {Object} data I dati del grafo (nodi e link).
+         */
+        function updateGraph(data) {
+            if (!Graph) {
+                // Se il grafo non esiste, lo crea per la prima volta
+                Graph = ForceGraph3D()
+                    (document.body) // Renderizza il grafo nel body del documento
+                    .backgroundColor('#ffffff') // Sfondo bianco
+                    .nodeLabel('name') // Mostra il nome del nodo al passaggio del mouse
+                    .nodeAutoColorBy('type') // Colora i nodi in base al loro tipo
+                    .nodeOpacity(0.9)
+                    .linkWidth(2)
+                    .linkDirectionalArrowLength(3)
+                    .linkDirectionalArrowRelPos(1);
+
+                // Configurazione delle etichette dei nodi
+                Graph.nodeThreeObject(node => {
+                    const nodeEl = document.createElement('div');
+                    nodeEl.className = 'node-label';
+                    // Crea l'etichetta con il nome e il tipo del nodo
+                    nodeEl.innerHTML = `<span style="background-color: ${stringToColor(node.type)}; padding: 2px 5px; border-radius: 5px;">${node.name}</span>`;
+                    
+                    const obj = new THREE.CSS2DObject(nodeEl);
+                    obj.position.set(0, 0, 0); // Posiziona l'etichetta
+                    return obj;
+                });
+
+            }
+            // Aggiorna i dati del grafo con i nuovi dati passati dal C#
+            Graph.graphData(data);
+        }
+    </script>
+</body>
+</html>

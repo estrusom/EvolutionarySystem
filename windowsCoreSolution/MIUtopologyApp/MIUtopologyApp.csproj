@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="MIUDataService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="htmlResources\graph.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="htmlResources\graph.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0-preview.7.25380.108" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.0-preview.7.25380.108" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0-preview.7.25380.108" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0-preview.7.25380.108" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3477-prerelease" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EvolutionarySystem.Core.Models\EvolutionarySystem.Core.Models.csproj" />
+    <ProjectReference Include="..\EvolutionarySystem.Data.cs\EvolutionarySystem.Data.cs.csproj" />
+    <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj" />
+    <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

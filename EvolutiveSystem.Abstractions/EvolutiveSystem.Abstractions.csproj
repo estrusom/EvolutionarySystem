@@ -32,7 +32,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -45,14 +44,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\EvolutiveSystem.Common\EvolutiveSystem.Common.csproj">
-      <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
-      <Name>EvolutiveSystem.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\EvolutiveSystem.Taxonomy\EvolutiveSystem.Taxonomy.csproj">
-      <Project>{a8026815-12ae-4cd2-9d45-cf663a76c1c1}</Project>
-      <Name>EvolutiveSystem.Taxonomy</Name>
-    </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
       <Name>MasterLogMutex</Name>

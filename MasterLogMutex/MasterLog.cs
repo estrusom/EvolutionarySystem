@@ -1,16 +1,16 @@
-// 29.04.2021 aggiunta la proprietà SeparatoreCampi, definisce il carattere che è messo come separatori nel messaggio di log
-// 04/07/2025 aggiunto overload all metodo log per impostare la lunghezza massima del log
+// Modificato per .NET 8
+// Rimossa la dipendenza da System.Diagnostics.EventLog per la compatibilità cross-platform.
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading;
+using System.Linq;
 
 namespace MasterLog
 {
     /// <summary>
-    /// Indica il livello della riga di log, verra scritto nel file
+    /// Indica il livello della riga di log, verra scritto nel file.
     /// </summary>
     public enum LogLevel
     {
@@ -51,89 +51,100 @@ namespace MasterLog
         /// </summary>
         INTERNAL_TEST
     }
+
     /// <summary>
-    /// Classe per la determinazione dei livelli di log
+    /// Classe per la determinazione dei livelli di log.
     /// </summary>
     public class LogLevels : System.Attribute
     {
         /// <summary>
-        /// Nome del livello da visualizzare
+        /// Nome del livello da visualizzare.
         /// </summary>
         public string LevelName { get; set; }
         /// <summary>
-        /// peso in bit del livello di logs
+        /// peso in bit del livello di logs.
         /// </summary>
         public int LogLevelToShow { get; set; }
         /// <summary>
-        /// indice enum del log da visualizzare
+        /// indice enum del log da visualizzare.
         /// </summary>
         public LogLevel LogIndex { get; set; }
     }
-    /// <summary>
-    /// Classe per la gestione dei essaggi di log nei programmi
-    /// </summary>
-    public class Logger
-    {
-        private short applicationCategoryId = 0;
-        private int applicationEventId = 0;
-        private EventLog evLog;
-        private bool isAdmin = false;
-        private EventLogEntryType logEventEntryType;
-        private List<LogLevels> LogLevelList;
-        private byte[] rawData = new byte[4];
-        private int swLogLevel = 0;
-        private string separatoreCampi = "-";
-        private DateTime toDay = DateTime.Now;
 
+    /// <summary>
+    /// Classe per configurare i livelli di log tramite attributi di proprietà.
+    /// </summary>
+    public class LogConfiguration
+    {
         /// <summary>
-        ///  bit 0 LOG_INFO
+        /// bit 0 LOG_INFO
         /// </summary>
-        [LogLevels(LevelName = "INFO", LogLevelToShow = 1, LogIndex = (LogLevel)0)]
-        public int LOG_INFO { get { return 1; } }
+        [LogLevels(LevelName = "INFO", LogLevelToShow = 1, LogIndex = LogLevel.INFO)]
+        public int LOG_INFO { get; } = 1;
+
         /// <summary>
         /// bit 1 LOG_DEBUG 
         /// </summary>
-        [LogLevels(LevelName = "DEBUG", LogLevelToShow = 2, LogIndex = (LogLevel)3)]
-        public int LOG_DEBUG { get { return 2; } }
+        [LogLevels(LevelName = "DEBUG", LogLevelToShow = 2, LogIndex = LogLevel.DEBUG)]
+        public int LOG_DEBUG { get; } = 2;
+
         /// <summary>
         /// bit 2 LOG_SOCKET 
         /// </summary>
-        [LogLevels(LevelName = "SOCKET", LogLevelToShow = 4, LogIndex = (LogLevel)4)]
-        public int LOG_SOCKET { get { return 4; } }
-        /// bit log 6 LOG_WARNING
+        [LogLevels(LevelName = "SOCKET", LogLevelToShow = 4, LogIndex = LogLevel.SOCKET)]
+        public int LOG_SOCKET { get; } = 4;
+
+        /// <summary>
+        /// bit 6 LOG_WARNING
         /// </summary>
-        [LogLevels(LevelName = "WARNING", LogLevelToShow = 0x40, LogIndex = (LogLevel)1)]
-        public int LOG_WARNING { get { return 0x40; } }
+        [LogLevels(LevelName = "WARNING", LogLevelToShow = 0x40, LogIndex = LogLevel.WARNING)]
+        public int LOG_WARNING { get; } = 0x40;
+
         /// <summary>
         /// bit 7 LOG_SERVICE
         /// </summary>
-        [LogLevels(LevelName = "SERVICE", LogLevelToShow = 0x80, LogIndex = (LogLevel)5)]
-        public int LOG_SERVICE { get { return 0x80; } }
+        [LogLevels(LevelName = "SERVICE", LogLevelToShow = 0x80, LogIndex = LogLevel.SERVICE)]
+        public int LOG_SERVICE { get; } = 0x80;
+
         /// <summary>
         /// bit 8 LOG_SERVICE_EVENT
         /// </summary>
-        [LogLevels(LevelName = "SERVICE_EVENT", LogLevelToShow = 0x100, LogIndex = (LogLevel)6)]
-        public int LOG_SERVICE_EVENT { get { return 0x100; } }
+        [LogLevels(LevelName = "SERVICE_EVENT", LogLevelToShow = 0x100, LogIndex = LogLevel.SERVICE_EVENT)]
+        public int LOG_SERVICE_EVENT { get; } = 0x100;
+
         /// <summary>
         /// bit 10 LOG_ENANCED_DEBUG
         /// </summary>
-        [LogLevels(LevelName = "ENANCED_DEBUG", LogLevelToShow = 0x400, LogIndex = (LogLevel)7)]
-        public int LOG_ENANCED_DEBUG { get { return 0x400; } }
+        [LogLevels(LevelName = "ENANCED_DEBUG", LogLevelToShow = 0x400, LogIndex = LogLevel.ENANCED_DEBUG)]
+        public int LOG_ENANCED_DEBUG { get; } = 0x400;
+
         /// <summary>
-        /// bit log 11 LOG_ERROR
+        /// bit 11 LOG_ERROR
         /// </summary>
-        [LogLevels(LevelName = "ERROR", LogLevelToShow = 0x800, LogIndex = (LogLevel)2)]
-        public int LOG_ERROR { get { return 0x800; } }
+        [LogLevels(LevelName = "ERROR", LogLevelToShow = 0x800, LogIndex = LogLevel.ERROR)]
+        public int LOG_ERROR { get; } = 0x800;
+
         /// <summary>
-        /// bit log 14 INTERNAL_TEST 
-        /// 16.04.2021 Log per test interni
+        /// bit 14 INTERNAL_TEST 
         /// </summary>
-        [LogLevels(LevelName = "INTERNAL_TEST", LogLevelToShow = 0x4000, LogIndex = (LogLevel)8)]
-        public int LOG_INTERNAL_TEST { get { return 0x4000; } }
+        [LogLevels(LevelName = "INTERNAL_TEST", LogLevelToShow = 0x4000, LogIndex = LogLevel.INTERNAL_TEST)]
+        public int LOG_INTERNAL_TEST { get; } = 0x4000;
+    }
+
+    /// <summary>
+    /// Classe per la gestione dei messaggi di log nei programmi.
+    /// </summary>
+    public class Logger
+    {
+        private int swLogLevel = 0;
+        private string separatoreCampi = "-";
+        private DateTime toDay = DateTime.Now;
+        private List<LogLevels> LogLevelList;
+
         /// <summary>
-        /// Determina il livello dei log da visualizzare
+        /// determina il tipo di separatore da usare nella costruzione della stringa di log, il valore predefinito è '-'.
         /// </summary>
-        public int SwLogLevel { set { this.swLogLevel = value; } get { return this.swLogLevel; } }
+        public string SeparatoreCampi { get { return this.separatoreCampi; } set { this.separatoreCampi = value; } }
 
         #region Costanti
         private const string _ESTENSIONE_FILE = "txt";
@@ -141,26 +152,27 @@ namespace MasterLog
         #endregion
 
         #region Variabili
-        Mutex syncLogMutex;
-        bool mtxEnabled = false;
+        private Mutex syncLogMutex;
+        private bool mtxEnabled = false;
+
         /// <summary>
-        /// Percorso dove scrivere i file
+        /// Percorso dove scrivere i file.
         /// </summary>
         private string _Percorso = string.Empty;
 
         /// <summary>
-        /// Nome del file di log passato al costruttore
+        /// Nome del file di log passato al costruttore.
         /// </summary>
         private string _Nome = string.Empty;
 
         /// <summary>
-        /// Nome del file di log comprensivo di data ed estensione
+        /// Nome del file di log comprensivo di data ed estensione.
         /// </summary>
         private string _NomeLog = string.Empty;
 
         /// <summary>
         /// Indica quanti file di log conservare, gli altri verranno eliminati;
-        /// Se maggiore di Zero
+        /// Se maggiore di Zero.
         /// </summary>
         private int _NumeroStorico = 0;
 
@@ -169,92 +181,30 @@ namespace MasterLog
         /// </summary>
         private string _NomeEseguibile = string.Empty;
         #endregion
+
         #region Construttori
+
         /// <summary>
-        /// Crea un nuovo file di log
+        /// Crea un nuovo file di log con opzioni di base.
         /// </summary>
-        /// <param name="percorso">E' il percorso dove scrivere il file di log (indifferente se termina con il carattere di slash o no)</param>
-        /// <param name="nome">Nome del file di log: senza estensione, e senza data ed ora, perchè verranno aggiunte in automatico</param>
-        /// <param name="numeroStorico">Se maggiore di Zero, indica quanti file di log conservare, gli altri verranno eliminati; altrimenti se Zero non eliminerà nessun file</param>
-        public Logger(string percorso, string nome, int numeroStorico = 0, string ext = "")
+        /// <param name="percorso">E' il percorso dove scrivere il file di log (indifferente se termina con il carattere di slash o no).</param>
+        /// <param name="nome">Nome del file di log: senza estensione, e senza data ed ora, perchè verranno aggiunte in automatico.</param>
+        /// <param name="numeroStorico">Se maggiore di Zero, indica quanti file di log conservare, gli altri verranno eliminati; altrimenti se Zero non eliminerà nessun file.</param>
+        /// <param name="ext">Estensione del file, predefinita "txt".</param>
+        public Logger(string percorso, string nome, int numeroStorico = 0, string ext = _ESTENSIONE_FILE)
+            : this(percorso, nome, null, numeroStorico, ext) // Chaining al costruttore più completo
         {
-            #region percorso
-            if (string.IsNullOrWhiteSpace(percorso))
-                throw new IOException("Specificare un Percorso valido.");
-
-            try
-            {
-                if (!Directory.Exists(percorso))
-                    Directory.CreateDirectory(percorso);
-            }
-            catch (Exception ex)
-            {
-                throw new IOException("Errore durante la creazione della directory: " + ex.Message);
-            }
-
-            _Percorso = percorso;
-            #endregion
-
-            #region nome
-            if (string.IsNullOrWhiteSpace(nome))
-                throw new IOException("Specificare un Nome valido.");
-
-            _Nome = nome;
-            if (ext.Length == 0)
-                _NomeLog = string.Concat(nome.Trim(), "_", DateTime.Now.ToString(_DATE_TIME_NOME_FILE), ".", _ESTENSIONE_FILE);
-            else
-                _NomeLog = string.Concat(nome.Trim(), "_", DateTime.Now.ToString(_DATE_TIME_NOME_FILE), ".", ext);
-            #endregion
-
-            _NumeroStorico = numeroStorico;
-
-            #region LogInfoLocali
-            try
-            {
-                LogInfoLocali();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Errore durante la scrittura delle Informazioni locali: " + ex.Message);
-            }
-            #endregion
-
-            #region Pulizia file di vecchi
-            try
-            {
-                DeleteOldFile();
-            }
-            catch (Exception ex)
-            {
-                //Non solleva l'eccezione perchè non è bloccante per l'esecuzione del chiamante
-                Log(LogLevel.WARNING, "Errore durante l'eliminazione dei file di log più vecchi: " + ex.Message);
-            }
-            #endregion
-            // this.mtxEnabled = false;
-            Type tyLogger = this.GetType();
-            LogLevelList = new List<LogLevels>();
-            PropertyInfo[] pInfoLogger = tyLogger.GetProperties();
-            foreach (PropertyInfo pInfo in pInfoLogger)
-            {
-                var v = pInfo.GetCustomAttributes(false);
-                if (v.Length > 0)
-                {
-                    if (v[0].GetType().Name == "LogLevels")
-                    {
-                        LogLevelList.Add(v[0] as LogLevels);
-                    }
-                }
-            }
         }
+
         /// <summary>
-        /// 
+        /// Crea un nuovo file di log con un Mutex per la sincronizzazione tra processi.
         /// </summary>
-        /// <param name="percorso"></param>
-        /// <param name="nome"></param>
-        /// <param name="SyncLogMutex"></param>
-        /// <param name="numeroStorico"></param>
-        /// QUA
-        public Logger(string percorso, string nome, Mutex SyncLogMutex, int numeroStorico = 0)
+        /// <param name="percorso">Percorso dove scrivere il file di log.</param>
+        /// <param name="nome">Nome del file di log.</param>
+        /// <param name="SyncLogMutex">Mutex per la sincronizzazione tra processi.</param>
+        /// <param name="numeroStorico">Numero di file di log da conservare.</param>
+        /// <param name="ext">Estensione del file, predefinita "txt".</param>
+        public Logger(string percorso, string nome, Mutex SyncLogMutex, int numeroStorico = 0, string ext = _ESTENSIONE_FILE)
         {
             #region percorso
             if (string.IsNullOrWhiteSpace(percorso))
@@ -278,10 +228,22 @@ namespace MasterLog
                 throw new IOException("Specificare un Nome valido.");
 
             _Nome = nome;
-            _NomeLog = string.Concat(nome.Trim(), "_", DateTime.Now.ToString(_DATE_TIME_NOME_FILE), ".", _ESTENSIONE_FILE);
+            _NomeLog = string.Concat(nome.Trim(), "_", DateTime.Now.ToString(_DATE_TIME_NOME_FILE), ".", ext);
             #endregion
 
             _NumeroStorico = numeroStorico;
+
+            // Inizializzazione della lista usando la reflection sulla classe LogConfiguration
+            LogLevelList = new List<LogLevels>();
+            var logConfigType = typeof(LogConfiguration);
+            foreach (var prop in logConfigType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var attr = (LogLevels)prop.GetCustomAttribute(typeof(LogLevels));
+                if (attr != null)
+                {
+                    LogLevelList.Add(attr);
+                }
+            }
 
             #region LogInfoLocali
             try
@@ -290,7 +252,8 @@ namespace MasterLog
             }
             catch (Exception ex)
             {
-                throw new Exception("Errore durante la scrittura delle Informazioni locali: " + ex.Message);
+                // Registra l'errore senza bloccare l'esecuzione
+                Log(LogLevel.ERROR, "Errore durante la scrittura delle Informazioni locali: " + ex.Message);
             }
             #endregion
 
@@ -301,38 +264,28 @@ namespace MasterLog
             }
             catch (Exception ex)
             {
-                //Non solleva l'eccezione perchè non è bloccante per l'esecuzione del chiamante
                 Log(LogLevel.WARNING, "Errore durante l'eliminazione dei file di log più vecchi: " + ex.Message);
             }
             #endregion
+
             this.syncLogMutex = SyncLogMutex;
-            this.mtxEnabled = true;
-            Type tyLogger = this.GetType();
-            LogLevelList = new List<LogLevels>();
-            PropertyInfo[] pInfoLogger = tyLogger.GetProperties();
-            foreach (PropertyInfo pInfo in pInfoLogger)
-            {
-                var v = pInfo.GetCustomAttributes(false);
-                if (v.Length > 0)
-                {
-                    if (v[0].GetType().Name == "LogLevels")
-                    {
-                        LogLevelList.Add(v[0] as LogLevels);
-                    }
-                }
-            }
+            this.mtxEnabled = this.syncLogMutex != null;
         }
         #endregion
 
-        #region Private Helper Method
         /// <summary>
-        /// Restituisce lo stream del file
+        /// Determina il livello dei log da visualizzare.
         /// </summary>
-        private StreamWriter getStream()
+        public int SwLogLevel { set { this.swLogLevel = value; } get { return this.swLogLevel; } }
+
+        #region Private Helper Methods
+        /// <summary>
+        /// Restituisce lo stream del file.
+        /// </summary>
+        private StreamWriter GetStream()
         {
             try
             {
-
                 return new StreamWriter(GetPercorsoCompleto(), true);
             }
             catch
@@ -342,7 +295,7 @@ namespace MasterLog
         }
 
         /// <summary>
-        /// Cancella i log più vecchi
+        /// Cancella i log più vecchi in base al numero di file da conservare.
         /// </summary>
         private void DeleteOldFile()
         {
@@ -351,7 +304,7 @@ namespace MasterLog
 
             try
             {
-                string[] fileList = Directory.GetFiles(_Percorso, string.Format("{0}*", _Nome.Replace("..", "")), SearchOption.TopDirectoryOnly);
+                string[] fileList = Directory.GetFiles(_Percorso, string.Format("{0}*", _Nome.Trim()), SearchOption.TopDirectoryOnly);
 
                 if (fileList.Length > 0 && fileList.Length > _NumeroStorico)
                 {
@@ -359,9 +312,7 @@ namespace MasterLog
                     for (int i = 0; i < fileList.Length; i++)
                         fileInfoList.Add(new FileInfo(fileList[i]));
 
-
                     fileInfoList.Sort((y, x) => DateTime.Compare(x.CreationTimeUtc, y.CreationTimeUtc));
-
 
                     for (int i = _NumeroStorico; i < fileInfoList.Count; i++)
                     {
@@ -371,6 +322,7 @@ namespace MasterLog
                         }
                         catch
                         {
+                            // Ignora gli errori di eliminazione, non sono bloccanti.
                         }
                     }
                 }
@@ -380,6 +332,7 @@ namespace MasterLog
                 throw;
             }
         }
+
         /// <summary>
         /// Tronca una stringa per scopi di logging, aggiungendo "..." al centro se troppo lunga.
         /// Metodo interno, chiamato solo dal metodo Log.
@@ -401,103 +354,42 @@ namespace MasterLog
         }
         #endregion
 
-        #region "* * *  PROPERTIES  * * * 
-        /// <summary>
-        /// determina il tipo di separatore da usare nella costruzione della stringa di log, il valore predefinito è '-'
-        /// </summary>
-        public string SeparatoreCampi { get { return this.separatoreCampi; } set { this.separatoreCampi = value; } }
-        public bool IsAdmin { get { return this.isAdmin; } set { this.isAdmin = value; } }
-        public EventLogEntryType LogEventEntryType { get { return this.logEventEntryType; } set { this.logEventEntryType = value; } }
-        public int AplicationEventID { get { return this.applicationEventId; } set { this.applicationEventId = value; } }
-        public short ApplicationCategoryId { get { return this.applicationCategoryId; } set { this.applicationCategoryId = value; } }
-        public byte[] RawData { get { return this.rawData; } set { this.rawData = value; } }
-        public EventLog EvLog { get { return this.evLog; } set { this.evLog = value; } }
-        #endregion
+        #region Public Methods
 
-        #region Public
         /// <summary>
-        /// Scrive nel file di log le seguenti informazioni:
-        /// 1) Il nome della macchina dal quale viene eseguito il software
-        /// 2) L'IP della macchina dal quale viene eseguito il software
-        /// 3) Il percorso del file Exe del software (se si tratta di un applicativo Web non scriverà nulla)
+        /// Scrive nel file di log le informazioni di sistema locali.
         /// </summary>
         private void LogInfoLocali()
         {
             try
             {
-                using (StreamWriter writer = getStream())
+                using (StreamWriter writer = GetStream())
                 {
-                    int i;
-                    int n;
-                    string localHost = string.Empty;
-                    System.Net.IPAddress[] localIps = null;
-                    string localPath = string.Empty;
+                    writer.WriteLine("--- INFORMAZIONI DI SISTEMA ---");
+                    writer.WriteLine($"Sistema avviato il: {DateTime.Now}");
 
-                    writer.WriteLine("Informazioni di sistema".ToUpper());
-                    writer.WriteLine("sistema partito il: ".ToUpper() + DateTime.Now.ToString());
-                    #region Host
+                    // Tentativo di ottenere il nome dell'eseguibile
                     try
                     {
-                        localHost = System.Net.Dns.GetHostName();
-                        if (!string.IsNullOrEmpty(localHost))
+                        var entryAssembly = Assembly.GetEntryAssembly();
+                        if (entryAssembly != null)
                         {
-                            writer.WriteLine(string.Format("Host: {0}", localHost));
+                            _NomeEseguibile = Path.GetFileNameWithoutExtension(entryAssembly.Location);
+                            writer.WriteLine($"Percorso Eseguibile: {entryAssembly.Location}");
+                        }
+                        else
+                        {
+                            _NomeEseguibile = _Nome;
+                            writer.WriteLine("Percorso Eseguibile: non disponibile (ambiente non-desktop)");
                         }
                     }
                     catch (Exception ex)
                     {
-                        writer.WriteLine(string.Format("Host: Errore durante il recupero: {0}", ex.Message));
-                    }
-                    #endregion Host
-
-                    #region IP
-                    try
-                    {
-                        localIps = System.Net.Dns.GetHostAddresses(localHost);
-                        n = localIps.Length;
-                        for (i = 0; i < n; i++)
-                        {
-                            if (!string.IsNullOrEmpty(localIps[i].ToString()))
-                            {
-                                writer.WriteLine(string.Format("IP: {0}", localIps[i].ToString()));
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        writer.WriteLine(string.Format("IP: Errore durante il recupero: {0}", ex.Message));
-                    }
-                    #endregion IP
-
-                    #region Path
-                    try
-                    {
-                        localPath = System.Reflection.Assembly.GetEntryAssembly().Location;
-
-                        if (!string.IsNullOrEmpty(localPath))
-                        {
-                            writer.WriteLine(string.Format("Percorso: {0}", localPath));
-
-                            try
-                            {
-                                string[] localPathSplit = localPath.Split('\\');
-                                _NomeEseguibile = localPathSplit[localPathSplit.Length - 1];
-                                _NomeEseguibile = _NomeEseguibile.Substring(0, _NomeEseguibile.LastIndexOf("."));
-                            }
-                            catch
-                            {
-                                _NomeEseguibile = _Nome;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        writer.WriteLine(string.Format("Percorso: Errore durante il recupero: {0}", ex.Message));
+                        writer.WriteLine($"Percorso Eseguibile: Errore durante il recupero: {ex.Message}");
                         _NomeEseguibile = _Nome;
                     }
-                    #endregion Path
 
-                    //Riga vuota
+                    // Aggiunge una riga vuota
                     writer.WriteLine("");
                     writer.Flush();
                 }
@@ -509,18 +401,16 @@ namespace MasterLog
         }
 
         /// <summary>
-        /// Restituisce il percorso compreso il nome del file.
+        /// Restituisce il percorso completo del file di log.
         /// </summary>
-        /// <returns></returns>
         public string GetPercorsoCompleto()
         {
             return Path.Combine(_Percorso, _NomeLog);
         }
 
         /// <summary>
-        /// Restituisce il percorso senza il nome del file.
+        /// Restituisce il percorso della directory dei log.
         /// </summary>
-        /// <returns></returns>
         public string GetPercorso()
         {
             return _Percorso;
@@ -529,7 +419,6 @@ namespace MasterLog
         /// <summary>
         /// Restituisce solo il nome del file.
         /// </summary>
-        /// <returns></returns>
         public string GetNome()
         {
             return _NomeLog;
@@ -542,112 +431,86 @@ namespace MasterLog
         {
             return _NomeEseguibile;
         }
+
         /// <summary>
-        /// Cancellazione dei file per data
-        /// Si cancellano tutti i file precedenti al numero di giorni indicato in NumDay
+        /// Cancella i file di log più vecchi in base al numero di giorni.
         /// </summary>
-        /// <param name="FolderSpec">Directory da cui cancellare i file più vecchi</param>
-        /// <param name="PatternSearc">Sequenza di caratteri di cui cercare i file (esmpio: "WinTTab*.*") </param>
-        /// <param name="NumDay">Numero di giorni a dietro da cancellare</param>
-        public void DeleteFileByDate(string FolderSpec, string PatternSearc, int NumDay)
+        /// <param name="folderSpec">Directory da cui cancellare i file più vecchi.</param>
+        /// <param name="patternSearc">Sequenza di caratteri di cui cercare i file (es. "WinTTab*.*").</param>
+        /// <param name="numDay">Numero di giorni a dietro da cancellare.</param>
+        public void DeleteFileByDate(string folderSpec, string patternSearc, int numDay)
         {
-            string[] listFiles = { };
-            listFiles = Directory.GetFiles(FolderSpec, PatternSearc);
+            string[] listFiles = Directory.GetFiles(folderSpec, patternSearc);
             foreach (string s in listFiles)
             {
-                if (File.GetCreationTime(s) < DateTime.Now.AddDays(-NumDay))
+                if (File.GetCreationTime(s) < DateTime.Now.AddDays(-numDay))
                     File.Delete(s);
             }
         }
+
         /// <summary>
         /// Scrive la riga nel file di log. Questa è la firma "classica" per mantenere la compatibilità.
         /// Non tronca automaticamente il messaggio.
         /// </summary>
-        /// <param name="livello">Livello del messaggio di log</param>
-        /// <param name="message">Contenuto da scrivere</param>
+        /// <param name="livello">Livello del messaggio di log.</param>
+        /// <param name="message">Contenuto da scrivere.</param>
         public void Log(LogLevel livello, string message)
         {
-            // Chiama l'overload più completo, impostando truncateLongStrings a false di default.
             Log(livello, message, false);
         }
+
         /// <summary>
-        /// Scrive la riga nel file di log
+        /// Scrive la riga nel file di log.
         /// </summary>
-        /// <param name="livello">Livello del messaggio di log</param>
-        /// <param name="message">Contenuto da scrivere</param>
+        /// <param name="livello">Livello del messaggio di log.</param>
+        /// <param name="message">Contenuto da scrivere.</param>
+        /// <param name="truncateLongStrings">Se true, tronca le stringhe lunghe.</param>
+        /// <param name="maxLength">Lunghezza massima del messaggio di log.</param>
         public void Log(LogLevel livello, string message, bool truncateLongStrings, int maxLength = 100)
         {
-            if (!truncateLongStrings) maxLength = 100000;
+            // Aggiorna il nome del file se il giorno è cambiato
             DateTime myDate = DateTime.Now;
-            // myDate = myDate.AddDays(1);
-            //int i = (int) livello;
             if (toDay.Day != myDate.Day)
             {
                 _NomeLog = string.Concat(_Nome.Trim(), "_", myDate.ToString(_DATE_TIME_NOME_FILE), ".", _ESTENSIONE_FILE);
                 toDay = myDate;
             }
+
+            // Controlla se il livello di log è abilitato
             var v = LogLevelList.Find(A => A.LogIndex == livello);
-            if (((this.swLogLevel & v.LogLevelToShow) == v.LogLevelToShow) || (livello == LogLevel.ERROR) || livello == LogLevel.WARNING)
+            if (v != null && (((this.swLogLevel & v.LogLevelToShow) == v.LogLevelToShow) || (livello == LogLevel.ERROR) || livello == LogLevel.WARNING))
             {
-                string finalMessage = message;
-                if (truncateLongStrings)
-                {
-                    finalMessage = TruncateForLogInternal(message, maxLength);
-                }
-                string logEntry = string.Format("{0} {1} {2} {3} {4}",
-                                                DateTime.Now.ToString("HH:mm:ss.fffffff"),
-                                                this.separatoreCampi,
-                                                livello.ToString(),
-                                                this.separatoreCampi,
-                                                finalMessage);
-                if (this.mtxEnabled && this.syncLogMutex != null) // Aggiunto controllo null per sicurezza
+                string finalMessage = truncateLongStrings ? TruncateForLogInternal(message, maxLength) : message;
+
+                string logEntry = string.Format("{0}{1}{2}{3}{4}",
+                    DateTime.Now.ToString("HH:mm:ss.fffffff"),
+                    this.separatoreCampi,
+                    livello.ToString(),
+                    this.separatoreCampi,
+                    finalMessage);
+
+                // Scrittura sul file di log con o senza Mutex
+                if (this.mtxEnabled && this.syncLogMutex != null)
                 {
                     try
                     {
                         this.syncLogMutex.WaitOne();
-                        using (StreamWriter writer = getStream())
-                        {
-                            writer.WriteLine(logEntry);
-                        }
+                        File.AppendAllText(GetPercorsoCompleto(), logEntry + Environment.NewLine);
+                    }
+                    catch (Exception)
+                    {
+                        // In caso di errore con il mutex, scrivi direttamente
+                        File.AppendAllText(GetPercorsoCompleto(), logEntry + Environment.NewLine);
                     }
                     finally
                     {
                         this.syncLogMutex.ReleaseMutex();
                     }
                 }
-                else // Nessun mutex abilitato o mutex è null
-                {
-                    using (StreamWriter writer = getStream())
-                    {
-                        writer.WriteLine(logEntry);
-                    }
-                }
-                // Log per EventLog di Windows se isAdmin è true
-                if (this.isAdmin)
-                {
-                    string myMessage = string.Format("{0} {1} {2} {3} {4}", DateTime.Now.ToString("HH:mm:ss.fffffff"), this.separatoreCampi, livello.ToString(), this.separatoreCampi, message);
-                    this.evLog.WriteEntry(myMessage, this.LogEventEntryType, this.applicationEventId, this.applicationCategoryId, this.RawData);
-                }
-
-                /*
-                if (this.mtxEnabled)
-                {
-                    this.syncLogMutex.WaitOne();
-                    using (StreamWriter writer = getStream())
-                        writer.WriteLine(string.Format("{0} {1} {2} {3} {4}", DateTime.Now.ToString("HH:mm:ss.fffffff"), this.separatoreCampi, livello.ToString(), this.separatoreCampi, message));
-                    this.syncLogMutex.ReleaseMutex();
-                }
                 else
                 {
-                    using (StreamWriter writer = getStream())
-                        writer.WriteLine(string.Format("{0} {1} {2} {3} {4}", DateTime.Now.ToString("HH:mm:ss.fffffff"), this.separatoreCampi, livello.ToString(), this.separatoreCampi, message));
+                    File.AppendAllText(GetPercorsoCompleto(), logEntry + Environment.NewLine);
                 }
-                if (this.isAdmin)
-                {
-                    string myMessage = string.Format("{0} {1} {2} {3} {4}", DateTime.Now.ToString("HH:mm:ss.fffffff"), this.separatoreCampi, livello.ToString(), this.separatoreCampi, message);
-                    this.evLog.WriteEntry(myMessage, this.LogEventEntryType, this.applicationEventId, this.applicationCategoryId, this.RawData);
-                }
-                */
             }
         }
         #endregion

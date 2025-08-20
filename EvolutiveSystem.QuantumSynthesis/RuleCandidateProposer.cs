@@ -6,7 +6,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using EvolutiveSystem.Common; // Per RegolaMIU, MiuStateInfo, MiuPattern (futuro)
+using EvolutiveSystem.Common;
+using EvolutiveSystem.Logic; // Per RegolaMIU, MiuStateInfo, MiuPattern (futuro)
 
 namespace EvolutiveSystem.QuantumSynthesis
 {
@@ -41,13 +42,15 @@ namespace EvolutiveSystem.QuantumSynthesis
         // quindi la logica sarà un placeholder.
         // In futuro, questo potrebbe prendere in input i dati dal MiuPatternManager o dal Taxonomy.
 
+        private readonly MIURulesEngine _rulesEngine;
+
         /// <summary>
-        /// Costruttore di default.
-        /// In una versione futura, potrebbe accettare parametri per configurare la strategia di proposta.
+        /// Inizializza una nuova istanza di RuleCandidateProposer con il motore di regole MIU.
         /// </summary>
-        public RuleCandidateProposer()
+        /// <param name="rulesEngine">Il motore di regole necessario per l'analisi dei fallimenti.</param>
+        public RuleCandidateProposer(MIURulesEngine rulesEngine)
         {
-            // Nulla di specifico da inizializzare per la versione base.
+            _rulesEngine = rulesEngine ?? throw new ArgumentNullException(nameof(rulesEngine));
         }
 
         /// <summary>
@@ -99,5 +102,59 @@ namespace EvolutiveSystem.QuantumSynthesis
 
             return new RuleProposal(candidateRule, testStates, targetState);
         }
+        #region public methods
+        /// <summary>
+        /// Esegue un'analisi ricorsiva (a mintermini) confrontando una stringa fallita con il suo obiettivo.
+        /// Il suo scopo è identificare il pattern di stringa minimo e non coperto che ha causato il fallimento,
+        /// fornendo un input strutturato per il processo di generazione di nuove regole.
+        /// </summary>
+        /// <param name="sourceString">La stringa di partenza che ha causato il fallimento.</param>
+        /// <param name="targetString">La stringa che ci si aspettava di ottenere.</param>
+        /// <param name="existingRules">L'insieme di tutte le regole MIU attive nel sistema.</param>
+        /// <returns>Un oggetto FailureDetails contenente la diagnosi completa del fallimento.</returns>
+        public FailureDetails AnalyzeFailures(string source, string target, List<RegolaMIU> regole)
+        {
+            // Coda per la ricerca in ampiezza
+            var queue = new Queue<string>();
+            queue.Enqueue(source);
+
+            // Insieme per tenere traccia delle stringhe già visitate
+            var visited = new HashSet<string> { source };
+
+            while (queue.Count > 0)
+            {
+                var currentString = queue.Dequeue();
+
+                // Se la stringa corrente corrisponde al target, abbiamo finito
+                if (currentString == target)
+                {
+                    // Successo! La stringa target è raggiungibile.
+                    // Ho aggiunto i parametri mancanti.
+                    return new FailureDetails(source, target, "", 0L, new List<RegolaMIU>());
+                }
+
+                // Applica ogni regola disponibile
+                foreach (var regola in regole)
+                {
+                    string newString;
+
+                    // Qui usi il tuo metodo TryApply per un singolo passo
+                    if (regola.TryApply(currentString, out newString))
+                    {
+                        // Se la nuova stringa non è già stata visitata, la aggiungiamo alla coda
+                        if (!visited.Contains(newString))
+                        {
+                            visited.Add(newString);
+                            queue.Enqueue(newString);
+                        }
+                    }
+                }
+            }
+
+            // Se la coda si svuota senza raggiungere il target, il percorso non esiste
+            // Ho aggiunto i parametri mancanti anche qui.
+            return new FailureDetails(source, target, "Mintermine irriducibile", 0L, new List<RegolaMIU>());
+        }
+        #endregion 
     }
 }

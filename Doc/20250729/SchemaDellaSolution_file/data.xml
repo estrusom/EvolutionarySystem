@@ -1,0 +1,2479 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VisioDocument>
+	<DocumentProperties>
+		<Title></Title>
+		<HyperlinkBase href=""></HyperlinkBase>
+	</DocumentProperties>
+	<Pages>
+		<Page ID="0" Name="Pagina 1" NameU="Page-1">
+			<PageProps>
+				<PageScale Unit="MM">0.039370078740157</PageScale>
+				<DrawingScale Unit="MM">0.039370078740157</DrawingScale>
+			</PageProps>
+			<Layer IX="0">
+				<Name>Diagramma di flusso</Name>
+				<NameUniv>Flowchart</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Layer IX="1">
+				<Name>Connettore</Name>
+				<NameUniv>Connector</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Layer IX="2">
+				<Name>Callout</Name>
+				<NameUniv>Callout</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Shapes>
+				<Shape ID="1" UniqueID="{29DCEACA-FADF-43F2-9A76-19E3EE890693}" Name="Processo" NameU="Process" Master="2">
+					<Text>STRATO DI TEST / UTILITY</Text>
+					<XForm>
+						<PinX Unit="MM">1.525590568696519</PinX>
+						<PinY Unit="MM">10.685002878905749</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="2" UniqueID="{403FC252-6352-4417-A072-E0B0E7FE0348}" Name="Connettore dinamico" NameU="Dynamic connector" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.525590568696519</PinX>
+						<PinY Unit="MM">10.154500180991668</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="3" UniqueID="{20E7B7BB-C3E3-428B-9B78-F976919C0E61}" Name="Processo.3" NameU="Process.3" Master="2">
+					<Text>APPLICAZIONI (Entry Points) </Text>
+					<XForm>
+						<PinX Unit="MM">1.525590568696519</PinX>
+						<PinY Unit="MM">9.623997483077591</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="4" UniqueID="{FDD4C09A-92D3-4E5E-B7D3-29B8212A95EA}" Name="Processo.4" NameU="Process.4" Master="2">
+					<Text>SERVIZI (Espongono Funzionalità)(Espongono Funzionalità)</Text>
+					<XForm>
+						<PinX Unit="MM">1.525590568696521</PinX>
+						<PinY Unit="MM">8.562992087249432</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="5" UniqueID="{B83D9B35-F9AC-4F38-B540-9A773D793243}" Name="Connettore dinamico.5" NameU="Dynamic connector.5" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.525590568696520</PinX>
+						<PinY Unit="MM">9.093494785163511</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="6" UniqueID="{99789F58-0F6E-4CCE-B5A1-FABA745A1EDD}" Name="Processo.6" NameU="Process.6" Master="2">
+					<Text>MOTORE / LOGICA(Core Business Logic)</Text>
+					<XForm>
+						<PinX Unit="MM">1.968503975524718</PinX>
+						<PinY Unit="MM">6.725420994705480</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="7" UniqueID="{CA3F91D5-C0A6-49B8-99D3-2F2E22E7E765}" Name="Connettore dinamico.7" NameU="Dynamic connector.7" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.747047272110620</PinX>
+						<PinY Unit="MM">8.032489389335355</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="8" UniqueID="{09057B2A-EE50-450D-880E-BCEE3788FD0B}" Name="Processo.8" NameU="Process.8" Master="2">
+					<Text>ASTRAZIONI / BASE (Interfacce, Dati Comuni)</Text>
+					<XForm>
+						<PinX Unit="MM">1.968503975524718</PinX>
+						<PinY Unit="MM">4.460566538410415</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="9" UniqueID="{38617EC2-2669-4234-A48F-4EE6CA9AF267}" Name="Connettore dinamico.9" NameU="Dynamic connector.9" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.968503975524718</PinX>
+						<PinY Unit="MM">5.204710918200048</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="12" UniqueID="{688151BE-99C0-44D2-B8D8-3EABB040152A}" Name="Processo.12" NameU="Process.12" Master="2">
+					<Text>Semantic Service (SemanticProcessor.csproj)</Text>
+					<XForm>
+						<PinX Unit="MM">4.527559177951611</PinX>
+						<PinY Unit="MM">9.623997483077591</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="13" UniqueID="{D2A94285-62C5-4EB0-8C67-FF8D2EB47C34}" Name="Connettore dinamico.13" NameU="Dynamic connector.13" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.149606375676885</PinX>
+						<PinY Unit="MM">9.623997483077591</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="16" UniqueID="{3D460BA9-9CB0-4600-89CF-793316716645}" Name="Processo.16" NameU="Process.16" Master="2">
+					<Text>EvolutiveSystem.SQL.Core MIUDatabaseManager (Accesso e Query Dati)</Text>
+					<XForm>
+						<PinX Unit="MM">4.576771777711954</PinX>
+						<PinY Unit="MM">4.460566538410415</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="18" UniqueID="{CB175CF3-4CFD-488B-B954-091D6058831D}" Name="Connettore dinamico.18" NameU="Dynamic connector.18" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.592519782505083</PinX>
+						<PinY Unit="MM">4.460566538410415</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="15" UniqueID="{0BE5D432-FCF6-4F52-BAB7-5292072099CB}" Name="Posizioni chiuse" NameU="Filled" Master="5">
+					<Text>Pagina 2</Text>
+					<XForm>
+						<PinX Unit="MM">6.102362383634073</PinX>
+						<PinY Unit="MM">10.078740435190838</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>2</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="24" UniqueID="{4FA8FEF5-2114-45BC-9F78-07A058E75403}" Name="Processo.24" NameU="Process.24" Master="2">
+					<Text>Dettaglio Comunicazione Esterna (SocketManager.csproj)</Text>
+					<XForm>
+						<PinX Unit="MM">4.625984377472298</PinX>
+						<PinY Unit="MM">8.562992358299786</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="26" UniqueID="{35069FD3-94BD-4313-8BA4-A2690265BB99}" Name="Connettore dinamico.26" NameU="Dynamic connector.26" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.149606375676886</PinX>
+						<PinY Unit="MM">8.562992222774611</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="29" UniqueID="{BB1D3BE6-9A77-4520-9618-030CEEFB0CDC}" Name="Processo secondario" NameU="Subprocess" Master="7">
+					<Text>Motore Semantico (analisi iniziale dei dati raw)</Text>
+					<XForm>
+						<PinX Unit="MM">1.938976443909006</PinX>
+						<PinY Unit="MM">7.421260048132287</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="30" UniqueID="{06760F10-DB01-48D3-B7A3-A6590E503D38}" Name="Processo secondario.30" NameU="Subprocess.30" Master="7">
+					<Text>Analisi Topologica + Tassonomia
+(analisi non semantica)</Text>
+					<XForm>
+						<PinX Unit="MM">1.938976443909006</PinX>
+						<PinY Unit="MM">7.040047606206124</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="31" UniqueID="{3DCBD9C8-0960-4E9B-ABA1-1D91DACDFD32}" Name="Processo secondario.31" NameU="Subprocess.31" Master="7">
+					<Text>Motore Dialettico
+(Circuito di creazione della tesi, induzione dell’antitesi e ricerca della sintesi</Text>
+					<XForm>
+						<PinX Unit="MM">1.938976443909006</PinX>
+						<PinY Unit="MM">6.619465080199219</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="32" UniqueID="{1FD34BB7-5B45-453C-B1AE-ADE2F30AE6CD}" Name="Processo secondario.32" NameU="Subprocess.32" Master="7">
+					<Text>Motore di Generazione Regole
+(analisi delle regole attraverso la derivazione analogica delle mappe di Karnaugt per la codifica di regole)</Text>
+					<XForm>
+						<PinX Unit="MM">1.938976443909005</PinX>
+						<PinY Unit="MM">6.061087278601761</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="33" UniqueID="{779190FA-2D76-45F6-83F0-EF6D9ACCFB62}" Name="Connettore dinamico.33" NameU="Dynamic connector.33" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.513779622888533</PinX>
+						<PinY Unit="MM">7.423800051144976</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="34" UniqueID="{F0E00684-064B-48F1-B8BC-8D791A129221}" Name="Processo.34" NameU="Process.34" Master="2">
+					<Text>Derivazione Nuove Stringhe MIU da Esistenti
+RegoleMIUManager -&gt; RegoleMIU.cs -&gt; MIU.Core.csproj</Text>
+					<XForm>
+						<PinX Unit="MM">5.167322974836078</PinX>
+						<PinY Unit="MM">7.426340054157667</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="22" UniqueID="{1C454903-B6CD-4506-8CB5-B783EECE4C9F}" Name="Posizioni chiuse.22" NameU="Filled.22" Master="5">
+					<Text>Pagina 3</Text>
+					<XForm>
+						<PinX Unit="MM">6.102362383634073</PinX>
+						<PinY Unit="MM">4.970472575794703</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>2</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="27" UniqueID="{9E13A793-E689-4D33-834A-8AE5403E23CC}" Name="Posizioni chiuse.27" NameU="Filled.27" Master="5">
+					<Text>Pagina 4</Text>
+					<XForm>
+						<PinX Unit="MM">6.200787583154761</PinX>
+						<PinY Unit="MM">9.055118355903222</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>2</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="37" UniqueID="{9C0A9868-80C5-451D-89A5-D9003F350DCB}" Name="Callout testo" NameU="Text Callout" Master="8">
+					<Text>Pagina 5</Text>
+					<XForm>
+						<PinX Unit="MM">7.037401765729134</PinX>
+						<PinY Unit="MM">8.149606544879600</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>2</LayerMember>
+					</LayerMem>
+				</Shape>
+			</Shapes>
+		</Page>
+		<Page ID="4" Name="Pagina 2" NameU="Page-2">
+			<PageProps>
+				<PageScale Unit="MM">0.039370078740157</PageScale>
+				<DrawingScale Unit="MM">0.039370078740157</DrawingScale>
+			</PageProps>
+			<Layer IX="0">
+				<Name>Diagramma di flusso</Name>
+				<NameUniv>Flowchart</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Layer IX="1">
+				<Name>Connettore</Name>
+				<NameUniv>Connector</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Shapes>
+				<Shape ID="1" UniqueID="{FB0DD8ED-06A9-4955-A2E5-8C710073C337}" Name="Processo" NameU="Process" Master="2">
+					<Text>STRATO APPLICAZIONI / SERVIZI    
+(Punti di Ingresso / Orchestratori) </Text>
+					<XForm>
+						<PinX Unit="MM">2.588582767195405</PinX>
+						<PinY Unit="MM">10.430610549668506</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="2" UniqueID="{9B052A62-12BC-44C0-9414-E2ECA382C7F2}" Name="Processo.2" NameU="Process.2" Master="2">
+					<Text>SemanticProcessor (Windows Service)
+(Il "Cervello" Semantico del Sistema)
+Espone funzionalità via Socket
+Orchestratore della logica semantica</Text>
+					<XForm>
+						<PinX Unit="MM">2.588582767195405</PinX>
+						<PinY Unit="MM">9.468504261184519</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="3" UniqueID="{C9727606-FEFD-429C-8263-3F72357B0F27}" Name="Connettore dinamico" NameU="Dynamic connector" Master="4">
+					<XForm>
+						<PinX Unit="MM">2.588582767195405</PinX>
+						<PinY Unit="MM">10.029527902743979</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="4" UniqueID="{B3E642C5-F90A-4852-A927-E7A43FE9597F}" Name="Processo.4" NameU="Process.4" Master="2">
+					<Text>STRATO LOGICA OPERATIVA / MOTORE
+ (Processing Avanzato e Algoritmi)   </Text>
+					<XForm>
+						<PinX Unit="MM">2.588582767195405</PinX>
+						<PinY Unit="MM">8.484252258448626</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="5" UniqueID="{F8D02296-02C1-4CE0-890D-C82DDCED2B98}" Name="Connettore dinamico.5" NameU="Dynamic connector.5" Master="4">
+					<XForm>
+						<PinX Unit="MM">2.588582767195405</PinX>
+						<PinY Unit="MM">8.937008179707139</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="6" UniqueID="{58F7517F-5DD3-4362-BB27-D608C5C03A47}" Name="Processo.6" NameU="Process.6" Master="2">
+					<Text>EvolutiveSystem.Taxonomy (Definizioni Tassonomie)</Text>
+					<XForm>
+						<PinX Unit="MM">1.338582723720818</PinX>
+						<PinY Unit="MM">7.480315220792805</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="7" UniqueID="{1DA665DB-D870-4C0F-8868-8F73383BD65D}" Name="Processo.7" NameU="Process.7" Master="2">
+					<Text>EvolutiveSystem.TaxonomyOrchestration (Orchestrazione Tassonomie)</Text>
+					<XForm>
+						<PinX Unit="MM">3.484252089685070</PinX>
+						<PinY Unit="MM">7.480315220792805</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="9" UniqueID="{C470E26F-2E47-4333-A9EA-87DCFDD0CC4E}" Name="Processo.9" NameU="Process.9" Master="2">
+					<Text>EvolutiveSystem.SQL.Core
+(Interazione DB SQL) </Text>
+					<XForm>
+						<PinX Unit="MM">5.629921455649321</PinX>
+						<PinY Unit="MM">7.480315220792805</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="11" UniqueID="{6B4E235C-7FAE-4EA8-AB62-A3042FFD0DCF}" Name="Connettore dinamico.11" NameU="Dynamic connector.11" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.328740203693459</PinX>
+						<PinY Unit="MM">7.962598696998599</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="12" UniqueID="{944EECB7-C2F4-4C69-8BEA-F1596AE86898}" Name="Connettore dinamico.12" NameU="Dynamic connector.12" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.484252089685070</PinX>
+						<PinY Unit="MM">7.962598696998599</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="14" UniqueID="{1C1A8B9D-5FF6-45DD-9860-4B7AFAD8E588}" Name="Processo.14" NameU="Process.14" Master="2">
+					<Text>STRATO CORE / UTILITY / FONDAMENTA
+(Logica di Base, Utilities, Logging, Errori)</Text>
+					<XForm>
+						<PinX Unit="MM">2.795275687769943</PinX>
+						<PinY Unit="MM">6.397638028052907</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="15" UniqueID="{B951B00D-B82C-4BDF-B986-4D5DA084D477}" Name="Connettore dinamico.15" NameU="Dynamic connector.15" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.328740203693459</PinX>
+						<PinY Unit="MM">6.938976632636094</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="16" UniqueID="{40011111-14C4-4262-A39B-1BA30158FE53}" Name="Connettore dinamico.16" NameU="Dynamic connector.16" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.477517733876876</PinX>
+						<PinY Unit="MM">6.938976624422855</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="17" UniqueID="{748BDA79-8966-4E58-B254-722C614E11DE}" Name="Sheet.17" NameU="Sheet.17">
+					<Text>Dipenda da</Text>
+					<XForm>
+						<PinX Unit="MM">1.840551245116124</PinX>
+						<PinY Unit="MM">6.889764019151267</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="19" UniqueID="{529A48A6-0FD9-4E1F-B448-1E0C25C80340}" Name="Sheet.19" NameU="Sheet.19">
+					<Text>Dipende da</Text>
+					<XForm>
+						<PinX Unit="MM">3.984252107074904</PinX>
+						<PinY Unit="MM">6.889764019151267</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="21" UniqueID="{D14063BF-8B8B-4264-9653-3931764818D4}" Name="Processo.21" NameU="Process.21" Master="2">
+					<Text>MIU.Core
+(Cuore Operazioni MIU)</Text>
+					<XForm>
+						<PinX Unit="MM">1.228346499414397</PinX>
+						<PinY Unit="MM">5.455216774488844</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="22" UniqueID="{3FE460AF-4540-4067-9E41-A560DEDBEC52}" Name="Processo.22" NameU="Process.22" Master="2">
+					<Text>EvolutiveSystem.Common (Utilities Comuni)</Text>
+					<XForm>
+						<PinX Unit="MM">2.954828117687128</PinX>
+						<PinY Unit="MM">5.455216774488844</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="23" UniqueID="{923AD7FC-E25E-41ED-8090-65F4C6F1823D}" Name="Processo.23" NameU="Process.23" Master="2">
+					<Text>MasterLogMutex (Gestione Logging)</Text>
+					<XForm>
+						<PinX Unit="MM">4.377952908169263</PinX>
+						<PinY Unit="MM">5.455216774488844</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="24" UniqueID="{4265D917-C1AD-466C-90A0-B5082672BFA8}" Name="Connettore dinamico.24" NameU="Dynamic connector.24" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.224409491403454</PinX>
+						<PinY Unit="MM">5.905512026684960</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="25" UniqueID="{8D49A6ED-081F-466E-BDB1-72A59E7504BE}" Name="Connettore dinamico.25" NameU="Dynamic connector.25" Master="4">
+					<XForm>
+						<PinX Unit="MM">2.953792062947406</PinX>
+						<PinY Unit="MM">5.905512026684959</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="26" UniqueID="{2D61FE1C-7C07-434D-94F2-E68C0EC9610C}" Name="Connettore dinamico.26" NameU="Dynamic connector.26" Master="4">
+					<XForm>
+						<PinX Unit="MM">4.377952908169263</PinX>
+						<PinY Unit="MM">5.905512026684960</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="27" UniqueID="{3D386883-8CE0-4328-AD23-4D40F5F451B8}" Name="Processo.27" NameU="Process.27" Master="2">
+					<Text>CommandHandlers (Gestione Comandi)</Text>
+					<XForm>
+						<PinX Unit="MM">1.338582723720817</PinX>
+						<PinY Unit="MM">4.429134022581117</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="28" UniqueID="{9FC5CE2A-EFB8-4D3F-91A1-94F0EA8E229F}" Name="Processo.28" NameU="Process.28" Master="2">
+					<Text>MessaggiErrore (Gestione Errori)</Text>
+					<XForm>
+						<PinX Unit="MM">2.954828117687128</PinX>
+						<PinY Unit="MM">4.429134022581117</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="29" UniqueID="{6813926A-1312-4A4B-9AD7-E5A9052454D2}" Name="Processo.29" NameU="Process.29" Master="2">
+					<Text>SocketManagerInfo (Info Socket Manager)</Text>
+					<XForm>
+						<PinX Unit="MM">4.384065631133618</PinX>
+						<PinY Unit="MM">4.429134022581117</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="30" UniqueID="{F6CD8C6A-1DCD-4102-9953-4C7492AA7148}" Name="Connettore dinamico.30" NameU="Dynamic connector.30" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.338582723720818</PinX>
+						<PinY Unit="MM">4.963090773120896</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="32" UniqueID="{8B2930E6-0E7B-464C-8185-5BDC49D25F8E}" Name="Connettore dinamico.32" NameU="Dynamic connector.32" Master="4">
+					<XForm>
+						<PinX Unit="MM">4.381009269651440</PinX>
+						<PinY Unit="MM">4.963090773120896</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="33" UniqueID="{D8864D69-3C73-4AE5-AB21-B98AE30C2528}" Name="Processo.33" NameU="Process.33" Master="2">
+					<Text>SocketManager 
+(Gestione Comunicazioni)</Text>
+					<XForm>
+						<PinX Unit="MM">1.338582723720817</PinX>
+						<PinY Unit="MM">3.444882019845221</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="35" UniqueID="{A761CDC6-D17A-4170-9141-2A210B823EDA}" Name="Connettore dinamico.35" NameU="Dynamic connector.35" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.338582723720817</PinX>
+						<PinY Unit="MM">3.937008021213169</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="43" UniqueID="{014323DE-A8F6-45D7-BE46-5FC7AE6FCC5B}" Name="Connettore dinamico.43" NameU="Dynamic connector.43" Master="4">
+					<XForm>
+						<PinX Unit="MM">2.954828117687128</PinX>
+						<PinY Unit="MM">4.963090773120896</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="44" UniqueID="{81619A55-EAF1-4986-8CAD-808E2FC07F0C}" Name="Processo.44" NameU="Process.44" Master="2">
+					<Text>AsyncSocketServer
+(Server Socket Asincrono)</Text>
+					<XForm>
+						<PinX Unit="MM">1.338582723720817</PinX>
+						<PinY Unit="MM">2.263779616562147</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="45" UniqueID="{B6AB9F38-CE00-4EFE-A3A3-911F21C8EA2B}" Name="Connettore dinamico.45" NameU="Dynamic connector.45" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.338582723720817</PinX>
+						<PinY Unit="MM">2.854330818203684</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="54" UniqueID="{77770D02-6B46-4F86-A6BA-AE5F44E1B52A}" Name="Sheet.54" NameU="Sheet.54">
+					<Text>(Utilizzato da)</Text>
+					<XForm>
+						<PinX Unit="MM">1.968504005471791</PinX>
+						<PinY Unit="MM">2.844488287906738</PinY>
+					</XForm>
+				</Shape>
+			</Shapes>
+		</Page>
+		<Page ID="5" Name="Pagina 3" NameU="Page-3">
+			<PageProps>
+				<PageScale Unit="MM">0.039370078740157</PageScale>
+				<DrawingScale Unit="MM">0.039370078740157</DrawingScale>
+			</PageProps>
+			<Layer IX="0">
+				<Name>Diagramma di flusso</Name>
+				<NameUniv>Flowchart</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Layer IX="1">
+				<Name>Connettore</Name>
+				<NameUniv>Connector</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Shapes>
+				<Shape ID="1" UniqueID="{5CEE9E53-F303-440A-92FB-0DAAE1F1AA69}" Name="Processo" NameU="Process" Master="2">
+					<Text>Pagina 3: Dettaglio DataManager 
+Responsabilità: Gestione Persistenza, Accesso e Query Dati</Text>
+					<XForm>
+						<PinX Unit="MM">3.651575073352163</PinX>
+						<PinY Unit="MM">10.551181419287898</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="2" UniqueID="{C7F4E7FB-8589-4E2B-9B51-7D6161177A05}" Name="Processo.2" NameU="Process.2" Master="2">
+					<Text>Riferimento da Pagina 1:[Schema Generale - Pagina 1] 
+Blocco: DataManager
+                                                              
+Riferimento e Integrazione con SemanticProcessor (Pagina 2):
+[SemanticProcessor - Pagina 2]
+Il SemanticProcessor interroga il DataManager per:
+ Recuperare dati per l'elaborazione semantica (es. regole, metadati).
+ Persistere i risultati dell'elaborazione (es. entità estratte, relazioni).
+ Ottenere configurazioni e parametri operativi.
+Flusso:
+SemanticProcessor --&gt; Richieste Dati --&gt; DataManager
+DataManager  --&gt; Dati Elaborati --&gt; SemanticProcessor  </Text>
+					<XForm>
+						<PinX Unit="MM">3.651575073352163</PinX>
+						<PinY Unit="MM">8.700787662920245</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="5" UniqueID="{79DAF5EF-3506-4DA4-A4D0-B1893190DD74}" Name="Processo.5" NameU="Process.5" Master="2">
+					<Text>[DataManager Core]
+(Logica centrale di coordinamento) 
+ Gestione Transazioni
+ Pooling Connessioni </Text>
+					<XForm>
+						<PinX Unit="MM">2.618110635901118</PinX>
+						<PinY Unit="MM">6.692913586861727</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="6" UniqueID="{0550CD9A-7932-4884-A378-6BB4CD54931D}" Name="Processo.6" NameU="Process.6" Master="2">
+					<Text>[DataAccessLayer (DAL)]
+(Interfaccia per DB) 
+ CRUD Operations
+ Mappatura ORM</Text>
+					<XForm>
+						<PinX Unit="MM">2.135826996327595</PinX>
+						<PinY Unit="MM">5.590551349025678</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="7" UniqueID="{1278D1F1-3F9C-465D-8BE9-FDACFF9FEE12}" Name="Processo.7" NameU="Process.7" Master="2">
+					<Text>[Caching Service]
+(Gestione cache dati)
+ Redis Cache
+ In-memory Cache</Text>
+					<XForm>
+						<PinX Unit="MM">3.966535421257355</PinX>
+						<PinY Unit="MM">5.590551349025677</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="8" UniqueID="{6180417E-5183-4515-89BE-2BF7B58514F9}" Name="Processo.8" NameU="Process.8" Master="2">
+					<Text>[Data Validation]
+(Regole di validazione)
+ Schemi XML
+ Regole Business</Text>
+					<XForm>
+						<PinX Unit="MM">5.797243846187115</PinX>
+						<PinY Unit="MM">5.590551349025676</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="9" UniqueID="{A0C38034-D724-462E-B64E-5ECC76A89A68}" Name="Connettore dinamico" NameU="Dynamic connector" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.651575073352163</PinX>
+						<PinY Unit="MM">10.009842964701127</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="10" UniqueID="{35E6DB52-C8D5-4736-B172-C978CF12A965}" Name="Sheet.10" NameU="Sheet.10">
+					<Text>Dipende da / Interagisce con</Text>
+					<XForm>
+						<PinX Unit="MM">4.473972117025183</PinX>
+						<PinY Unit="MM">10.009842964701127</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="12" UniqueID="{19BCDBB2-FEA1-40D4-8A58-E2A9B760B5A7}" Name="Connettore dinamico.12" NameU="Dynamic connector.12" Master="4">
+					<XForm>
+						<PinX Unit="MM">2.618110635901118</PinX>
+						<PinY Unit="MM">7.342519905586542</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="13" UniqueID="{18A5D64C-E349-4E04-B135-0370F8AD6E9C}" Name="Sheet.13" NameU="Sheet.13">
+					<Text>Dipendenze Interne / Struttura</Text>
+					<XForm>
+						<PinX Unit="MM">3.464567033199011</PinX>
+						<PinY Unit="MM">7.322834865625183</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="14" UniqueID="{52323E33-4DFC-4DAB-AE12-050D94EEA3AA}" Name="Connettore dinamico.14" NameU="Dynamic connector.14" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.811023676444937</PinX>
+						<PinY Unit="MM">6.141732467156563</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="15" UniqueID="{45D8917F-8927-4C40-8D9C-58F8DB5F49A0}" Name="Connettore dinamico.15" NameU="Dynamic connector.15" Master="4">
+					<XForm>
+						<PinX Unit="MM">1.968503996135802</PinX>
+						<PinY Unit="MM">6.141732467156562</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="16" UniqueID="{53568FBB-3740-465A-BF50-13ABD3145465}" Name="Processo.16" NameU="Process.16" Master="2">
+					<Text>[SQL Database]
+(Persistenza strutturata)
+ Tabelle Relazionali
+ Query (futuro sp)</Text>
+					<XForm>
+						<PinX Unit="MM">2.131889667294824</PinX>
+						<PinY Unit="MM">4.429133982436365</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="18" UniqueID="{1A0E758F-7295-4FB8-B394-CCFEC61290BB}" Name="Processo.18" NameU="Process.18" Master="2">
+					<Text>[External APIs]  (Servizi esterni nativi)
+ SOAP/XML 
+ .NET Framework 4.8 </Text>
+					<XForm>
+						<PinX Unit="MM">5.797243846187115</PinX>
+						<PinY Unit="MM">4.429133982436364</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="20" UniqueID="{F59202C8-5DEE-4908-913B-E9C515678F1C}" Name="Connettore dinamico.20" NameU="Dynamic connector.20" Master="4">
+					<XForm>
+						<PinX Unit="MM">2.133858331811209</PinX>
+						<PinY Unit="MM">5.009842665731021</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="21" UniqueID="{EA49B1BB-1284-4E8F-96D5-914199074683}" Name="Connettore dinamico.21" NameU="Dynamic connector.21" Master="4">
+					<XForm>
+						<PinX Unit="MM">5.797243846187115</PinX>
+						<PinY Unit="MM">5.009842665731020</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+			</Shapes>
+		</Page>
+		<Page ID="6" Name="Pagina 4" NameU="Page-4">
+			<PageProps>
+				<PageScale Unit="MM">0.039370078740157</PageScale>
+				<DrawingScale Unit="MM">0.039370078740157</DrawingScale>
+			</PageProps>
+			<Layer IX="0">
+				<Name>Diagramma di flusso</Name>
+				<NameUniv>Flowchart</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Layer IX="1">
+				<Name>Connettore</Name>
+				<NameUniv>Connector</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Shapes>
+				<Shape ID="1" UniqueID="{87A53CA0-13A5-4242-ABAE-E694263D1356}" Name="Processo" NameU="Process" Master="2">
+					<Text>Pagina 4: Dettaglio Comunicazione Esterna 
+Responsabilità: Gestione Connessioni, Ricezione Comandi</Text>
+					<XForm>
+						<PinX Unit="MM">3.326771694763921</PinX>
+						<PinY Unit="MM">10.516732311061631</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="2" UniqueID="{377BDE23-6786-4D86-9719-FE3346D69077}" Name="Processo.2" NameU="Process.2" Master="2">
+					<Text>Riferimento da Pagina 1:  
+[Schema Generale - Pagina 1] 
+Blocco: SERVIZI (Espongono Funzionalità)
+
+Integrazione con SemanticProcessor (Pagina 2):
+Il SemanticProcessor riceve comandi o dati preprocessati dal sottosistema di comunicazione per avviare le sue elaborazioni.
+Flusso:
+Comando Esterno --&gt; AsyncSocketServer --&gt; Dispatcher Comandi --&gt; SemanticProcessor</Text>
+					<XForm>
+						<PinX Unit="MM">3.681102414068370</PinX>
+						<PinY Unit="MM">8.759842791673504</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="3" UniqueID="{744E7C80-6EA3-4C00-9B92-FBAA7829F2E2}" Name="Processo.3" NameU="Process.3" Master="2">
+					<Text>[AsyncSocketServer]
+(Server Socket Asincrono - Gestione Connessioni TCP/IP)
+ Listener per richieste in entrata
+ Gestione Connessioni Client </Text>
+					<XForm>
+						<PinX Unit="MM">3.326771694763931</PinX>
+						<PinY Unit="MM">7.106299415998496</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="4" UniqueID="{D3557B36-4829-4C93-B894-4B8D0977B222}" Name="Connettore dinamico" NameU="Dynamic connector" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.316929204136034</PinX>
+						<PinY Unit="MM">9.862205029509553</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="5" UniqueID="{C1A58D92-F5D4-45ED-BDF5-D54768113F3D}" Name="Sheet.5" NameU="Sheet.5">
+					<Text>Interagisce con</Text>
+					<XForm>
+						<PinX Unit="MM">3.786636169662962</PinX>
+						<PinY Unit="MM">9.862205029509555</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="6" UniqueID="{96F16027-7BAB-40E7-A0EB-C8A2EB918CB7}" Name="Connettore dinamico.6" NameU="Dynamic connector.6" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.320866212128311</PinX>
+						<PinY Unit="MM">7.696850614839237</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="7" UniqueID="{6D207749-28CC-43DE-B87D-AEE354B23E20}" Name="Sheet.7" NameU="Sheet.7">
+					<Text>Componenti e Flussi</Text>
+					<XForm>
+						<PinX Unit="MM">3.937007992271603</PinX>
+						<PinY Unit="MM">7.657480553837455</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="9" UniqueID="{5CCBFEBD-35BF-4E09-9FAB-A068C5025373}" Name="Processo.9" NameU="Process.9" Master="2">
+					<Text>[Dispatcher Comandi / Interprete]
+(Interpreta e indirizza i comandi in entrata)
+ Parsing dei messaggi ricevuti
+ Interfaccia con la Tabella di Mappatura </Text>
+					<XForm>
+						<PinX Unit="MM">3.326771694763931</PinX>
+						<PinY Unit="MM">5.944882068330121</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="10" UniqueID="{1823D0A6-B498-4A89-A138-63A9228081FB}" Name="Connettore dinamico.10" NameU="Dynamic connector.10" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.326771694763931</PinX>
+						<PinY Unit="MM">6.525590742164308</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="11" UniqueID="{4C4AC203-F266-4D28-A3EA-A97EFC65F3D7}" Name="Sheet.11" NameU="Sheet.11">
+					<Text>Comandi Ricevuti</Text>
+					<XForm>
+						<PinX Unit="MM">3.944116489353826</PinX>
+						<PinY Unit="MM">6.496063187248145</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="12" UniqueID="{CE68D810-72CD-415A-AC60-6BB67996CCB6}" Name="Processo.12" NameU="Process.12" Master="2">
+					<Text>[Tabella di Mappatura Comandi (DOS Interrupt-like)]
+(Associa comandi esterni a funzioni/handler interni)
+ Mappatura "ComandoEsterno_ID" -&gt; "FunzioneInterna()"
+ Registro dei Comandi Supportati</Text>
+					<XForm>
+						<PinX Unit="MM">3.326771694763931</PinX>
+						<PinY Unit="MM">4.842519831676631</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="13" UniqueID="{0C01002C-07DC-4C5E-A5B6-A66616DB77B3}" Name="Connettore dinamico.13" NameU="Dynamic connector.13" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.326771694763931</PinX>
+						<PinY Unit="MM">5.393700950003375</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="14" UniqueID="{5C08B49C-CCD3-49D2-AAC3-11D19C36FE59}" Name="Processo.14" NameU="Process.14" Master="2">
+					<Text>[SocketManager]
+(Gestione sessioni e stato delle comunicazioni)
+ Mantenimento stato connessioni
+ Invio risposte/messaggi di stato  </Text>
+					<XForm>
+						<PinX Unit="MM">3.326771694763931</PinX>
+						<PinY Unit="MM">3.700787512735307</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="15" UniqueID="{9C16B05C-62FD-4D2D-BB85-0E5DC42362C5}" Name="Sheet.15" NameU="Sheet.15">
+					<Text>Mappatura</Text>
+					<XForm>
+						<PinX Unit="MM">3.831474295382591</PinX>
+						<PinY Unit="MM">5.382108647267159</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="16" UniqueID="{9D17988F-E92A-4E93-8B81-F3A30BF39E68}" Name="Connettore dinamico.16" NameU="Dynamic connector.16" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.326771694763932</PinX>
+						<PinY Unit="MM">4.271653672205969</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="17" UniqueID="{F0553021-B49C-4FE6-8739-BEC17278762A}" Name="Sheet.17" NameU="Sheet.17">
+					<Text>Output Comandi Processati</Text>
+					<XForm>
+						<PinX Unit="MM">4.148075386049627</PinX>
+						<PinY Unit="MM">4.295931885063949</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="19" UniqueID="{535323BB-A72F-4224-BB7F-746889872A76}" Name="Connettore dinamico.19" NameU="Dynamic connector.19" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.316929204136039</PinX>
+						<PinY Unit="MM">3.100393798939762</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="20" UniqueID="{41D9C5F8-391A-464A-9C9B-F2547A55270E}" Name="Sheet.20" NameU="Sheet.20">
+					<Text> (Potenziale interazione con SocketManagerInfo e altri moduli)</Text>
+					<XForm>
+						<PinX Unit="MM">4.960630070262221</PinX>
+						<PinY Unit="MM">3.105643140406665</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="22" UniqueID="{E85862FE-EA49-4ABC-954D-8BF599F73E5F}" Name="Sheet.22" NameU="Sheet.22">
+					<Text>[Altre Parti del Sistema (es. SemanticProcessor)]</Text>
+					<XForm>
+						<PinX Unit="MM">4.292104230478369</PinX>
+						<PinY Unit="MM">2.716535514667406</PinY>
+					</XForm>
+				</Shape>
+			</Shapes>
+		</Page>
+		<Page ID="7" Name="Pagina 5" NameU="Page-5">
+			<PageProps>
+				<PageScale Unit="MM">0.039370078740157</PageScale>
+				<DrawingScale Unit="MM">0.039370078740157</DrawingScale>
+			</PageProps>
+			<Layer IX="0">
+				<Name>Diagramma di flusso</Name>
+				<NameUniv>Flowchart</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Layer IX="1">
+				<Name>Connettore</Name>
+				<NameUniv>Connector</NameUniv>
+				<Visible>1</Visible>
+			</Layer>
+			<Shapes>
+				<Shape ID="1" UniqueID="{98C4CF3A-DA9E-4946-BDD9-A879B2E4693E}" Name="Processo" NameU="Process" Master="2">
+					<Text>Pagina 5: Derivazione Stringhe MIU 
+Responsabilità: Derivazione Nuove Stringhe MIU da Esistenti</Text>
+					<XForm>
+						<PinX Unit="MM">3.267716602090755</PinX>
+						<PinY Unit="MM">10.492126010702670</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="2" UniqueID="{A77D5FC6-B8DA-4B5E-9C50-714EDFF8512F}" Name="Processo.2" NameU="Process.2" Master="2">
+					<Text>Riferimento da Pagina 1:                                                         
+   [Schema Generale - Pagina 1]                                                     
+   Blocco: Motore Semantico                                                         
+                                                                                    
+   Interazione Principale per l'Input: DataManager (Pagina 3)                       
+La logica di derivazione legge le stringhe MIU esistenti dalla tabella `MIU_Searches` (e altre tabelle pertinenti come statistiche di regole/transizioni) tramite `MIUDatabaseManager` in `EvolutiveSystem.SQL.Core.csproj`. 
+Questo fornisce i "semi" su cui si basano gli algoritmi BFS/DFS per derivare nuove stringhe.
+Flusso Input:
+     Database (SQLite) --- (tramite EvolutiveSystem.SQL.Core) ---&gt; DataManager --- (tramite IMIUDataManager / IMIURepository) ---&gt; Motore di Derivazione MIU
+                                                                                    
+Persistenza degli Esiti (del Motore Semantico in generale):
+Il `SemanticProcessorService` (il "cervello centrale" di Pagina 2) orchestra l'elaborazione e persiste i suoi risultati (come regole, statistiche, anomalie, stati MIU) nel database SQLite utilizzando il`MIUDatabaseManager` in `EvolutiveSystem.SQL.Core.csproj`.                    
+    Questa operazione non è diretta derivazione, ma persistenza dell'elaborazione generale del "Motore Semantico".
+   Output per il Prossimo Strato:                                                   
+   Fornisce le Stringhe MIU derivate e arricchite (risultato di BFS/DFS)            
+   al blocco "Analisi Topologica + Tassonomia (analisi non semantica)"             
+   (come definito in Pagina 1 e dettagliato in EvolutiveSystem.Taxonomy.cs</Text>
+					<XForm>
+						<PinX Unit="MM">3.267716602090764</PinX>
+						<PinY Unit="MM">7.933071094375533</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="4" UniqueID="{0878014D-EE12-4731-91C0-E9C8EECD05E3}" Name="Processo.4" NameU="Process.4" Master="2">
+					<Text>[Input/Recupero Stringhe MIU Esistenti]              
+(Recupera le stringhe MIU dal database tramite DataManager) 
+Query su tabella MIU_Searches
+Caricamento in memoria delle stringhe per l'elaborazione proj).</Text>
+					<XForm>
+						<PinX Unit="MM">3.267716602090764</PinX>
+						<PinY Unit="MM">5.374015899398992</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="5" UniqueID="{EBA0844C-8D66-4771-BA97-0C4BE6AF58A9}" Name="Processo.5" NameU="Process.5" Master="2">
+					<Text>[Motore di Derivazione MIU]
+(Classe: RegoleMIU.cs in MIU.Core.csproj)
+(Applica logiche combinatoriali per derivare nuove stringhe MIU)
+ Algoritmi di ricerca: Depth-First Search (DFS)
+ Algoritmi di ricerca: Breadth-First Search (BFS) (versione "Intelligent" con coda a priorità e euristiche) 
+Logica di selezione algoritmo (TrovaDerivazioneAutomatica) basata su euristiche (es. lunghezza stringhe).
+Utilizzo di CurrentTransitionStatistics e CurrentRuleStatistics per guidare l'esplorazione.
+ Potatura (pruning) tramite MAX_STRING_LENGTH e penalità  lunghezza stringa.
+Tracciamento nodi visitati (HashSet&lt;string&gt; visitedStandard).
+ Interazioni chiave: UpsertMIUState (persistenza stati), pubblicazione eventi (OnSolutionFound, OnRuleApplied, OnNewMiuStringDiscoveredInternal).</Text>
+					<XForm>
+						<PinX Unit="MM">3.267716602090764</PinX>
+						<PinY Unit="MM">3.543307193044443</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="6" UniqueID="{2A2914B8-1340-454D-8A87-18E077352BA1}" Name="Processo.6" NameU="Process.6" Master="2">
+					<Text>[Output / Interfaccia per Elaborazione Successiva](
+Prepara le stringhe MIU derivate per l'Analisi Topologica) 
+Potenziale persistenza delle stringhe MIU derivate (tramite MIU.Core che usa IMIUDataManager).
+Interfaccia per il blocco "Analisi Topologica + Tassonomia"</Text>
+					<XForm>
+						<PinX Unit="MM">3.267716602090764</PinX>
+						<PinY Unit="MM">1.673228407949737</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>0</LayerMember>
+					</LayerMem>
+					<Prop ID="1" Name="Cost" NameU="Cost">
+						<Value></Value>
+						<Label>Costo</Label>
+					</Prop>
+					<Prop ID="2" Name="ProcessNumber" NameU="ProcessNumber">
+						<Value></Value>
+						<Label>Numero processo</Label>
+					</Prop>
+					<Prop ID="3" Name="Owner" NameU="Owner">
+						<Value></Value>
+						<Label>Proprietario</Label>
+					</Prop>
+					<Prop ID="4" Name="Function" NameU="Function">
+						<Value></Value>
+						<Label>Funzione</Label>
+					</Prop>
+					<Prop ID="5" Name="StartDate" NameU="StartDate">
+						<Value></Value>
+						<Label>Data inizio</Label>
+					</Prop>
+					<Prop ID="6" Name="EndDate" NameU="EndDate">
+						<Value></Value>
+						<Label>Data fine</Label>
+					</Prop>
+					<Prop ID="7" Name="Status" NameU="Status">
+						<Value></Value>
+						<Label>Stato</Label>
+					</Prop>
+				</Shape>
+				<Shape ID="7" UniqueID="{132268AA-EB8C-4F41-AB06-4D01A1321EB0}" Name="Connettore dinamico" NameU="Dynamic connector" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.267716602090760</PinX>
+						<PinY Unit="MM">9.911417615517887</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="8" UniqueID="{6346BE02-E751-49F4-A33E-CA9E6F6E32C4}" Name="Sheet.8" NameU="Sheet.8">
+					<Text>Input: Stringhe MIU esistenti nel database</Text>
+					<XForm>
+						<PinX Unit="MM">4.365376344526888</PinX>
+						<PinY Unit="MM">9.911417615517887</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="11" UniqueID="{A7D0E6D2-1072-4661-857E-F785B3223AF2}" Name="Connettore dinamico.11" NameU="Dynamic connector.11" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.267716602090764</PinX>
+						<PinY Unit="MM">5.954724573233179</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="12" UniqueID="{238A0216-45F1-4925-810B-7B560F4F4826}" Name="Sheet.12" NameU="Sheet.12">
+					<Text>Componenti e Flussi Interni</Text>
+					<XForm>
+						<PinX Unit="MM">4.015748152117036</PinX>
+						<PinY Unit="MM">5.954724573233178</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="15" UniqueID="{262BD72E-E840-4A58-AF0B-040ADC723ECA}" Name="Connettore dinamico.15" NameU="Dynamic connector.15" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.267716602090764</PinX>
+						<PinY Unit="MM">4.793307225564803</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="16" UniqueID="{04D31A77-01C9-43F0-B63C-D22A1221F587}" Name="Sheet.16" NameU="Sheet.16">
+					<Text>Stringhe MIU Caricate</Text>
+					<XForm>
+						<PinX Unit="MM">4.015748152117036</PinX>
+						<PinY Unit="MM">4.793307225564805</PinY>
+					</XForm>
+				</Shape>
+				<Shape ID="18" UniqueID="{73FFB854-56FA-4D19-9490-7AD82A7D8EA4}" Name="Connettore dinamico.18" NameU="Dynamic connector.18" Master="4">
+					<XForm>
+						<PinX Unit="MM">3.267716602090764</PinX>
+						<PinY Unit="MM">2.293307160524083</PinY>
+					</XForm>
+					<LayerMem>
+						<LayerMember>1</LayerMember>
+					</LayerMem>
+				</Shape>
+				<Shape ID="20" UniqueID="{AF2FBB8F-0CD1-4592-A95F-D67D35E7D958}" Name="Sheet.20" NameU="Sheet.20">
+					<Text>Nuove Stringhe MIU Derivate e Arricchite</Text>
+					<XForm>
+						<PinX Unit="MM">4.357502328542344</PinX>
+						<PinY Unit="MM">2.293307160524081</PinY>
+					</XForm>
+				</Shape>
+			</Shapes>
+		</Page>
+	</Pages>
+</VisioDocument>

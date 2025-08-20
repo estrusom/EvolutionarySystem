@@ -63,6 +63,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Analog.Deep
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EvolutiveSystem.Abstractions", "EvolutiveSystem.Abstractions\EvolutiveSystem.Abstractions.csproj", "{46DBADA2-CE3B-49CF-B9E7-D87335BFB912}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestAnalyzer", "TestAnalyzer\TestAnalyzer.csproj", "{A258195B-0519-4699-BD86-83D4F9E9C8EA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -311,6 +313,14 @@ Global
 		{46DBADA2-CE3B-49CF-B9E7-D87335BFB912}.Release|Any CPU.Build.0 = Release|Any CPU
 		{46DBADA2-CE3B-49CF-B9E7-D87335BFB912}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{46DBADA2-CE3B-49CF-B9E7-D87335BFB912}.Release|ARM64.Build.0 = Release|Any CPU
+		{A258195B-0519-4699-BD86-83D4F9E9C8EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A258195B-0519-4699-BD86-83D4F9E9C8EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A258195B-0519-4699-BD86-83D4F9E9C8EA}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{A258195B-0519-4699-BD86-83D4F9E9C8EA}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{A258195B-0519-4699-BD86-83D4F9E9C8EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A258195B-0519-4699-BD86-83D4F9E9C8EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A258195B-0519-4699-BD86-83D4F9E9C8EA}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{A258195B-0519-4699-BD86-83D4F9E9C8EA}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

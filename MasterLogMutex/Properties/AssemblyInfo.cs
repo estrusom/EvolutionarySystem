@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("RRU Evolutive System")]
 [assembly: AssemblyProduct("MasterLog")]
 [assembly: AssemblyCopyright("Copyright © Evolutive System 2025")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyTrademark("RRU")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 

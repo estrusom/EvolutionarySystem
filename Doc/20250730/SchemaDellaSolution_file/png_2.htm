@@ -1,0 +1,174 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<link rel="stylesheet" type="text/css" href="visio.css"/>
+<title>
+SchemaDellaSolution
+</title>
+<script type="text/javascript" language="javascript">
+function UpdateTooltip(){};
+function OnShapeClick(){};
+</script>
+
+<script src="png_1.js" type="text/javascript" language="javascript"></script>
+<script type="text/javascript" language="javascript">
+	if( (parent.isSVG) || 
+		(parent.isVML && parent.vmlSupported) || 
+		(parent.isXAML && parent.isUpLevel)) 
+	{
+		location.replace(parent.g_FileList[parent.g_CurPageIndex].PriImage);
+	}
+</script>
+
+
+<script type="text/javascript" language="javascript">
+var pageID = 4;
+var isUpLevel = parent.isUpLevel;
+var OnShapeClick = null;
+if (!parent.isMac)
+{
+	OnShapeClick = parent.OnShapeClick;
+}
+
+var OnShapeKey = parent.OnShapeKey;
+var UpdateTooltip = parent.UpdateTooltip;
+var clickMenu = parent.clickMenu;
+var toggleMenuDiv = parent.toggleMenuDiv;
+var toggleMenuLink = parent.toggleMenuLink;
+var GoToPage = parent.GoToPage;
+
+
+if (parent.isUpLevel)
+{
+
+	if (parent.g_FirstPageToLoad != null && parent.g_FirstPageToLoad.length > 0)
+	{
+		if (parent.g_FileList[parent.g_CurPageIndex].PageID != pageID)
+		{
+			var fileEntry = parent.g_FileList[parent.g_CurPageIndex];
+			var fileToLoad = fileToLoad = fileEntry.PriImage;
+			if (fileEntry.SecImage.length > 0)
+			{
+				fileToLoad = fileEntry.SecImage;
+			}
+
+			location.replace(fileToLoad);
+		}
+
+		parent.g_FirstPageToLoad = null;
+	}
+
+
+	var viewMgr = new parent.CViewMgr();
+	parent.viewMgr = viewMgr;
+
+	viewMgr.SupportsDetails = true;
+	viewMgr.SupportsSearch = true;
+
+	viewMgr.put_Location = ViewMgrSetRasterLocation;
+	viewMgr.visBBoxLeft = 0.562177;
+	viewMgr.visBBoxRight = 6.379689;
+	viewMgr.visBBoxBottom = 1.966768;
+	viewMgr.visBBoxTop = 10.685792;
+	viewMgr.highlightDiv = null;
+}
+
+function load ()
+{
+	if(isUpLevel)
+	{
+		arrowdiv.innerHTML = '<img id="arrowgif" alt="Mostra la posizione della forma selezionata" src="arrow.png"/>';
+
+		var pageIndex = parent.PageIndexFromID (pageID);
+		parent.CurPageUpdate (pageIndex);
+	}
+}
+
+function unload()
+{
+	if(isUpLevel)
+	{
+		viewMgr = null;
+		parent.viewMgr = null;
+	}
+}
+
+window.onload = load;
+window.onunload = unload;
+document.onclick = clickMenu;
+
+</script>
+<style type="text/css"> 
+body {
+	background:url(foo) fixed;
+	padding: 10px;
+}
+div.banner {
+	position: fixed;
+	_position: absolute;
+	top: 0;
+	left: 0;
+	_top: expression(eval(document.body.scrollTop));
+	_left: expression(eval(document.body.scrollLeft));
+	width: 100%;
+	_width: expression(eval(document.body.clientWidth));
+	margin: 0;
+	padding: 3px;
+	padding-left: 6px;
+	background:lime;
+	background-color: #FFFFC6;
+	font: 11px tahoma,arial,serif;
+	border-bottom: 2px ridge #FFFFC6;
+}
+</style>
+</head>
+
+<body class="pageView" bgcolor="#FFFFFF" style="margin: 0px">
+
+<script type="text/javascript" language="javascript">
+// Displays the banner prompt to install Silverlight
+if (parent.slSupported && !parent.slInstalled)
+{
+	var slBanner = document.createElement("div");
+	slBanner.className = "banner";
+	slBanner.innerHTML = 'Per attivare tutte le funzionalità, tra cui Zoom e dettaglio, <a href="https://www.microsoft.com/silverlight/resources/install.aspx" target="parent">fare clic qui</a> per installare il plug-in Silverlight.';
+
+	document.body.appendChild(slBanner);
+	document.body.style.paddingTop = "2.5em";
+}
+</script>
+
+
+<div id="arrowdiv" style="position:absolute;top:0;left:0;visibility:hidden;z-index:5">
+</div>
+
+<div id="menu1" onclick="clickMenu()" class="hlMenu">
+</div>
+<DIV id="RasterDiv" style="margin:10px">
+
+<center>
+  <IMG id="ConvertedImage" SRC="png_2.png" ALT="Pagina 2" name=RasterImage BORDER="0" USEMAP="#visImageMap">
+</center>
+
+<MAP NAME="visImageMap">
+  <AREA shape="POLYGON" tabindex="1" ALT="AsyncSocketServer (Server Socket Asincrono)" origTitle="AsyncSocketServer (Server Socket Asincrono)" TITLE="AsyncSocketServer (Server Socket Asincrono)"  target="_top" COORDS="2,767,134,767,134,715,2,715,2,767" onmouseover="UpdateTooltip(this,4,44,event)" onfocus="UpdateTooltip(this,4,44,event)" onclick="return OnShapeClick(4,44,event);" onkeyup="OnShapeKey(4,44,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="SocketManager  (Gestione Comunicazioni)" origTitle="SocketManager  (Gestione Comunicazioni)" TITLE="SocketManager  (Gestione Comunicazioni)"  target="_top" COORDS="2,663,134,663,134,611,2,611,2,663" onmouseover="UpdateTooltip(this,4,33,event)" onfocus="UpdateTooltip(this,4,33,event)" onclick="return OnShapeClick(4,33,event);" onkeyup="OnShapeKey(4,33,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="SocketManagerInfo (Info Socket Manager)" origTitle="SocketManagerInfo (Info Socket Manager)" TITLE="SocketManagerInfo (Info Socket Manager)"  target="_top" COORDS="287,577,386,577,386,525,287,525,287,577" onmouseover="UpdateTooltip(this,4,29,event)" onfocus="UpdateTooltip(this,4,29,event)" onclick="return OnShapeClick(4,29,event);" onkeyup="OnShapeKey(4,29,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="MessaggiErrore (Gestione Errori)" origTitle="MessaggiErrore (Gestione Errori)" TITLE="MessaggiErrore (Gestione Errori)"  target="_top" COORDS="150,577,271,577,271,525,150,525,150,577" onmouseover="UpdateTooltip(this,4,28,event)" onfocus="UpdateTooltip(this,4,28,event)" onclick="return OnShapeClick(4,28,event);" onkeyup="OnShapeKey(4,28,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="CommandHandlers (Gestione Comandi)" origTitle="CommandHandlers (Gestione Comandi)" TITLE="CommandHandlers (Gestione Comandi)"  target="_top" COORDS="2,577,134,577,134,525,2,525,2,577" onmouseover="UpdateTooltip(this,4,27,event)" onfocus="UpdateTooltip(this,4,27,event)" onclick="return OnShapeClick(4,27,event);" onkeyup="OnShapeKey(4,27,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="MasterLogMutex (Gestione Logging)" origTitle="MasterLogMutex (Gestione Logging)" TITLE="MasterLogMutex (Gestione Logging)"  target="_top" COORDS="280,483,392,483,392,438,280,438,280,483" onmouseover="UpdateTooltip(this,4,23,event)" onfocus="UpdateTooltip(this,4,23,event)" onclick="return OnShapeClick(4,23,event);" onkeyup="OnShapeKey(4,23,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="EvolutiveSystem.Common (Utilities Comuni)" origTitle="EvolutiveSystem.Common (Utilities Comuni)" TITLE="EvolutiveSystem.Common (Utilities Comuni)"  target="_top" COORDS="145,483,276,483,276,438,145,438,145,483" onmouseover="UpdateTooltip(this,4,22,event)" onfocus="UpdateTooltip(this,4,22,event)" onclick="return OnShapeClick(4,22,event);" onkeyup="OnShapeKey(4,22,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="MIU.Core (Cuore Operazioni MIU)" origTitle="MIU.Core (Cuore Operazioni MIU)" TITLE="MIU.Core (Cuore Operazioni MIU)"  target="_top" COORDS="2,483,115,483,115,438,2,438,2,483" onmouseover="UpdateTooltip(this,4,21,event)" onfocus="UpdateTooltip(this,4,21,event)" onclick="return OnShapeClick(4,21,event);" onkeyup="OnShapeKey(4,21,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="STRATO CORE / UTILITY / FONDAMENTA (Logica di Base, Utilities,..." origTitle="STRATO CORE / UTILITY / FONDAMENTA (Logica di Base, Utilities,..." TITLE="STRATO CORE / UTILITY / FONDAMENTA (Logica di Base, Utilities,..."  target="_top" COORDS="2,403,391,403,391,351,2,351,2,403" onmouseover="UpdateTooltip(this,4,14,event)" onfocus="UpdateTooltip(this,4,14,event)" onclick="return OnShapeClick(4,14,event);" onkeyup="OnShapeKey(4,14,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="EvolutiveSystem.SQL.Core (Interazione DB SQL)" origTitle="EvolutiveSystem.SQL.Core (Interazione DB SQL)" TITLE="EvolutiveSystem.SQL.Core (Interazione DB SQL)"  target="_top" COORDS="380,308,512,308,512,256,380,256,380,308" onmouseover="UpdateTooltip(this,4,9,event)" onfocus="UpdateTooltip(this,4,9,event)" onclick="return OnShapeClick(4,9,event);" onkeyup="OnShapeKey(4,9,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="EvolutiveSystem.TaxonomyOrchestration (Orchestrazione..." origTitle="EvolutiveSystem.TaxonomyOrchestration (Orchestrazione..." TITLE="EvolutiveSystem.TaxonomyOrchestration (Orchestrazione..."  target="_top" COORDS="158,308,356,308,356,256,158,256,158,308" onmouseover="UpdateTooltip(this,4,7,event)" onfocus="UpdateTooltip(this,4,7,event)" onclick="return OnShapeClick(4,7,event);" onkeyup="OnShapeKey(4,7,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="EvolutiveSystem.Taxonomy (Definizioni Tassonomie)" origTitle="EvolutiveSystem.Taxonomy (Definizioni Tassonomie)" TITLE="EvolutiveSystem.Taxonomy (Definizioni Tassonomie)"  target="_top" COORDS="2,308,134,308,134,256,2,256,2,308" onmouseover="UpdateTooltip(this,4,6,event)" onfocus="UpdateTooltip(this,4,6,event)" onclick="return OnShapeClick(4,6,event);" onkeyup="OnShapeKey(4,6,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="STRATO LOGICA OPERATIVA / MOTORE  (Processing Avanzato e..." origTitle="STRATO LOGICA OPERATIVA / MOTORE  (Processing Avanzato e..." TITLE="STRATO LOGICA OPERATIVA / MOTORE  (Processing Avanzato e..."  target="_top" COORDS="2,223,354,223,354,164,2,164,2,223" onmouseover="UpdateTooltip(this,4,4,event)" onfocus="UpdateTooltip(this,4,4,event)" onclick="return OnShapeClick(4,4,event);" onkeyup="OnShapeKey(4,4,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="SemanticProcessor (Windows Service) (Il &#34;Cervello&#34;..." origTitle="SemanticProcessor (Windows Service) (Il &#34;Cervello&#34;..." TITLE="SemanticProcessor (Windows Service) (Il &#34;Cervello&#34;..."  target="_top" COORDS="72,144,285,144,285,71,72,71,72,144" onmouseover="UpdateTooltip(this,4,2,event)" onfocus="UpdateTooltip(this,4,2,event)" onclick="return OnShapeClick(4,2,event);" onkeyup="OnShapeKey(4,2,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="STRATO APPLICAZIONI / SERVIZI     (Punti di Ingresso /..." origTitle="STRATO APPLICAZIONI / SERVIZI     (Punti di Ingresso /..." TITLE="STRATO APPLICAZIONI / SERVIZI     (Punti di Ingresso /..."  target="_top" COORDS="72,45,285,45,285,0,72,0,72,45" onmouseover="UpdateTooltip(this,4,1,event)" onfocus="UpdateTooltip(this,4,1,event)" onclick="return OnShapeClick(4,1,event);" onkeyup="OnShapeKey(4,1,event);">
+</MAP>
+
+
+</DIV>
+</body>
+</html>

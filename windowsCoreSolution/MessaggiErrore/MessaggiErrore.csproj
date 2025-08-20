@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>C:\progetti\EvolutionarySystem\windowsCoreSolution\CertificatoDiFirma\RRU_EvolutiveSystem.pfx</AssemblyOriginatorKeyFile>
+    <PackageId>MessaggiErrore</PackageId>
+    <Title>MessaggiErrore</Title>
+    <Version>1.1.0</Version>
+    <Authors>Rocco Marco Russo</Authors>
+    <Company>RRU Evolutive System</Company>
+    <Product>MessaggiErrore</Product>
+    <Description>Pacchetto di personalizazione dei messggi di errore, gestione dello steck e individuazione codice di errore nativo</Description>
+    <Copyright>Copyright © Evolutive System 2025</Copyright>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>25.8.19.11</FileVersion>
+  </PropertyGroup>
+
+</Project>

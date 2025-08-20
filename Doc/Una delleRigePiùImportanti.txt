@@ -1,0 +1,2 @@
+QuantumSynthesisOrchestrator -> HandleAntithesisIdentified -> Evaluate -> Simulate 
+

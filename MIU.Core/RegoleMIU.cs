@@ -464,7 +464,7 @@ namespace MIU.Core
                         LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
 
                         // Controllo della lunghezza della stringa generata
-                        if (newStringStandard.Length > MAX_STRING_LENGTH)
+                        if (newStringStandard.Length > MAX_STRING_LENGTH) // QUESTA E' UNA CAZZATA
                         {
                             LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Stringa '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...' troppo lunga ({newStringStandard.Length} > {MAX_STRING_LENGTH}). Saltata.", true);
                             continue; // Salta questa stringa e passa alla prossima regola/iterazione
@@ -898,13 +898,13 @@ namespace MIU.Core
             {
                 chosenAlgorithm = "DFS (Automatic)";
                 LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Target string is longer. Chosen algorithm DFS.");
-                resultPath = TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed, dataManager, cancellationToken); // <- error cs1501  NEW: Passa dataManager
+                resultPath = TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed, dataManager, cancellationToken); 
             }
             else
             {
                 chosenAlgorithm = "BFS (Automatic)";
                 LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Target string is not significantly longer. Chosen algorithm BFS.");
-                resultPath = TrovaDerivazioneBFS(searchId, startStringCompressed, targetStringCompressed, cancellationToken, dataManager); // <- error cs1501  NEW: Passa dataManager
+                resultPath = TrovaDerivazioneBFS(searchId, startStringCompressed, targetStringCompressed, cancellationToken, dataManager); 
             }
 
             // The OnSolutionFound event is already invoked by the BFS/DFS methods,

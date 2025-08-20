@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>C:\progetti\EvolutionarySystem\windowsCoreSolution\CertificatoDiFirma\RRU_EvolutiveSystem.pfx</AssemblyOriginatorKeyFile>
+    <Title>MasterLog</Title>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>3.1.0.1</AssemblyVersion>
+    <FileVersion>25.8.19.11</FileVersion>
+    <Authors>Rocco Marco Russo</Authors>
+    <Company>RRU Evolutive System</Company>
+    <Product>MasterLog</Product>
+    <Description>Pacchetto di generazione e gestione dei log dell'applicazione</Description>
+    <Copyright>Copyright © Evolutive System 2025</Copyright>
+    <PackageReleaseNotes>Versione derivata da .NET Framework 4.8</PackageReleaseNotes>
+  </PropertyGroup>
+
+</Project>

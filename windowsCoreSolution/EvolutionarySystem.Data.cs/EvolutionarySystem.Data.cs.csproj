@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EvolutionarySystem.Core.Models\EvolutionarySystem.Core.Models.csproj" />
+    <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj" />
+    <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj" />
+  </ItemGroup>
+
+</Project>

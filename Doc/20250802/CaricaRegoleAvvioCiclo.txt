@@ -1,0 +1,16 @@
+CmdMIUexploration -> StartExplorationAsync -> LoadRegoleMIU -> CaricaRegoleDaOggettoRepository
+
+TrovaDerivazioneAutomatica
+
+Ibecille guarda qua!
+CmdMIUautomation -> StartScheduler -> ExplorationLoop -> StartExplorationAsync -> TrovaDerivazioneAutomatica
+
+
+								      /TrovaDerivazioneDFS
+ExplorationLoop -> StartExplorationAsync -> TrovaDerivazioneAutomatica
+								      \TrovaDerivazioneBFS
+
+StartScheduler -> ExplorationLoop
+
+
+MUIII -> MUU 

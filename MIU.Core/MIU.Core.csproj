@@ -57,6 +57,10 @@
     <Compile Include="RegoleMIU.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\EvolutiveSystem.Abstractions\EvolutiveSystem.Abstractions.csproj">
+      <Project>{46dbada2-ce3b-49cf-b9e7-d87335bfb912}</Project>
+      <Name>EvolutiveSystem.Abstractions</Name>
+    </ProjectReference>
     <ProjectReference Include="..\EvolutiveSystem.Common\EvolutiveSystem.Common.csproj">
       <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
       <Name>EvolutiveSystem.Common</Name>

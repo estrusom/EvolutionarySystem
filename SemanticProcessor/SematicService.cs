@@ -1007,7 +1007,7 @@ namespace SemanticProcessor
                         }
                         else
                         {
-                            // comando tipo config
+                            // comando tipo CmdConfig
                             myMethod = tyCommandHandlers.GetMethod(
                                 cmdCom.CommandSocket, // Nome del metodo
                                 BindingFlags.Public | BindingFlags.Instance, // Cerca metodi pubblici d'istanza
@@ -1136,7 +1136,7 @@ namespace SemanticProcessor
                                                 object[] parameters = new object[] { myO, e.BufferDati, asl, this.miuDataManagerInstance, this.miuRepositoryInstance, this.configParam, this._continuousScheduler };
                                                 myMethod.Invoke(commandHandlers, parameters);
                                                 this._continuousScheduler = (MiuContinuousExplorerScheduler)parameters[parameters.Length - 1];
-                                                if (cmdCom.MethoToBeExecute.Length > 0)
+                                                if (cmdCom.MethoToBeExecute.Length > 0) //SetEventAutomation
                                                 {
                                                     Type ty = typeof(SemanticProcessorService);
                                                     myMethod = ty.GetMethod(

@@ -311,9 +311,9 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                                 _currentSearchId,
                                 initialString, // Stringa iniziale della ricerca
                                 targetString, // Stringa target della ricerca
-                                              // Questo 'Outcome' dovrebbe riflettere lo stato finale effettivo dal DB o dalla logica di chiusura
-                                              // Per ora, usiamo "Completed" come generico, ma idealmente sarebbe più specifico.
-                                              // Potresti voler recuperare l'outcome effettivo dal DB qui.
+                                                // Questo 'Outcome' dovrebbe riflettere lo stato finale effettivo dal DB o dalla logica di chiusura
+                                                // Per ora, usiamo "Completed" come generico, ma idealmente sarebbe più specifico.
+                                                // Potresti voler recuperare l'outcome effettivo dal DB qui.
                                 "Completed", // Placeholder: idealmente recuperato dal DB o determinato più precisamente
                                 finalSteps, // Placeholder
                                 finalNodes, // Placeholder
@@ -361,7 +361,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
         private void HandleRuleApplied(object sender, RuleAppliedEventArgs e)
         {
             string message = $"AppliedRuleID: {e.AppliedRuleID} AppliedRuleName: {e.AppliedRuleName} OriginalString: {e.OriginalString} NewString: {e.NewString} CurrentDepth: {e.CurrentDepth}";
-            _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Rule Applied] {message}");
+            _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Rule Applied] {message}", true);
 
             // Persistenza dello stato originale e del nuovo stato
 
@@ -491,7 +491,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                             }
                         }
 
-                        // Inserisce i passi del percorso nel DB
+                        // Inserisce i passi del percorso in MIU_Paths
                         _dataManager.InsertSolutionPathStep(
                             e.SearchID,
                             step.StepNumber,

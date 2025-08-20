@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafico 3D</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; background-color: #f0f0f0; color: #333; }
+        canvas { display: block; }
+        #info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: 300px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="info-panel"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- Setup della scena Three.js ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Aggiungi luci per una migliore visualizzazione
+        const light = new THREE.PointLight(0xffffff, 1, 1000);
+        light.position.set(0, 0, 100);
+        scene.add(light);
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        let nodes = [];
+        let links = [];
+        let linkObjects = [];
+        let nodeObjects = [];
+
+        const infoPanel = document.getElementById('info-panel');
+
+        // --- Funzione di ridimensionamento ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        window.addEventListener('resize', onWindowResize, false);
+
+        // --- Funzione per aggiornare il grafico ---
+        window.updateGraph = function(data) {
+            console.log("Dati del grafico ricevuti:", data);
+            
+            // Pulisci la scena precedente
+            nodeObjects.forEach(obj => scene.remove(obj));
+            linkObjects.forEach(obj => scene.remove(obj));
+            nodeObjects = [];
+            linkObjects = [];
+            nodes = data.nodes;
+            links = data.links;
+
+            if (nodes.length === 0) {
+                console.warn("Nessun nodo da disegnare.");
+                return;
+            }
+
+            // --- Creazione nodi ---
+            nodes.forEach(node => {
+                const geometry = new THREE.SphereGeometry(1.5, 32, 32);
+                const material = new THREE.MeshPhongMaterial({ color: 0x0077ff, specular: 0x5c5c5c, shininess: 30 });
+                const sphere = new THREE.Mesh(geometry, material);
+
+                // Posiziona i nodi in modo casuale o con una logica di layout
+                const pos = new THREE.Vector3(
+                    (Math.random() - 0.5) * 100,
+                    (Math.random() - 0.5) * 100,
+                    (Math.random() - 0.5) * 100
+                );
+                sphere.position.copy(pos);
+                scene.add(sphere);
+                nodeObjects.push(sphere);
+                node.object = sphere; // Associa l'oggetto Three.js al dato del nodo
+            });
+
+            // --- Creazione link ---
+            links.forEach(link => {
+                const sourceNode = nodes.find(n => n.id === link.source);
+                const targetNode = nodes.find(n => n.id === link.target);
+
+                if (sourceNode && targetNode) {
+                    const material = new THREE.LineBasicMaterial({ color: 0xaaaaaa, linewidth: 2 });
+                    const geometry = new THREE.BufferGeometry().setFromPoints([sourceNode.object.position, targetNode.object.position]);
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line);
+                    linkObjects.push(line);
+                    link.object = line; // Associa l'oggetto Three.js al dato del link
+                }
+            });
+
+            // Posiziona la telecamera per visualizzare tutto il grafico
+            camera.position.z = Math.max(
+                ...nodeObjects.map(obj => obj.position.length())
+            ) * 1.5;
+            if (camera.position.z < 50) {
+                camera.position.z = 50;
+            }
+            camera.lookAt(scene.position);
+            
+            console.log("Grafico disegnato con", nodes.length, "nodi e", links.length, "link.");
+        }
+
+        // --- Interazione con il mouse per rotazione e zoom ---
+        let isMouseDown = false;
+        let prevMouseX = 0, prevMouseY = 0;
+        let rotationSpeed = 0.005;
+        let zoomSpeed = 0.001;
+
+        document.addEventListener('mousedown', (event) => {
+            isMouseDown = true;
+            prevMouseX = event.clientX;
+            prevMouseY = event.clientY;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            if (isMouseDown) {
+                const deltaX = event.clientX - prevMouseX;
+                const deltaY = event.clientY - prevMouseY;
+
+                // Rotazione attorno agli assi
+                scene.rotation.y += deltaX * rotationSpeed;
+                scene.rotation.x += deltaY * rotationSpeed;
+
+                prevMouseX = event.clientX;
+                prevMouseY = event.clientY;
+            }
+        });
+
+        document.addEventListener('wheel', (event) => {
+            camera.position.z += event.deltaY * zoomSpeed;
+            if (camera.position.z < 10) camera.position.z = 10;
+        });
+
+        document.addEventListener('mouseover', (event) => {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(nodeObjects);
+            
+            if (intersects.length > 0) {
+                const intersectedObject = intersects[0].object;
+                const node = nodes.find(n => n.object === intersectedObject);
+                if (node) {
+                    infoPanel.style.display = 'block';
+                    infoPanel.innerHTML = `
+                        <strong>Nome:</strong> ${node.name}<br>
+                        <strong>ID:</strong> ${node.id}<br>
+                        <strong>Tipo:</strong> ${node.type}
+                    `;
+                    infoPanel.style.left = `${event.clientX + 15}px`;
+                    infoPanel.style.top = `${event.clientY + 15}px`;
+                }
+            } else {
+                infoPanel.style.display = 'none';
+            }
+        });
+
+        // --- Ciclo di animazione ---
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        
+        window.onload = function() {
+            animate();
+        };
+
+    </script>
+</body>
+</html>

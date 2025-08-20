@@ -1,3 +1,20 @@
+CREATE TABLE AntithesisEvent (
+    ID                     INTEGER PRIMARY KEY AUTOINCREMENT,
+    EventType              TEXT    NOT NULL,
+    SeverityScore          REAL    NOT NULL,
+    Description            TEXT    NOT NULL,
+    Timestamp              TEXT    NOT NULL,
+    TriggeredByMiuStateID  INTEGER,
+    TriggeredBySearchID    INTEGER,
+    RelatedPatternIDs_SCSV TEXT,
+    IsResolved             INTEGER NOT NULL
+                                   DEFAULT 0,
+    ResolutionTimestamp    TEXT,
+    ResolutionDetails      TEXT,
+    GeneratedRuleID        INTEGER
+);
+
+
 CREATE TABLE ExplorationAnomalies (
     Id                   INTEGER PRIMARY KEY AUTOINCREMENT,
     Type                 INTEGER NOT NULL,
@@ -26,7 +43,8 @@ CREATE TABLE Learning_RuleStatistics (
                                DEFAULT 0,
     EffectivenessScore REAL    NOT NULL
                                DEFAULT 0.0,
-    LastUpdated        TEXT    NOT NULL
+    LastUpdated        TEXT    NOT NULL,
+    LastSearchID       INTEGER
 );
 
 CREATE TABLE Learning_TransitionStatistics (
@@ -45,6 +63,29 @@ CREATE TABLE Learning_TransitionStatistics (
         AppliedRuleID
     )
     REFERENCES RegoleMIU (ID) 
+);
+
+CREATE TABLE LlmArchitectureLog (
+    ID                      INTEGER PRIMARY KEY AUTOINCREMENT,
+    VersionNumber           TEXT    NOT NULL
+                                    UNIQUE,
+    Description             TEXT    NOT NULL,
+    ModificationTimestamp   TEXT    NOT NULL,
+    TriggeredByAntithesisID INTEGER,
+    PerformanceMetrics_SCSV TEXT
+);
+
+CREATE TABLE LlmSemanticInterpretation (
+    ID                     INTEGER PRIMARY KEY AUTOINCREMENT,
+    EntityID               INTEGER NOT NULL,
+    EntityType             TEXT    NOT NULL,
+    SemanticText           TEXT    NOT NULL,
+    ConfidenceScore        REAL,
+    Timestamp              TEXT    NOT NULL,
+    LlmArchitectureVersion TEXT    NOT NULL,
+    HumanFeedback_SCSV     TEXT,
+    RelevanceScore         REAL    NOT NULL
+                                   DEFAULT 1.0
 );
 
 CREATE TABLE MIU_Actions (
@@ -110,16 +151,6 @@ CREATE TABLE MIU_RuleApplications (
     REFERENCES RegoleMIU (ID) 
 );
 
-CREATE TABLE MIU_Rules (
-    RuleID      INTEGER PRIMARY KEY AUTOINCREMENT,
-    RuleName    TEXT    NOT NULL
-                        UNIQUE,
-    Description TEXT,
-    Pattern     TEXT    NOT NULL,
-    Replacement TEXT    NOT NULL,
-    RuleType    INTEGER NOT NULL
-);
-
 CREATE TABLE MIU_Searches (
     SearchID            INTEGER  PRIMARY KEY AUTOINCREMENT,
     InitialString       TEXT     NOT NULL,
@@ -141,16 +172,17 @@ CREATE TABLE MIU_Searches (
 );
 
 CREATE TABLE MIU_States (
-    StateID            INTEGER PRIMARY KEY AUTOINCREMENT,
-    CurrentString      TEXT    UNIQUE
-                               NOT NULL,
-    StringLength       INTEGER,
-    DeflateString      TEXT,
-    Hash               TEXT,
-    DiscoveryTime_Int  INTEGER,
-    DiscoveryTime_Text TEXT,
-    UsageCount         INTEGER DEFAULT 0,
-    SeedingType        INTEGER
+    StateID                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    CurrentString              TEXT    UNIQUE
+                                       NOT NULL,
+    StringLength               INTEGER,
+    DeflateString              TEXT,
+    Hash                       TEXT,
+    DiscoveryTime_Int          INTEGER,
+    DiscoveryTime_Text         TEXT,
+    UsageCount                 INTEGER DEFAULT 0,
+    SeedingType                INTEGER,
+    DetectedPatternHashes_SCSV TEXT
 );
 
 CREATE TABLE MIUParameterConfigurator (
@@ -163,32 +195,51 @@ CREATE TABLE MIUParameterConfigurator (
     Descrizione     TEXT
 );
 
-CREATE TABLE RegoleMIU (
-    ID           INTEGER    PRIMARY KEY ON CONFLICT ROLLBACK AUTOINCREMENT
-                            UNIQUE ON CONFLICT ROLLBACK
-                            NOT NULL ON CONFLICT ROLLBACK,
-    Nome         TEXT (16)  NOT NULL ON CONFLICT ROLLBACK,
-    Pattern      TEXT (16)  UNIQUE ON CONFLICT ROLLBACK
-                            NOT NULL ON CONFLICT ROLLBACK,
-    Sostituzione TEXT (12)  UNIQUE ON CONFLICT ROLLBACK
-                            NOT NULL ON CONFLICT ROLLBACK,
-    Descrizione  TEXT (512) 
+CREATE TABLE MiuPattern (
+    ID                     INTEGER PRIMARY KEY AUTOINCREMENT,
+    PatternString          TEXT    NOT NULL
+                                   UNIQUE,
+    PatternHash            TEXT    NOT NULL
+                                   UNIQUE,
+    PatternType            TEXT    NOT NULL,
+    ComplexityScore        REAL    NOT NULL
+                                   DEFAULT 0.0,
+    CreationTimestamp      TEXT    NOT NULL,
+    SourceAntithesisId     INTEGER,
+    Description            TEXT,
+    IsPrincipal            INTEGER NOT NULL
+                                   DEFAULT 1,
+    DerivedFromPatternID   INTEGER,
+    DerivationRule         TEXT,
+    ParentPatternID        INTEGER,
+    RelatedPatternIDs_SCSV TEXT
 );
 
-Come noterai le tabelle MIU_Rules e RegoleMIU sono simili, ciò è nato da una precedente incomprensione. La tabella usata è RegoleMIU. Per completezza ti mostro il contenuto di entrambe
+CREATE TABLE PatternStatistics (
+    ID                        INTEGER PRIMARY KEY AUTOINCREMENT,
+    MiuPatternID              INTEGER NOT NULL
+                                      UNIQUE,
+    DetectionCount            INTEGER NOT NULL
+                                      DEFAULT 0,
+    AssociatedAntithesisCount INTEGER NOT NULL
+                                      DEFAULT 0,
+    AssociatedSolutionCount   INTEGER NOT NULL
+                                      DEFAULT 0,
+    CurrentEpistemicPressure  REAL    NOT NULL
+                                      DEFAULT 0.0,
+    LastDetectionTimestamp    TEXT    NOT NULL,
+    LastUpdateTimestamp       TEXT    NOT NULL
+);
 
-Tabella RegoleMIU
-ID;Nome;Pattern;Sostituzione;Descrizione
-1;Regola I;(.*)I$;$1IU;Sostituisce 'I' con 'IU' alla fine di una stringa
-2;Regola II (Hofstadter);^M(.*)$;M$1$1;Se la stringa è Mx, puoi formare Mxx (M seguita dalla stringa x ripetuta due volte).
-3;Regola III;III;U;Se 'III' appare, può essere sostituito con 'U'
-4;Regola IV;UU;;Rimuove due 'U' consecutive
-
-tabella MIU_Rules
-RuleID;RuleName;Description;Pattern;Replacement;RuleType
-1;Regola I;Add U to the end of a string ending with I.;(.*)I$;$1IU;1
-2;Regola II (Hofstadter);Double the string after M.;^M(.*)$;M$1$1;2
-3;Regola III;Replace III with U.;III;U;3
-4;Regola IV;Remove UU.;UU;;4
-
-Ti ricordo che la tabella MIU_States è pre compilata e contiene le 1000 righe circa di cui trovare la derivazione. Nelle 1000 righe ci sono almeno 30 combinazioni sicuramente derivabili e circa 300 "quasi" derivabili
+CREATE TABLE RegoleMIU (
+    ID                   INTEGER    PRIMARY KEY ON CONFLICT ROLLBACK AUTOINCREMENT
+                                    UNIQUE ON CONFLICT ROLLBACK
+                                    NOT NULL ON CONFLICT ROLLBACK,
+    Nome                 TEXT (16)  NOT NULL ON CONFLICT ROLLBACK,
+    Pattern              TEXT (16)  UNIQUE ON CONFLICT ROLLBACK
+                                    NOT NULL ON CONFLICT ROLLBACK,
+    Sostituzione         TEXT (12)  UNIQUE ON CONFLICT ROLLBACK
+                                    NOT NULL ON CONFLICT ROLLBACK,
+    Descrizione          TEXT (512),
+    StimaProfonditaMedia REAL
+);

@@ -1,0 +1,183 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<link rel="stylesheet" type="text/css" href="visio.css"/>
+<title>
+SchemaDellaSolution
+</title>
+<script type="text/javascript" language="javascript">
+function UpdateTooltip(){};
+function OnShapeClick(){};
+</script>
+
+<script src="png_1.js" type="text/javascript" language="javascript"></script>
+<script type="text/javascript" language="javascript">
+	if( (parent.isSVG) || 
+		(parent.isVML && parent.vmlSupported) || 
+		(parent.isXAML && parent.isUpLevel)) 
+	{
+		location.replace(parent.g_FileList[parent.g_CurPageIndex].PriImage);
+	}
+</script>
+
+
+<script type="text/javascript" language="javascript">
+var pageID = 0;
+var isUpLevel = parent.isUpLevel;
+var OnShapeClick = null;
+if (!parent.isMac)
+{
+	OnShapeClick = parent.OnShapeClick;
+}
+
+var OnShapeKey = parent.OnShapeKey;
+var UpdateTooltip = parent.UpdateTooltip;
+var clickMenu = parent.clickMenu;
+var toggleMenuDiv = parent.toggleMenuDiv;
+var toggleMenuLink = parent.toggleMenuLink;
+var GoToPage = parent.GoToPage;
+
+
+if (parent.isUpLevel)
+{
+
+	if (parent.g_FirstPageToLoad != null && parent.g_FirstPageToLoad.length > 0)
+	{
+		if (parent.g_FileList[parent.g_CurPageIndex].PageID != pageID)
+		{
+			var fileEntry = parent.g_FileList[parent.g_CurPageIndex];
+			var fileToLoad = fileToLoad = fileEntry.PriImage;
+			if (fileEntry.SecImage.length > 0)
+			{
+				fileToLoad = fileEntry.SecImage;
+			}
+
+			location.replace(fileToLoad);
+		}
+
+		parent.g_FirstPageToLoad = null;
+	}
+
+
+	var viewMgr = new parent.CViewMgr();
+	parent.viewMgr = viewMgr;
+
+	viewMgr.SupportsDetails = true;
+	viewMgr.SupportsSearch = true;
+
+	viewMgr.put_Location = ViewMgrSetRasterLocation;
+	viewMgr.visBBoxLeft = 0.533247;
+	viewMgr.visBBoxRight = 7.485524;
+	viewMgr.visBBoxBottom = 4.120212;
+	viewMgr.visBBoxTop = 11.029416;
+	viewMgr.highlightDiv = null;
+}
+
+function load ()
+{
+	if(isUpLevel)
+	{
+		arrowdiv.innerHTML = '<img id="arrowgif" alt="Mostra la posizione della forma selezionata" src="arrow.png"/>';
+
+		var pageIndex = parent.PageIndexFromID (pageID);
+		parent.CurPageUpdate (pageIndex);
+	}
+}
+
+function unload()
+{
+	if(isUpLevel)
+	{
+		viewMgr = null;
+		parent.viewMgr = null;
+	}
+}
+
+window.onload = load;
+window.onunload = unload;
+document.onclick = clickMenu;
+
+</script>
+<style type="text/css"> 
+body {
+	background:url(foo) fixed;
+	padding: 10px;
+}
+div.banner {
+	position: fixed;
+	_position: absolute;
+	top: 0;
+	left: 0;
+	_top: expression(eval(document.body.scrollTop));
+	_left: expression(eval(document.body.scrollLeft));
+	width: 100%;
+	_width: expression(eval(document.body.clientWidth));
+	margin: 0;
+	padding: 3px;
+	padding-left: 6px;
+	background:lime;
+	background-color: #FFFFC6;
+	font: 11px tahoma,arial,serif;
+	border-bottom: 2px ridge #FFFFC6;
+}
+</style>
+</head>
+
+<body class="pageView" bgcolor="#FFFFFF" style="margin: 0px">
+
+<script type="text/javascript" language="javascript">
+// Displays the banner prompt to install Silverlight
+if (parent.slSupported && !parent.slInstalled)
+{
+	var slBanner = document.createElement("div");
+	slBanner.className = "banner";
+	slBanner.innerHTML = 'Per attivare tutte le funzionalità, tra cui Zoom e dettaglio, <a href="https://www.microsoft.com/silverlight/resources/install.aspx" target="parent">fare clic qui</a> per installare il plug-in Silverlight.';
+
+	document.body.appendChild(slBanner);
+	document.body.style.paddingTop = "2.5em";
+}
+</script>
+
+
+<div id="arrowdiv" style="position:absolute;top:0;left:0;visibility:hidden;z-index:5">
+</div>
+
+<div id="menu1" onclick="clickMenu()" class="hlMenu">
+</div>
+<DIV id="RasterDiv" style="margin:10px">
+
+<center>
+  <IMG id="ConvertedImage" SRC="png_1.png" ALT="Pagina 1" name=RasterImage BORDER="0" USEMAP="#visImageMap">
+</center>
+
+<MAP NAME="visImageMap">
+  <AREA shape="POLYGON" tabindex="1" ALT="Integrazione e Retroazione Aggiornamento del Sistema, e..." origTitle="Integrazione e Retroazione Aggiornamento del Sistema, e..." TITLE="Integrazione e Retroazione Aggiornamento del Sistema, e..."  target="_top" COORDS="317,540,572,540,572,500,317,500,317,540" onmouseover="UpdateTooltip(this,0,53,event)" onfocus="UpdateTooltip(this,0,53,event)" onclick="return OnShapeClick(0,53,event);" onkeyup="OnShapeKey(0,53,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Motore Dialettico - Sintesi..." origTitle="Motore Dialettico - Sintesi..." TITLE="Motore Dialettico - Sintesi..."  target="_top" COORDS="317,479,572,479,572,441,317,441,317,479" onmouseover="UpdateTooltip(this,0,44,event)" onfocus="UpdateTooltip(this,0,44,event)" onclick="return OnShapeClick(0,44,event);" onkeyup="OnShapeKey(0,44,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Analisi Topologica e Tassonomia (non semantica)..." origTitle="Analisi Topologica e Tassonomia (non semantica)..." TITLE="Analisi Topologica e Tassonomia (non semantica)..."  target="_top" COORDS="375,389,317,389,317,419,572,419,572,389,514,389,514,389,375,389,375,389" onmouseover="UpdateTooltip(this,0,39,event)" onfocus="UpdateTooltip(this,0,39,event)" onclick="return OnShapeClick(0,39,event);" onkeyup="OnShapeKey(0,39,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Derivazione Nuove Stringhe MIU da Esistenti RegoleMIUManager..." origTitle="Derivazione Nuove Stringhe MIU da Esistenti RegoleMIUManager..." TITLE="Derivazione Nuove Stringhe MIU da Esistenti RegoleMIUManager..."  target="_top" COORDS="317,380,572,380,572,342,317,342,317,380" onmouseover="UpdateTooltip(this,0,34,event)" onfocus="UpdateTooltip(this,0,34,event)" onclick="return OnShapeClick(0,34,event);" onkeyup="OnShapeKey(0,34,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Integrazione Tesi / Retroazione Assimilazione delle Nuove..." origTitle="Integrazione Tesi / Retroazione Assimilazione delle Nuove..." TITLE="Integrazione Tesi / Retroazione Assimilazione delle Nuove..."  target="_top" COORDS="239,501,239,539,247,539,247,501,239,501" onmouseover="UpdateTooltip(this,0,32,event)" onfocus="UpdateTooltip(this,0,32,event)" onclick="return OnShapeClick(0,32,event);" onkeyup="OnShapeKey(0,32,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Integrazione Tesi / Retroazione Assimilazione delle Nuove..." origTitle="Integrazione Tesi / Retroazione Assimilazione delle Nuove..." TITLE="Integrazione Tesi / Retroazione Assimilazione delle Nuove..."  target="_top" COORDS="22,501,22,539,30,539,30,501,22,501" onmouseover="UpdateTooltip(this,0,32,event)" onfocus="UpdateTooltip(this,0,32,event)" onclick="return OnShapeClick(0,32,event);" onkeyup="OnShapeKey(0,32,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Integrazione Tesi / Retroazione Assimilazione delle Nuove..." origTitle="Integrazione Tesi / Retroazione Assimilazione delle Nuove..." TITLE="Integrazione Tesi / Retroazione Assimilazione delle Nuove..."  target="_top" COORDS="255,501,15,501,15,539,255,539,255,501" onmouseover="UpdateTooltip(this,0,32,event)" onfocus="UpdateTooltip(this,0,32,event)" onclick="return OnShapeClick(0,32,event);" onkeyup="OnShapeKey(0,32,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Motore Dialettico (Circuito di creazione della tesi, induzione..." origTitle="Motore Dialettico (Circuito di creazione della tesi, induzione..." TITLE="Motore Dialettico (Circuito di creazione della tesi, induzione..."  target="_top" COORDS="239,427,239,492,247,492,247,427,239,427" onmouseover="UpdateTooltip(this,0,31,event)" onfocus="UpdateTooltip(this,0,31,event)" onclick="return OnShapeClick(0,31,event);" onkeyup="OnShapeKey(0,31,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Motore Dialettico (Circuito di creazione della tesi, induzione..." origTitle="Motore Dialettico (Circuito di creazione della tesi, induzione..." TITLE="Motore Dialettico (Circuito di creazione della tesi, induzione..."  target="_top" COORDS="22,427,22,492,30,492,30,427,22,427" onmouseover="UpdateTooltip(this,0,31,event)" onfocus="UpdateTooltip(this,0,31,event)" onclick="return OnShapeClick(0,31,event);" onkeyup="OnShapeKey(0,31,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Motore Dialettico (Circuito di creazione della tesi, induzione..." origTitle="Motore Dialettico (Circuito di creazione della tesi, induzione..." TITLE="Motore Dialettico (Circuito di creazione della tesi, induzione..."  target="_top" COORDS="96,427,15,427,15,492,255,492,255,427,173,427,173,426,96,426,96,427" onmouseover="UpdateTooltip(this,0,31,event)" onfocus="UpdateTooltip(this,0,31,event)" onclick="return OnShapeClick(0,31,event);" onkeyup="OnShapeKey(0,31,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Analisi Topologica + Tassonomia (analisi non semantica)" origTitle="Analisi Topologica + Tassonomia (analisi non semantica)" TITLE="Analisi Topologica + Tassonomia (analisi non semantica)"  target="_top" COORDS="239,389,239,419,247,419,247,389,239,389" onmouseover="UpdateTooltip(this,0,30,event)" onfocus="UpdateTooltip(this,0,30,event)" onclick="return OnShapeClick(0,30,event);" onkeyup="OnShapeKey(0,30,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Analisi Topologica + Tassonomia (analisi non semantica)" origTitle="Analisi Topologica + Tassonomia (analisi non semantica)" TITLE="Analisi Topologica + Tassonomia (analisi non semantica)"  target="_top" COORDS="22,389,22,419,30,419,30,389,22,389" onmouseover="UpdateTooltip(this,0,30,event)" onfocus="UpdateTooltip(this,0,30,event)" onclick="return OnShapeClick(0,30,event);" onkeyup="OnShapeKey(0,30,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Analisi Topologica + Tassonomia (analisi non semantica)" origTitle="Analisi Topologica + Tassonomia (analisi non semantica)" TITLE="Analisi Topologica + Tassonomia (analisi non semantica)"  target="_top" COORDS="56,389,15,389,15,419,255,419,255,389,213,389,213,388,56,388,56,389" onmouseover="UpdateTooltip(this,0,30,event)" onfocus="UpdateTooltip(this,0,30,event)" onclick="return OnShapeClick(0,30,event);" onkeyup="OnShapeKey(0,30,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Motore Semantico (analisi iniziale dei dati raw)" origTitle="Motore Semantico (analisi iniziale dei dati raw)" TITLE="Motore Semantico (analisi iniziale dei dati raw)"  target="_top" COORDS="239,350,239,380,247,380,247,350,239,350" onmouseover="UpdateTooltip(this,0,29,event)" onfocus="UpdateTooltip(this,0,29,event)" onclick="return OnShapeClick(0,29,event);" onkeyup="OnShapeKey(0,29,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Motore Semantico (analisi iniziale dei dati raw)" origTitle="Motore Semantico (analisi iniziale dei dati raw)" TITLE="Motore Semantico (analisi iniziale dei dati raw)"  target="_top" COORDS="22,350,22,380,30,380,30,350,22,350" onmouseover="UpdateTooltip(this,0,29,event)" onfocus="UpdateTooltip(this,0,29,event)" onclick="return OnShapeClick(0,29,event);" onkeyup="OnShapeKey(0,29,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Motore Semantico (analisi iniziale dei dati raw)" origTitle="Motore Semantico (analisi iniziale dei dati raw)" TITLE="Motore Semantico (analisi iniziale dei dati raw)"  target="_top" COORDS="89,350,15,350,15,380,255,380,255,350,180,350,180,349,89,349,89,350" onmouseover="UpdateTooltip(this,0,29,event)" onfocus="UpdateTooltip(this,0,29,event)" onclick="return OnShapeClick(0,29,event);" onkeyup="OnShapeKey(0,29,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Dettaglio Comunicazione Esterna (SocketManager.csproj)" origTitle="Dettaglio Comunicazione Esterna (SocketManager.csproj)" TITLE="Dettaglio Comunicazione Esterna (SocketManager.csproj)"  target="_top" COORDS="308,269,459,269,459,204,308,204,308,269" onmouseover="UpdateTooltip(this,0,24,event)" onfocus="UpdateTooltip(this,0,24,event)" onclick="return OnShapeClick(0,24,event);" onkeyup="OnShapeKey(0,24,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="EvolutiveSystem.SQL.Core MIUDatabaseManager (Accesso e Query..." origTitle="EvolutiveSystem.SQL.Core MIUDatabaseManager (Accesso e Query..." TITLE="EvolutiveSystem.SQL.Core MIUDatabaseManager (Accesso e Query..."  target="_top" COORDS="317,659,472,659,472,602,317,602,317,659" onmouseover="UpdateTooltip(this,0,16,event)" onfocus="UpdateTooltip(this,0,16,event)" onclick="return OnShapeClick(0,16,event);" onkeyup="OnShapeKey(0,16,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="Semantic Service (SemanticProcessor.csproj)" origTitle="Semantic Service (SemanticProcessor.csproj)" TITLE="Semantic Service (SemanticProcessor.csproj)"  target="_top" COORDS="317,167,449,167,449,102,317,102,317,167" onmouseover="UpdateTooltip(this,0,12,event)" onfocus="UpdateTooltip(this,0,12,event)" onclick="return OnShapeClick(0,12,event);" onkeyup="OnShapeKey(0,12,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="ASTRAZIONI / BASE (Interfacce, Dati Comuni)" origTitle="ASTRAZIONI / BASE (Interfacce, Dati Comuni)" TITLE="ASTRAZIONI / BASE (Interfacce, Dati Comuni)"  target="_top" COORDS="3,663,267,663,267,598,3,598,3,663" onmouseover="UpdateTooltip(this,0,8,event)" onfocus="UpdateTooltip(this,0,8,event)" onclick="return OnShapeClick(0,8,event);" onkeyup="OnShapeKey(0,8,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="MOTORE / LOGICA(Core Business Logic)" origTitle="MOTORE / LOGICA(Core Business Logic)" TITLE="MOTORE / LOGICA(Core Business Logic)"  target="_top" COORDS="3,558,267,558,267,327,3,327,3,558" onmouseover="UpdateTooltip(this,0,6,event)" onfocus="UpdateTooltip(this,0,6,event)" onclick="return OnShapeClick(0,6,event);" onkeyup="OnShapeKey(0,6,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="SERVIZI (Espongono Funzionalità)(Espongono Funzionalità)" origTitle="SERVIZI (Espongono Funzionalità)(Espongono Funzionalità)" TITLE="SERVIZI (Espongono Funzionalità)(Espongono Funzionalità)"  target="_top" COORDS="5,269,185,269,185,204,5,204,5,269" onmouseover="UpdateTooltip(this,0,4,event)" onfocus="UpdateTooltip(this,0,4,event)" onclick="return OnShapeClick(0,4,event);" onkeyup="OnShapeKey(0,4,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="APPLICAZIONI (Entry Points)" origTitle="APPLICAZIONI (Entry Points)" TITLE="APPLICAZIONI (Entry Points)"  target="_top" COORDS="5,167,185,167,185,102,5,102,5,167" onmouseover="UpdateTooltip(this,0,3,event)" onfocus="UpdateTooltip(this,0,3,event)" onclick="return OnShapeClick(0,3,event);" onkeyup="OnShapeKey(0,3,event);">
+  <AREA shape="POLYGON" tabindex="1" ALT="STRATO DI TEST / UTILITY" origTitle="STRATO DI TEST / UTILITY" TITLE="STRATO DI TEST / UTILITY"  target="_top" COORDS="5,66,185,66,185,1,5,1,5,66" onmouseover="UpdateTooltip(this,0,1,event)" onfocus="UpdateTooltip(this,0,1,event)" onclick="return OnShapeClick(0,1,event);" onkeyup="OnShapeKey(0,1,event);">
+</MAP>
+
+
+</DIV>
+</body>
+</html>

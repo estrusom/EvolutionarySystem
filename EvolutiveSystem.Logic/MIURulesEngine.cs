@@ -66,6 +66,7 @@ namespace EvolutiveSystem.Logic
         /// <exception cref="InvalidOperationException">Lanciata se la regola non è applicabile allo stato fornito.</exception>
         public MIUState ApplyRule(MIUState state, MIURule rule)
         {
+
             if (state == null)
             {
                 throw new ArgumentNullException(nameof(state), "Lo stato non può essere nullo per applicare una regola.");
