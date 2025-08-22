@@ -465,11 +465,104 @@ namespace MIU.Core
                         // Log che la regola è stata applicata
                         LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
 
+                        // ✅ PASSO 1: Controllo della lunghezza della stringa PRIMA del salvataggio
+                        if (newStringStandard.Length > MAX_STRING_LENGTH)
+                        {
+                            // L'EVENTO DI MAX LUNGHEZZA STRINGA VIENE SCATENATO QUI
+                            onAnomalyDetected?.Invoke(
+                                AnomalyType.ExcessiveLengthGeneration,
+                                (int)rule.ID,
+                                newStringStandard,
+                                $"Regola {rule.ID} ha generato una stringa di lunghezza eccessiva ({newStringStandard.Length} > {MAX_STRING_LENGTH}).",
+                                searchId,
+                                "WARNING"
+                            );
+                            LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Stringa '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...' troppo lunga ({newStringStandard.Length} > {MAX_STRING_LENGTH}). Saltata.", true);
+                            continue; // Salta questa stringa e passa alla prossima regola/iterazione
+                        }
+
+                        // ✅ PASSO 2: Invoca l'evento OnRuleApplied PRIMA del salvataggio
+                        OnRuleApplied?.Invoke(null, new RuleAppliedEventArgs
+                        {
+                            SearchID = searchId,
+                            AppliedRuleID = rule.ID,
+                            AppliedRuleName = rule.Nome,
+                            OriginalString = currentStandard,
+                            NewString = newStringStandard,
+                            CurrentDepth = currentPath.Count - 1 // Profondità della stringa originale
+                        });
+
+                        // ✅ PASSO 3: Prepara l'oggetto completo
+                        int usageCount = CalcolaConteggioUtilizzo(newStringStandard);
+                        string detectedHashes = TrovaPatternRilevati(newStringStandard);
+                        var newState = new MIUStateHistoryDb
+                        {
+                            MIUString = MIUStringConverter.DeflateMIUString(newStringStandard),
+                            Hash = MIUStringConverter.DeflateMIUString(newStringStandard),
+                            FirstDiscoveredByRuleId = rule.ID,
+                            Depth = currentPath.Count,
+                            TimesFound = 1,
+                            Timestamp = DateTime.UtcNow.ToString("o"),
+                            UsageCount = usageCount,
+                            DetectedPatternHashes_SCSV = detectedHashes
+                        };
+
+                        // ✅ PASSO 4: Chiama il nuovo metodo di persistenza UNA SOLA VOLTA
+                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUStateHistory(newState);
+                        long newStateId = upsertResult.Item1;
+                        bool isNewToDatabase = upsertResult.Item2;
+
+                        // Se la stringa è già stata visitata, salta.
+                        if (!visitedStandard.Contains(newStringStandard))
+                        {
+                            visitedStandard.Add(newStringStandard);
+                            // Scatena l'evento per contare le "nuove stringhe scoperte"
+                            OnNewMiuStringDiscoveredInternal?.Invoke(null, new NewMiuStringDiscoveredEventArgs
+                            {
+                                SearchID = searchId,
+                                DiscoveredString = newStringStandard,
+                                IsTrulyNewToDatabase = isNewToDatabase,
+                                StateID = newStateId,
+                                Depth = currentPath.Count
+                            });
+                            // Crea un nuovo passo per il percorso
+                            var newPathStep = new PathStepInfo
+                            {
+                                StateStringStandard = newStringStandard,
+                                AppliedRuleID = rule.ID,
+                                ParentStateStringStandard = currentStandard,
+                                StateID = newStateId,
+                                ParentStateID = (currentPath.LastOrDefault()?.StateID),
+                                Depth = currentPath.Count,
+                                ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
+                                NodesExplored = nodesExplored,
+                                MaxDepthReached = maxDepthReached
+                            };
+
+                            List<PathStepInfo> newPath = new List<PathStepInfo>(currentPath) { newPathStep };
+
+                            // Aggiungi il nuovo stato allo stack per DFS
+                            stack.Push((newStringStandard, newPath));
+
+                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{(rule.Nome)}'). Depth: {newPathStep.Depth}. Stack: {stack.Count}", true);
+                        }
+                        else
+                        {
+                            LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] State '{newStringStandard}' already visited. Skipping.", true);
+                        }
+                    }
+                    /*if (applySuccess)
+                    {
+                        // Log che la regola è stata applicata
+                        LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
+
+                        // === INIZIO MODIFICHE: Ora l'upsert avviene una sola volta, dopo i controlli ===
+
                         // Passo 1: Calcola i valori per i nuovi campi (devi implementare questa logica)
                         int usageCount = CalcolaConteggioUtilizzo(newStringStandard);
                         string detectedHashes = TrovaPatternRilevati(newStringStandard);
 
-
+                        // Passo 2: Crea l'oggetto MIUStateHistoryDb con tutti i dati
                         var newState = new MIUStateHistoryDb
                         {
                             MIUString = MIUStringConverter.DeflateMIUString(newStringStandard),
@@ -486,6 +579,8 @@ namespace MIU.Core
                         Tuple<long, bool> upsertResult = dataManager.UpsertMIUStateHistory(newState);
                         long newStateId = upsertResult.Item1;
                         bool isNewToDatabase = upsertResult.Item2;
+                        
+                        // === FINE MODIFICHE ===
 
                         // Controllo della lunghezza della stringa generata
                         if (newStringStandard.Length > MAX_STRING_LENGTH) 
@@ -515,9 +610,9 @@ namespace MIU.Core
                         });
 
                         // Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
-                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUStateHistory(MIUStringConverter.DeflateMIUString(newStringStandard));
-                        long newStateId = upsertResult.Item1;
-                        bool isNewToDatabase = upsertResult.Item2;
+                        // -> riga da elimiunare ???  upsertResult = dataManager.UpsertMIUStateHistory(MIUStringConverter.DeflateMIUString(newStringStandard));
+                        newStateId = upsertResult.Item1;
+                        isNewToDatabase = upsertResult.Item2;
 
                         // Se la stringa è già stata visitata, salta.
                         if (!visitedStandard.Contains(newStringStandard))
@@ -558,6 +653,7 @@ namespace MIU.Core
                             LoggerInstance?.Log(LogLevel.DEBUG, $"[DFS] State '{newStringStandard}' already visited. Skipping.", true);
                         }
                     }
+                    */
                 }
             }
 
@@ -676,7 +772,7 @@ namespace MIU.Core
                 }
 
                 // Limite di passi di esplorazione raggiunto (ora `nodesExplored` si riferisce ai nodi *estratti* dalla coda)
-                                    // L'EVENTO DI MAX NODI DA ESPLORARE VIENE SCATENATO QUI
+                // L'EVENTO DI MAX NODI DA ESPLORARE VIENE SCATENATO QUI
                 if (nodesExplored >= MaxNodiDaEsplorare)
                 {
                     // L'EVENTO DI MAX NODI DA ESPLORARE VIENE SCATENATO QUI
@@ -728,7 +824,9 @@ namespace MIU.Core
                     // Se la regola è stata applicata con successo, procedi con la logica successiva
                     if (applySuccess)
                     {
-
+                        // Log che la regola è stata applicata
+                        LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
+                        
                         // Controllo della lunghezza della stringa generata
                         if (newStringStandard.Length > MAX_STRING_LENGTH)
                         {
@@ -757,8 +855,22 @@ namespace MIU.Core
                             CurrentDepth = currentPath.Count - 1 // Profondità della stringa originale
                         });
 
+                        int usageCount = CalcolaConteggioUtilizzo(newStringStandard);
+                        string detectedHashes = TrovaPatternRilevati(newStringStandard);
+                        var newState = new MIUStateHistoryDb
+                        {
+                            MIUString = MIUStringConverter.DeflateMIUString(newStringStandard),
+                            Hash = MIUStringConverter.DeflateMIUString(newStringStandard),
+                            FirstDiscoveredByRuleId = rule.ID,
+                            Depth = currentPath.Count,
+                            TimesFound = 1,
+                            Timestamp = DateTime.UtcNow.ToString("o"),
+                            UsageCount = usageCount, // Valore calcolato qui
+                            DetectedPatternHashes_SCSV = detectedHashes // Valore calcolato qui
+                        };
+
                         // Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
-                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUStateHistory(MIUStringConverter.DeflateMIUString(newStringStandard));
+                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUStateHistory(newState);
                         long newStateId = upsertResult.Item1;
                         bool isNewToDatabase = upsertResult.Item2;
 
@@ -838,8 +950,47 @@ namespace MIU.Core
             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Nessuna soluzione trovata o limiti raggiunti per ricerca ID: {searchId}. Restituisco null."); // 25.07.08
             return null;
             }
-        
 
+        /// <summary>
+        /// Calcola un punteggio di utilizzo/complessità per una stringa MIU, basato sul conteggio dei caratteri.
+        /// </summary>
+        /// <param name="miuStringStandard">La stringa MIU in formato standard.</param>
+        /// <returns>Il conteggio dei caratteri 'M', 'I' e 'U' nella stringa.</returns>
+        private static int CalcolaConteggioUtilizzo(string miuStringStandard)
+        {
+            return miuStringStandard.Count(c => c == 'M' || c == 'I' || c == 'U');
+        }
+        /// <summary>
+        /// Trova e restituisce gli hash dei pattern rilevati in una stringa MIU.
+        /// </summary>
+        /// <param name="miuStringStandard">La stringa MIU in formato standard.</param>
+        /// <returns>Una stringa che contiene gli hash dei pattern rilevati, separati da virgola.</returns>
+        private static string TrovaPatternRilevati(string miuStringStandard)
+        {
+            var patternsToSearch = new Dictionary<int, string>
+        {
+            { 1, "MU" },
+            { 2, "I" },
+            { 3, "U" },
+            { 4, "M" }
+        };
+
+            var detectedHashes = new List<string>();
+
+            foreach (var pattern in patternsToSearch)
+            {
+                if (miuStringStandard.Contains(pattern.Value))
+                {
+                    string patternHash = MIUStringConverter.DeflateMIUString(pattern.Value);
+                    if (!detectedHashes.Contains(patternHash))
+                    {
+                        detectedHashes.Add(patternHash);
+                    }
+                }
+            }
+
+            return string.Join(",", detectedHashes);
+        }
         /// <summary>
         /// Calcola la priorità di un nuovo stato da esplorare.
         /// Utilizza le statistiche di apprendimento per informare l'euristica.

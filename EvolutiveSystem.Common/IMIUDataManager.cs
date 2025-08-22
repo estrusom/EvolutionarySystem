@@ -60,6 +60,14 @@ namespace EvolutiveSystem.Common
         /// <param name="miuString">La stringa MIU da inserire/aggiornare.</param>
         /// <returns>Un Tuple dove Item1 è l'ID dello stato e Item2 è true se la stringa è stata appena inserita (nuova), false se esisteva già.</returns>
         Tuple<long, bool> UpsertMIUStateHistory(string miuString);
+
+        /// <summary>
+        /// Inserisce o aggiorna uno stato MIU completo, inclusi i nuovi campi.
+        /// </summary>
+        /// <param name="state">L'oggetto MIUStateHistoryDb contenente tutti i dati dello stato.</param>
+        /// <returns>Un Tuple dove Item1 è l'ID dello stato e Item2 è true se lo stato è nuovo, false se esisteva già.</returns>
+        Tuple<long, bool> UpsertMIUStateHistory(MIUStateHistoryDb state);
+
         // Reso asincrono per l'I/O del database
         Task<List<MiuStateInfo>> LoadMIUStatesAsync();
         bool SearchExists(string initialString, string targetString);
