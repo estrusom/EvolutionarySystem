@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Configuration; // Necessario per usare ConfigurationManager
 using System.Collections.Generic; // Necessario per Dictionary
 using System.Data.SQLite; // Contiene SQLiteConnection
+using System.Linq; // Per l'uso di LINQ
 
 // Importa i namespace dai progetti di riferimento
 using EvolutiveSystem.Common; // Contiene RegolaMIU
@@ -152,11 +153,14 @@ public class Program
                                 {
                                     RegoleMIUManager.MaxProfonditaRicerca = p != null ? Convert.ToInt32(p) : 0;
                                 }
-                                if (configParams.TryGetValue("MassimoPassiRicerca", out var r))
+                                if (configParams.TryGetValue("MaxNodiDaEsplorare", out var r))
                                 {
-                                    RegoleMIUManager.MassimoPassiRicerca = r != null ? Convert.ToInt32(r) : 0;
+                                    RegoleMIUManager.MaxNodiDaEsplorare = r != null ? Convert.ToInt32(r) : 0;
                                 }
-                                
+                                if (configParams.TryGetValue("MaxStringLength", out var l))
+                                {
+                                    RegoleMIUManager.MAX_STRING_LENGTH = l != null ? Convert.ToInt32(l) : 0;
+                                }
                                 //RegoleMIUManager.MassimoPassiRicerca = maxSteps;
 
                             }
@@ -326,9 +330,92 @@ public class Program
 
     private static void _continuousScheduler_NewMiuStringDiscovered(object sender, NewMiuStringDiscoveredEventArgs e)
     {
-        string msg = $"[SemanticProcessorService] Nuova stringa MIU scoperta dallo scheduler: '{e.DiscoveredString}'. StateID: {e.StateID}, IsTrulyNewToDatabase: {e.IsTrulyNewToDatabase}";
-        logger.Log(LogLevel.INFO, msg, true);
-        Console.WriteLine(msg);
+        // Verifica che la stringa sia veramente nuova per il database.
+        // L'analisi ha senso solo per stati appena scoperti o aggiornati.
+        if (!e.IsTrulyNewToDatabase)
+        {
+            return;
+        }
+
+        string logMessage = $"[SemanticProcessorService] Nuova stringa MIU scoperta dallo scheduler: '{e.DiscoveredString}'. StateID: {e.StateID}, IsTrulyNewToDatabase: {e.IsTrulyNewToDatabase}. Avvio calcolo tassonomia.";
+        logger.Log(LogLevel.INFO, logMessage, true);
+
+        try
+        {
+            // Ottiene l'istanza statica del data manager.
+            var miuDataManager = iMiuDataManagerInstance;
+            if (miuDataManager == null)
+            {
+                logger.Log(LogLevel.ERROR, "[SemanticProcessorService] L'istanza di IMIUDataManager non è stata inizializzata. Impossibile procedere.");
+                return;
+            }
+
+            // Carica le applicazioni di regole dal database.
+            var allRuleApplications = miuDataManager.LoadAllRuleApplications();
+
+            if (allRuleApplications == null || !allRuleApplications.Any())
+            {
+                logger.Log(LogLevel.WARNING, "[SemanticProcessorService] Nessuna applicazione di regole trovata per l'analisi. Ignoro l'evento.");
+                return;
+            }
+
+            // Calcola l'in-degree (numero di archi in entrata) per ogni nodo (stringa MIU).
+            var inDegree = allRuleApplications
+                .GroupBy(ra => ra.NewStateID)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // Calcola l'out-degree (numero di archi in uscita) per ogni nodo (stringa MIU).
+            var outDegree = allRuleApplications
+                .GroupBy(ra => ra.ParentStateID)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            // Identifica e logga le anomalie (es. Trappole e Collettori).
+            var traps = outDegree
+                .Where(kvp => kvp.Value == 0)
+                .Select(kvp => kvp.Key);
+
+            var collectors = inDegree
+                .Where(kvp => kvp.Value > 1 && (!outDegree.ContainsKey(kvp.Key) || outDegree[kvp.Key] == 0))
+                .Select(kvp => kvp.Key);
+
+            string anomalyMessage = "[SemanticProcessorService] Analisi Tassonomia completata.";
+            if (traps.Any())
+            {
+                anomalyMessage += $" Trovate Trappole (out-degree = 0): {string.Join(", ", traps)}";
+                foreach (var trapId in traps)
+                {
+                    miuDataManager.UpsertExplorationAnomaly(new ExplorationAnomaly(
+                    type: AnomalyType.DeadEndString,
+                    ruleId: null,
+                    contextPatternHash: null,
+                    contextPatternSample: null,
+                    description: $"Trap found for StateID {trapId} (out-degree = 0)"
+                ));
+                }
+            }
+            if (collectors.Any())
+            {
+                anomalyMessage += $" Trovati Collettori (in-degree > 1 e out-degree = 0): {string.Join(", ", collectors)}";
+            }
+
+            logger.Log(LogLevel.INFO, anomalyMessage, true);
+
+            // Ulteriori log di dettaglio sui gradi del nodo appena scoperto
+            int discoveredInDegree;
+            inDegree.TryGetValue(e.StateID, out discoveredInDegree);
+
+            int discoveredOutDegree;
+            outDegree.TryGetValue(e.StateID, out discoveredOutDegree);
+
+            logger.Log(LogLevel.INFO, $"[SemanticProcessorService] Dettagli per la nuova stringa (ID: {e.StateID}, '{e.DiscoveredString}'): In-Degree = {discoveredInDegree}, Out-Degree = {discoveredOutDegree}", true);
+
+            // TODO: Qui puoi inserire la logica per salvare i risultati della tassonomia in una nuova tabella.
+            // Esempio: miuDataManager.SaveTaxonomyResult(e.StateID, discoveredInDegree, discoveredOutDegree);
+        }
+        catch (Exception ex)
+        {
+            logger.Log(LogLevel.ERROR, $"[SemanticProcessorService] Errore nel calcolo della tassonomia per la stringa '{e.DiscoveredString}': {ex.Message}");
+        }
     }
 
     private static void _continuousScheduler_ExplorationError(object sender, MiuExplorationErrorEventArgs e)
@@ -377,11 +464,11 @@ public class Program
         string searchId = null;
         if (algorithmType == SearchAlgorithmType.BFS)
         {
-            pathStepInfos = RegoleMIUManager.TrovaDerivazioneBFS(long.MaxValue, deflateStartString, deflateTargetStrin, _cancellationTokenSource.Token, iMiuDataManagerInstance);
+            //pathStepInfos = RegoleMIUManager.TrovaDerivazioneBFS(long.MaxValue, deflateStartString, deflateTargetStrin, _cancellationTokenSource.Token, iMiuDataManagerInstance, engine);
         }
         else if (algorithmType == SearchAlgorithmType.DFS)
         {
-            pathStepInfos = RegoleMIUManager.TrovaDerivazioneDFS(long.MaxValue, deflateStartString, deflateTargetStrin, iMiuDataManagerInstance, _cancellationTokenSource.Token);
+            // pathStepInfos = RegoleMIUManager.TrovaDerivazioneDFS(long.MaxValue, deflateStartString, deflateTargetStrin, iMiuDataManagerInstance, _cancellationTokenSource.Token);
         }
 
         if (searchId != null)

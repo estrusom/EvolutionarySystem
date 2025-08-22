@@ -31,4 +31,10 @@
     <ProjectReference Include="..\MessaggiErrore\MessaggiErrore.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="EvolutionarySystemContext.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+  </ItemGroup>
+
 </Project>

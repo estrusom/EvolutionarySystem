@@ -12,7 +12,7 @@ namespace EvolutionarySystem.Core.Models
     {
         public int ApplicationID { get; set; }
         public int SearchID { get; set; }
-        public int ParentStateID { get; set; }
+        public int? ParentStateID { get; set; }
         public int NewStateID { get; set; }
         public int AppliedRuleID { get; set; }
         public int CurrentDepth { get; set; }

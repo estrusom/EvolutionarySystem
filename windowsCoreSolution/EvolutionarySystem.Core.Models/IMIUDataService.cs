@@ -15,6 +15,6 @@ namespace EvolutionarySystem.Core.Models
         /// Recupera tutti i percorsi MIU e le regole applicate dal database.
         /// </summary>
         /// <returns>Un oggetto contenente liste di MIUPath e MIURuleApplication.</returns>
-        Task<(List<MIUPath> Paths, List<MIURuleApplication> RuleApplications)> GetAllDataAsync();
+        Task<(List<MIUPath> Paths, List<MIURuleApplication> RuleApplications, List<MIUStateHistory> StatesHistory)> GetAllDataAsync();
     }
 }

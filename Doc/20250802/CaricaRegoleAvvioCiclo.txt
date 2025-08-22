@@ -3,14 +3,19 @@ CmdMIUexploration -> StartExplorationAsync -> LoadRegoleMIU -> CaricaRegoleDaOgg
 TrovaDerivazioneAutomatica
 
 Ibecille guarda qua!
-CmdMIUautomation -> StartScheduler -> ExplorationLoop -> StartExplorationAsync -> TrovaDerivazioneAutomatica
+CmdMIUautomation -> StartScheduler -> ExplorationLoop -> StartExplorationAsync -> TrovaDerivazioneAutomatica -> (handler)_continuousScheduler_NewMiuStringDiscovered
 
 
-								      /TrovaDerivazioneDFS
-ExplorationLoop -> StartExplorationAsync -> TrovaDerivazioneAutomatica
-								      \TrovaDerivazioneBFS
+							/TrovaDerivazioneDFS
+ -> StartExplorationAsync -> TrovaDerivazioneAutomatica
+							\TrovaDerivazioneBFS
 
 StartScheduler -> ExplorationLoop
 
 
 MUIII -> MUU 
+
+Limiti ricerca 
+	MAX_STRING_LENGTH (stringa troppo lunga)
+	MaxProfonditaRicerca (massima profondità di ricerca)
+	MaxNodiDaEsplorare (numero massimo da esplorare)

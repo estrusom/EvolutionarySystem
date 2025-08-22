@@ -1,0 +1,2925 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafico 3D</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; background-color: #f0f0f0; color: #333; }
+        canvas { display: block; }
+        #info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: 300px;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="info-panel"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- Setup della scena Three.js ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Aggiungi luci per una migliore visualizzazione
+        const light = new THREE.PointLight(0xffffff, 1, 1000);
+        light.position.set(0, 0, 100);
+        scene.add(light);
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        let nodes = [];
+        let links = [];
+        let linkObjects = [];
+        let nodeObjects = [];
+        let labelObjects = [];
+
+        const infoPanel = document.getElementById('info-panel');
+
+        // --- Funzione di ridimensionamento ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        window.addEventListener('resize', onWindowResize, false);
+
+        // --- Funzione per aggiornare il grafico ---
+        function updateGraph(data) {
+            console.log("Dati del grafico ricevuti:", data);
+            
+            // Pulisci la scena precedente
+            nodeObjects.forEach(obj => scene.remove(obj));
+            linkObjects.forEach(obj => scene.remove(obj));
+            labelObjects.forEach(label => scene.remove(label));
+            nodeObjects = [];
+            linkObjects = [];
+            labelObjects = [];
+            nodes = data.nodes;
+            links = data.links;
+
+            if (nodes.length === 0) {
+                console.warn("Nessun nodo da disegnare.");
+                return;
+            }
+
+            // Parametri del nastro di Moebius
+            const radius = 50;
+            const width = 20;
+
+            // Mappa i nodi alle coordinate del nastro di Moebius
+            nodes.forEach((node, index) => {
+                // Usa l'indice del nodo per calcolare la sua posizione sul nastro
+                const u = (index / nodes.length) * 2 * Math.PI; // Mappa l'indice all'angolo
+                const v = ((Math.random() - 0.5) * width) / 2; // Posizione casuale lungo la larghezza
+
+                // Equazioni parametriche del nastro di Moebius
+                const x = (radius + v * Math.cos(u / 2)) * Math.cos(u);
+                const y = (radius + v * Math.cos(u / 2)) * Math.sin(u);
+                const z = v * Math.sin(u / 2);
+                
+                // Creazione del nodo (sfera)
+                const geometry = new THREE.SphereGeometry(1.5, 32, 32);
+                const material = new THREE.MeshPhongMaterial({ color: 0x0077ff, specular: 0x5c5c5c, shininess: 30 });
+                const sphere = new THREE.Mesh(geometry, material);
+                sphere.position.set(x, y, z);
+                scene.add(sphere);
+                nodeObjects.push(sphere);
+                node.object = sphere;
+
+                // Creazione dell'etichetta (testo)
+                const textCanvas = document.createElement('canvas');
+                const context = textCanvas.getContext('2d');
+                context.font = '24px Arial';
+                const textWidth = context.measureText(node.name).width;
+                textCanvas.width = textWidth + 10;
+                textCanvas.height = 30;
+                context.font = '24px Arial';
+                context.fillStyle = 'rgba(0, 0, 0, 1)';
+                context.fillText(node.name, 5, 25);
+
+                const texture = new THREE.CanvasTexture(textCanvas);
+                const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+                const sprite = new THREE.Sprite(spriteMaterial);
+                sprite.position.set(x, y, z);
+                sprite.scale.set(textCanvas.width / 10, textCanvas.height / 10, 1);
+                scene.add(sprite);
+                labelObjects.push(sprite);
+            });
+
+            // --- Creazione link ---
+            links.forEach(link => {
+                const sourceNode = nodes.find(n => n.id === link.source);
+                const targetNode = nodes.find(n => n.id === link.target);
+
+                if (sourceNode && targetNode) {
+                    const material = new THREE.LineBasicMaterial({ color: 0xaaaaaa, linewidth: 2 });
+                    const geometry = new THREE.BufferGeometry().setFromPoints([sourceNode.object.position, targetNode.object.position]);
+                    const line = new THREE.Line(geometry, material);
+                    scene.add(line);
+                    linkObjects.push(line);
+                    link.object = line;
+                }
+            });
+
+            // Posiziona la telecamera per visualizzare tutto il grafico
+            camera.position.z = Math.max(
+                ...nodeObjects.map(obj => obj.position.length())
+            ) * 1.5;
+            if (camera.position.z < 100) {
+                camera.position.z = 100;
+            }
+            camera.lookAt(scene.position);
+            
+            console.log("Grafico disegnato con", nodes.length, "nodi e", links.length, "link.");
+        }
+
+        // --- Interazione con il mouse per rotazione e zoom ---
+        let isMouseDown = false;
+        let prevMouseX = 0, prevMouseY = 0;
+        let rotationSpeed = 0.005;
+        let zoomSpeed = 0.001;
+
+        document.addEventListener('mousedown', (event) => {
+            isMouseDown = true;
+            prevMouseX = event.clientX;
+            prevMouseY = event.clientY;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            if (isMouseDown) {
+                const deltaX = event.clientX - prevMouseX;
+                const deltaY = event.clientY - prevMouseY;
+
+                // Rotazione attorno agli assi
+                scene.rotation.y += deltaX * rotationSpeed;
+                scene.rotation.x += deltaY * rotationSpeed;
+
+                prevMouseX = event.clientX;
+                prevMouseY = event.clientY;
+            }
+        });
+
+        document.addEventListener('wheel', (event) => {
+            camera.position.z += event.deltaY * zoomSpeed;
+            if (camera.position.z < 10) camera.position.z = 10;
+        });
+
+        document.addEventListener('mouseover', (event) => {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObjects(nodeObjects);
+            
+            if (intersects.length > 0) {
+                const intersectedObject = intersects[0].object;
+                const node = nodes.find(n => n.object === intersectedObject);
+                if (node) {
+                    infoPanel.style.display = 'block';
+                    infoPanel.innerHTML = `
+                        <strong>Nome:</strong> ${node.name}<br>
+                        <strong>ID:</strong> ${node.id}<br>
+                        <strong>Tipo:</strong> ${node.type}
+                    `;
+                    infoPanel.style.left = `${event.clientX + 15}px`;
+                    infoPanel.style.top = `${event.clientY + 15}px`;
+                }
+            } else {
+                infoPanel.style.display = 'none';
+            }
+        });
+
+        // --- Ciclo di animazione ---
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        
+        window.onload = function() {
+            animate();
+            // Aggiungi questo controllo per caricare i dati se esistono
+            if (window.initialGraphData) {
+                updateGraph(window.initialGraphData);
+            }
+        };
+
+    </script>
+<script>window.initialGraphData = {
+  "nodes": [
+    {
+      "id": "4",
+      "name": "Stato 4",
+      "type": "Stato"
+    },
+    {
+      "id": "1",
+      "name": "Stato 1",
+      "type": "Stato"
+    },
+    {
+      "id": "7",
+      "name": "Stato 7",
+      "type": "Stato"
+    },
+    {
+      "id": "10",
+      "name": "Stato 10",
+      "type": "Stato"
+    },
+    {
+      "id": "3",
+      "name": "Stato 3",
+      "type": "Stato"
+    },
+    {
+      "id": "6",
+      "name": "Stato 6",
+      "type": "Stato"
+    },
+    {
+      "id": "9",
+      "name": "Stato 9",
+      "type": "Stato"
+    },
+    {
+      "id": "18",
+      "name": "Stato 18",
+      "type": "Stato"
+    },
+    {
+      "id": "11",
+      "name": "Stato 11",
+      "type": "Stato"
+    },
+    {
+      "id": "20",
+      "name": "Stato 20",
+      "type": "Stato"
+    },
+    {
+      "id": "13",
+      "name": "Stato 13",
+      "type": "Stato"
+    },
+    {
+      "id": "14",
+      "name": "Stato 14",
+      "type": "Stato"
+    },
+    {
+      "id": "24",
+      "name": "Stato 24",
+      "type": "Stato"
+    },
+    {
+      "id": "25",
+      "name": "Stato 25",
+      "type": "Stato"
+    },
+    {
+      "id": "19",
+      "name": "Stato 19",
+      "type": "Stato"
+    },
+    {
+      "id": "28",
+      "name": "Stato 28",
+      "type": "Stato"
+    },
+    {
+      "id": "43",
+      "name": "Stato 43",
+      "type": "Stato"
+    },
+    {
+      "id": "36",
+      "name": "Stato 36",
+      "type": "Stato"
+    },
+    {
+      "id": "5",
+      "name": "Stato 5",
+      "type": "Stato"
+    },
+    {
+      "id": "8",
+      "name": "Stato 8",
+      "type": "Stato"
+    },
+    {
+      "id": "12",
+      "name": "Stato 12",
+      "type": "Stato"
+    },
+    {
+      "id": "15",
+      "name": "Stato 15",
+      "type": "Stato"
+    },
+    {
+      "id": "16",
+      "name": "Stato 16",
+      "type": "Stato"
+    },
+    {
+      "id": "17",
+      "name": "Stato 17",
+      "type": "Stato"
+    },
+    {
+      "id": "21",
+      "name": "Stato 21",
+      "type": "Stato"
+    },
+    {
+      "id": "22",
+      "name": "Stato 22",
+      "type": "Stato"
+    },
+    {
+      "id": "23",
+      "name": "Stato 23",
+      "type": "Stato"
+    },
+    {
+      "id": "26",
+      "name": "Stato 26",
+      "type": "Stato"
+    },
+    {
+      "id": "27",
+      "name": "Stato 27",
+      "type": "Stato"
+    },
+    {
+      "id": "29",
+      "name": "Stato 29",
+      "type": "Stato"
+    },
+    {
+      "id": "30",
+      "name": "Stato 30",
+      "type": "Stato"
+    },
+    {
+      "id": "31",
+      "name": "Stato 31",
+      "type": "Stato"
+    },
+    {
+      "id": "32",
+      "name": "Stato 32",
+      "type": "Stato"
+    },
+    {
+      "id": "33",
+      "name": "Stato 33",
+      "type": "Stato"
+    },
+    {
+      "id": "34",
+      "name": "Stato 34",
+      "type": "Stato"
+    },
+    {
+      "id": "35",
+      "name": "Stato 35",
+      "type": "Stato"
+    },
+    {
+      "id": "37",
+      "name": "Stato 37",
+      "type": "Stato"
+    },
+    {
+      "id": "38",
+      "name": "Stato 38",
+      "type": "Stato"
+    },
+    {
+      "id": "39",
+      "name": "Stato 39",
+      "type": "Stato"
+    },
+    {
+      "id": "40",
+      "name": "Stato 40",
+      "type": "Stato"
+    },
+    {
+      "id": "41",
+      "name": "Stato 41",
+      "type": "Stato"
+    },
+    {
+      "id": "42",
+      "name": "Stato 42",
+      "type": "Stato"
+    },
+    {
+      "id": "44",
+      "name": "Stato 44",
+      "type": "Stato"
+    },
+    {
+      "id": "45",
+      "name": "Stato 45",
+      "type": "Stato"
+    },
+    {
+      "id": "46",
+      "name": "Stato 46",
+      "type": "Stato"
+    },
+    {
+      "id": "47",
+      "name": "Stato 47",
+      "type": "Stato"
+    },
+    {
+      "id": "48",
+      "name": "Stato 48",
+      "type": "Stato"
+    },
+    {
+      "id": "49",
+      "name": "Stato 49",
+      "type": "Stato"
+    },
+    {
+      "id": "50",
+      "name": "Stato 50",
+      "type": "Stato"
+    },
+    {
+      "id": "51",
+      "name": "Stato 51",
+      "type": "Stato"
+    },
+    {
+      "id": "52",
+      "name": "Stato 52",
+      "type": "Stato"
+    },
+    {
+      "id": "53",
+      "name": "Stato 53",
+      "type": "Stato"
+    },
+    {
+      "id": "54",
+      "name": "Stato 54",
+      "type": "Stato"
+    },
+    {
+      "id": "55",
+      "name": "Stato 55",
+      "type": "Stato"
+    },
+    {
+      "id": "56",
+      "name": "Stato 56",
+      "type": "Stato"
+    },
+    {
+      "id": "57",
+      "name": "Stato 57",
+      "type": "Stato"
+    },
+    {
+      "id": "58",
+      "name": "Stato 58",
+      "type": "Stato"
+    },
+    {
+      "id": "59",
+      "name": "Stato 59",
+      "type": "Stato"
+    },
+    {
+      "id": "60",
+      "name": "Stato 60",
+      "type": "Stato"
+    },
+    {
+      "id": "61",
+      "name": "Stato 61",
+      "type": "Stato"
+    },
+    {
+      "id": "62",
+      "name": "Stato 62",
+      "type": "Stato"
+    },
+    {
+      "id": "63",
+      "name": "Stato 63",
+      "type": "Stato"
+    },
+    {
+      "id": "64",
+      "name": "Stato 64",
+      "type": "Stato"
+    },
+    {
+      "id": "65",
+      "name": "Stato 65",
+      "type": "Stato"
+    },
+    {
+      "id": "66",
+      "name": "Stato 66",
+      "type": "Stato"
+    },
+    {
+      "id": "67",
+      "name": "Stato 67",
+      "type": "Stato"
+    },
+    {
+      "id": "68",
+      "name": "Stato 68",
+      "type": "Stato"
+    },
+    {
+      "id": "69",
+      "name": "Stato 69",
+      "type": "Stato"
+    },
+    {
+      "id": "70",
+      "name": "Stato 70",
+      "type": "Stato"
+    },
+    {
+      "id": "71",
+      "name": "Stato 71",
+      "type": "Stato"
+    },
+    {
+      "id": "72",
+      "name": "Stato 72",
+      "type": "Stato"
+    },
+    {
+      "id": "73",
+      "name": "Stato 73",
+      "type": "Stato"
+    },
+    {
+      "id": "74",
+      "name": "Stato 74",
+      "type": "Stato"
+    },
+    {
+      "id": "75",
+      "name": "Stato 75",
+      "type": "Stato"
+    },
+    {
+      "id": "76",
+      "name": "Stato 76",
+      "type": "Stato"
+    },
+    {
+      "id": "77",
+      "name": "Stato 77",
+      "type": "Stato"
+    },
+    {
+      "id": "78",
+      "name": "Stato 78",
+      "type": "Stato"
+    },
+    {
+      "id": "79",
+      "name": "Stato 79",
+      "type": "Stato"
+    },
+    {
+      "id": "80",
+      "name": "Stato 80",
+      "type": "Stato"
+    },
+    {
+      "id": "81",
+      "name": "Stato 81",
+      "type": "Stato"
+    },
+    {
+      "id": "82",
+      "name": "Stato 82",
+      "type": "Stato"
+    },
+    {
+      "id": "83",
+      "name": "Stato 83",
+      "type": "Stato"
+    },
+    {
+      "id": "84",
+      "name": "Stato 84",
+      "type": "Stato"
+    },
+    {
+      "id": "85",
+      "name": "Stato 85",
+      "type": "Stato"
+    },
+    {
+      "id": "86",
+      "name": "Stato 86",
+      "type": "Stato"
+    },
+    {
+      "id": "87",
+      "name": "Stato 87",
+      "type": "Stato"
+    },
+    {
+      "id": "88",
+      "name": "Stato 88",
+      "type": "Stato"
+    },
+    {
+      "id": "89",
+      "name": "Stato 89",
+      "type": "Stato"
+    },
+    {
+      "id": "90",
+      "name": "Stato 90",
+      "type": "Stato"
+    },
+    {
+      "id": "91",
+      "name": "Stato 91",
+      "type": "Stato"
+    },
+    {
+      "id": "92",
+      "name": "Stato 92",
+      "type": "Stato"
+    },
+    {
+      "id": "93",
+      "name": "Stato 93",
+      "type": "Stato"
+    },
+    {
+      "id": "94",
+      "name": "Stato 94",
+      "type": "Stato"
+    },
+    {
+      "id": "95",
+      "name": "Stato 95",
+      "type": "Stato"
+    },
+    {
+      "id": "96",
+      "name": "Stato 96",
+      "type": "Stato"
+    },
+    {
+      "id": "97",
+      "name": "Stato 97",
+      "type": "Stato"
+    },
+    {
+      "id": "98",
+      "name": "Stato 98",
+      "type": "Stato"
+    },
+    {
+      "id": "99",
+      "name": "Stato 99",
+      "type": "Stato"
+    },
+    {
+      "id": "100",
+      "name": "Stato 100",
+      "type": "Stato"
+    },
+    {
+      "id": "101",
+      "name": "Stato 101",
+      "type": "Stato"
+    },
+    {
+      "id": "102",
+      "name": "Stato 102",
+      "type": "Stato"
+    },
+    {
+      "id": "103",
+      "name": "Stato 103",
+      "type": "Stato"
+    },
+    {
+      "id": "104",
+      "name": "Stato 104",
+      "type": "Stato"
+    },
+    {
+      "id": "105",
+      "name": "Stato 105",
+      "type": "Stato"
+    },
+    {
+      "id": "106",
+      "name": "Stato 106",
+      "type": "Stato"
+    },
+    {
+      "id": "107",
+      "name": "Stato 107",
+      "type": "Stato"
+    },
+    {
+      "id": "108",
+      "name": "Stato 108",
+      "type": "Stato"
+    },
+    {
+      "id": "109",
+      "name": "Stato 109",
+      "type": "Stato"
+    },
+    {
+      "id": "110",
+      "name": "Stato 110",
+      "type": "Stato"
+    },
+    {
+      "id": "111",
+      "name": "Stato 111",
+      "type": "Stato"
+    },
+    {
+      "id": "112",
+      "name": "Stato 112",
+      "type": "Stato"
+    },
+    {
+      "id": "113",
+      "name": "Stato 113",
+      "type": "Stato"
+    },
+    {
+      "id": "114",
+      "name": "Stato 114",
+      "type": "Stato"
+    },
+    {
+      "id": "115",
+      "name": "Stato 115",
+      "type": "Stato"
+    },
+    {
+      "id": "116",
+      "name": "Stato 116",
+      "type": "Stato"
+    },
+    {
+      "id": "117",
+      "name": "Stato 117",
+      "type": "Stato"
+    },
+    {
+      "id": "118",
+      "name": "Stato 118",
+      "type": "Stato"
+    },
+    {
+      "id": "119",
+      "name": "Stato 119",
+      "type": "Stato"
+    },
+    {
+      "id": "120",
+      "name": "Stato 120",
+      "type": "Stato"
+    },
+    {
+      "id": "121",
+      "name": "Stato 121",
+      "type": "Stato"
+    },
+    {
+      "id": "122",
+      "name": "Stato 122",
+      "type": "Stato"
+    },
+    {
+      "id": "123",
+      "name": "Stato 123",
+      "type": "Stato"
+    },
+    {
+      "id": "124",
+      "name": "Stato 124",
+      "type": "Stato"
+    },
+    {
+      "id": "125",
+      "name": "Stato 125",
+      "type": "Stato"
+    },
+    {
+      "id": "126",
+      "name": "Stato 126",
+      "type": "Stato"
+    },
+    {
+      "id": "127",
+      "name": "Stato 127",
+      "type": "Stato"
+    },
+    {
+      "id": "128",
+      "name": "Stato 128",
+      "type": "Stato"
+    },
+    {
+      "id": "129",
+      "name": "Stato 129",
+      "type": "Stato"
+    },
+    {
+      "id": "130",
+      "name": "Stato 130",
+      "type": "Stato"
+    },
+    {
+      "id": "131",
+      "name": "Stato 131",
+      "type": "Stato"
+    },
+    {
+      "id": "132",
+      "name": "Stato 132",
+      "type": "Stato"
+    },
+    {
+      "id": "133",
+      "name": "Stato 133",
+      "type": "Stato"
+    },
+    {
+      "id": "135",
+      "name": "Stato 135",
+      "type": "Stato"
+    },
+    {
+      "id": "136",
+      "name": "Stato 136",
+      "type": "Stato"
+    },
+    {
+      "id": "137",
+      "name": "Stato 137",
+      "type": "Stato"
+    },
+    {
+      "id": "139",
+      "name": "Stato 139",
+      "type": "Stato"
+    },
+    {
+      "id": "141",
+      "name": "Stato 141",
+      "type": "Stato"
+    },
+    {
+      "id": "142",
+      "name": "Stato 142",
+      "type": "Stato"
+    },
+    {
+      "id": "143",
+      "name": "Stato 143",
+      "type": "Stato"
+    },
+    {
+      "id": "145",
+      "name": "Stato 145",
+      "type": "Stato"
+    },
+    {
+      "id": "146",
+      "name": "Stato 146",
+      "type": "Stato"
+    },
+    {
+      "id": "148",
+      "name": "Stato 148",
+      "type": "Stato"
+    },
+    {
+      "id": "149",
+      "name": "Stato 149",
+      "type": "Stato"
+    },
+    {
+      "id": "150",
+      "name": "Stato 150",
+      "type": "Stato"
+    },
+    {
+      "id": "151",
+      "name": "Stato 151",
+      "type": "Stato"
+    },
+    {
+      "id": "152",
+      "name": "Stato 152",
+      "type": "Stato"
+    },
+    {
+      "id": "153",
+      "name": "Stato 153",
+      "type": "Stato"
+    },
+    {
+      "id": "154",
+      "name": "Stato 154",
+      "type": "Stato"
+    },
+    {
+      "id": "155",
+      "name": "Stato 155",
+      "type": "Stato"
+    },
+    {
+      "id": "156",
+      "name": "Stato 156",
+      "type": "Stato"
+    },
+    {
+      "id": "157",
+      "name": "Stato 157",
+      "type": "Stato"
+    },
+    {
+      "id": "158",
+      "name": "Stato 158",
+      "type": "Stato"
+    },
+    {
+      "id": "159",
+      "name": "Stato 159",
+      "type": "Stato"
+    },
+    {
+      "id": "160",
+      "name": "Stato 160",
+      "type": "Stato"
+    },
+    {
+      "id": "161",
+      "name": "Stato 161",
+      "type": "Stato"
+    },
+    {
+      "id": "162",
+      "name": "Stato 162",
+      "type": "Stato"
+    },
+    {
+      "id": "163",
+      "name": "Stato 163",
+      "type": "Stato"
+    },
+    {
+      "id": "164",
+      "name": "Stato 164",
+      "type": "Stato"
+    },
+    {
+      "id": "165",
+      "name": "Stato 165",
+      "type": "Stato"
+    },
+    {
+      "id": "166",
+      "name": "Stato 166",
+      "type": "Stato"
+    },
+    {
+      "id": "167",
+      "name": "Stato 167",
+      "type": "Stato"
+    },
+    {
+      "id": "168",
+      "name": "Stato 168",
+      "type": "Stato"
+    },
+    {
+      "id": "169",
+      "name": "Stato 169",
+      "type": "Stato"
+    },
+    {
+      "id": "170",
+      "name": "Stato 170",
+      "type": "Stato"
+    },
+    {
+      "id": "171",
+      "name": "Stato 171",
+      "type": "Stato"
+    },
+    {
+      "id": "172",
+      "name": "Stato 172",
+      "type": "Stato"
+    },
+    {
+      "id": "173",
+      "name": "Stato 173",
+      "type": "Stato"
+    },
+    {
+      "id": "174",
+      "name": "Stato 174",
+      "type": "Stato"
+    },
+    {
+      "id": "175",
+      "name": "Stato 175",
+      "type": "Stato"
+    },
+    {
+      "id": "176",
+      "name": "Stato 176",
+      "type": "Stato"
+    },
+    {
+      "id": "177",
+      "name": "Stato 177",
+      "type": "Stato"
+    },
+    {
+      "id": "178",
+      "name": "Stato 178",
+      "type": "Stato"
+    },
+    {
+      "id": "179",
+      "name": "Stato 179",
+      "type": "Stato"
+    },
+    {
+      "id": "180",
+      "name": "Stato 180",
+      "type": "Stato"
+    },
+    {
+      "id": "181",
+      "name": "Stato 181",
+      "type": "Stato"
+    },
+    {
+      "id": "182",
+      "name": "Stato 182",
+      "type": "Stato"
+    },
+    {
+      "id": "183",
+      "name": "Stato 183",
+      "type": "Stato"
+    },
+    {
+      "id": "184",
+      "name": "Stato 184",
+      "type": "Stato"
+    },
+    {
+      "id": "185",
+      "name": "Stato 185",
+      "type": "Stato"
+    },
+    {
+      "id": "186",
+      "name": "Stato 186",
+      "type": "Stato"
+    },
+    {
+      "id": "187",
+      "name": "Stato 187",
+      "type": "Stato"
+    },
+    {
+      "id": "188",
+      "name": "Stato 188",
+      "type": "Stato"
+    },
+    {
+      "id": "189",
+      "name": "Stato 189",
+      "type": "Stato"
+    },
+    {
+      "id": "190",
+      "name": "Stato 190",
+      "type": "Stato"
+    },
+    {
+      "id": "191",
+      "name": "Stato 191",
+      "type": "Stato"
+    },
+    {
+      "id": "192",
+      "name": "Stato 192",
+      "type": "Stato"
+    },
+    {
+      "id": "193",
+      "name": "Stato 193",
+      "type": "Stato"
+    },
+    {
+      "id": "194",
+      "name": "Stato 194",
+      "type": "Stato"
+    },
+    {
+      "id": "195",
+      "name": "Stato 195",
+      "type": "Stato"
+    },
+    {
+      "id": "196",
+      "name": "Stato 196",
+      "type": "Stato"
+    },
+    {
+      "id": "197",
+      "name": "Stato 197",
+      "type": "Stato"
+    },
+    {
+      "id": "198",
+      "name": "Stato 198",
+      "type": "Stato"
+    },
+    {
+      "id": "199",
+      "name": "Stato 199",
+      "type": "Stato"
+    },
+    {
+      "id": "200",
+      "name": "Stato 200",
+      "type": "Stato"
+    },
+    {
+      "id": "202",
+      "name": "Stato 202",
+      "type": "Stato"
+    },
+    {
+      "id": "203",
+      "name": "Stato 203",
+      "type": "Stato"
+    },
+    {
+      "id": "205",
+      "name": "Stato 205",
+      "type": "Stato"
+    },
+    {
+      "id": "206",
+      "name": "Stato 206",
+      "type": "Stato"
+    },
+    {
+      "id": "208",
+      "name": "Stato 208",
+      "type": "Stato"
+    },
+    {
+      "id": "209",
+      "name": "Stato 209",
+      "type": "Stato"
+    },
+    {
+      "id": "210",
+      "name": "Stato 210",
+      "type": "Stato"
+    },
+    {
+      "id": "211",
+      "name": "Stato 211",
+      "type": "Stato"
+    },
+    {
+      "id": "212",
+      "name": "Stato 212",
+      "type": "Stato"
+    },
+    {
+      "id": "213",
+      "name": "Stato 213",
+      "type": "Stato"
+    },
+    {
+      "id": "214",
+      "name": "Stato 214",
+      "type": "Stato"
+    },
+    {
+      "id": "216",
+      "name": "Stato 216",
+      "type": "Stato"
+    },
+    {
+      "id": "217",
+      "name": "Stato 217",
+      "type": "Stato"
+    },
+    {
+      "id": "218",
+      "name": "Stato 218",
+      "type": "Stato"
+    },
+    {
+      "id": "220",
+      "name": "Stato 220",
+      "type": "Stato"
+    },
+    {
+      "id": "221",
+      "name": "Stato 221",
+      "type": "Stato"
+    },
+    {
+      "id": "223",
+      "name": "Stato 223",
+      "type": "Stato"
+    },
+    {
+      "id": "224",
+      "name": "Stato 224",
+      "type": "Stato"
+    },
+    {
+      "id": "225",
+      "name": "Stato 225",
+      "type": "Stato"
+    },
+    {
+      "id": "226",
+      "name": "Stato 226",
+      "type": "Stato"
+    },
+    {
+      "id": "227",
+      "name": "Stato 227",
+      "type": "Stato"
+    },
+    {
+      "id": "228",
+      "name": "Stato 228",
+      "type": "Stato"
+    },
+    {
+      "id": "229",
+      "name": "Stato 229",
+      "type": "Stato"
+    },
+    {
+      "id": "230",
+      "name": "Stato 230",
+      "type": "Stato"
+    },
+    {
+      "id": "231",
+      "name": "Stato 231",
+      "type": "Stato"
+    },
+    {
+      "id": "232",
+      "name": "Stato 232",
+      "type": "Stato"
+    },
+    {
+      "id": "233",
+      "name": "Stato 233",
+      "type": "Stato"
+    },
+    {
+      "id": "234",
+      "name": "Stato 234",
+      "type": "Stato"
+    },
+    {
+      "id": "235",
+      "name": "Stato 235",
+      "type": "Stato"
+    },
+    {
+      "id": "236",
+      "name": "Stato 236",
+      "type": "Stato"
+    },
+    {
+      "id": "237",
+      "name": "Stato 237",
+      "type": "Stato"
+    },
+    {
+      "id": "238",
+      "name": "Stato 238",
+      "type": "Stato"
+    },
+    {
+      "id": "239",
+      "name": "Stato 239",
+      "type": "Stato"
+    },
+    {
+      "id": "240",
+      "name": "Stato 240",
+      "type": "Stato"
+    },
+    {
+      "id": "241",
+      "name": "Stato 241",
+      "type": "Stato"
+    },
+    {
+      "id": "242",
+      "name": "Stato 242",
+      "type": "Stato"
+    },
+    {
+      "id": "243",
+      "name": "Stato 243",
+      "type": "Stato"
+    },
+    {
+      "id": "244",
+      "name": "Stato 244",
+      "type": "Stato"
+    },
+    {
+      "id": "245",
+      "name": "Stato 245",
+      "type": "Stato"
+    },
+    {
+      "id": "246",
+      "name": "Stato 246",
+      "type": "Stato"
+    },
+    {
+      "id": "247",
+      "name": "Stato 247",
+      "type": "Stato"
+    },
+    {
+      "id": "248",
+      "name": "Stato 248",
+      "type": "Stato"
+    },
+    {
+      "id": "249",
+      "name": "Stato 249",
+      "type": "Stato"
+    },
+    {
+      "id": "250",
+      "name": "Stato 250",
+      "type": "Stato"
+    },
+    {
+      "id": "251",
+      "name": "Stato 251",
+      "type": "Stato"
+    },
+    {
+      "id": "252",
+      "name": "Stato 252",
+      "type": "Stato"
+    },
+    {
+      "id": "253",
+      "name": "Stato 253",
+      "type": "Stato"
+    },
+    {
+      "id": "254",
+      "name": "Stato 254",
+      "type": "Stato"
+    },
+    {
+      "id": "255",
+      "name": "Stato 255",
+      "type": "Stato"
+    },
+    {
+      "id": "256",
+      "name": "Stato 256",
+      "type": "Stato"
+    },
+    {
+      "id": "257",
+      "name": "Stato 257",
+      "type": "Stato"
+    },
+    {
+      "id": "258",
+      "name": "Stato 258",
+      "type": "Stato"
+    },
+    {
+      "id": "259",
+      "name": "Stato 259",
+      "type": "Stato"
+    },
+    {
+      "id": "260",
+      "name": "Stato 260",
+      "type": "Stato"
+    },
+    {
+      "id": "261",
+      "name": "Stato 261",
+      "type": "Stato"
+    },
+    {
+      "id": "262",
+      "name": "Stato 262",
+      "type": "Stato"
+    },
+    {
+      "id": "263",
+      "name": "Stato 263",
+      "type": "Stato"
+    },
+    {
+      "id": "264",
+      "name": "Stato 264",
+      "type": "Stato"
+    },
+    {
+      "id": "265",
+      "name": "Stato 265",
+      "type": "Stato"
+    },
+    {
+      "id": "266",
+      "name": "Stato 266",
+      "type": "Stato"
+    },
+    {
+      "id": "267",
+      "name": "Stato 267",
+      "type": "Stato"
+    },
+    {
+      "id": "268",
+      "name": "Stato 268",
+      "type": "Stato"
+    },
+    {
+      "id": "269",
+      "name": "Stato 269",
+      "type": "Stato"
+    },
+    {
+      "id": "270",
+      "name": "Stato 270",
+      "type": "Stato"
+    },
+    {
+      "id": "271",
+      "name": "Stato 271",
+      "type": "Stato"
+    },
+    {
+      "id": "272",
+      "name": "Stato 272",
+      "type": "Stato"
+    },
+    {
+      "id": "273",
+      "name": "Stato 273",
+      "type": "Stato"
+    },
+    {
+      "id": "274",
+      "name": "Stato 274",
+      "type": "Stato"
+    },
+    {
+      "id": "275",
+      "name": "Stato 275",
+      "type": "Stato"
+    },
+    {
+      "id": "276",
+      "name": "Stato 276",
+      "type": "Stato"
+    },
+    {
+      "id": "277",
+      "name": "Stato 277",
+      "type": "Stato"
+    },
+    {
+      "id": "278",
+      "name": "Stato 278",
+      "type": "Stato"
+    },
+    {
+      "id": "279",
+      "name": "Stato 279",
+      "type": "Stato"
+    },
+    {
+      "id": "280",
+      "name": "Stato 280",
+      "type": "Stato"
+    },
+    {
+      "id": "281",
+      "name": "Stato 281",
+      "type": "Stato"
+    },
+    {
+      "id": "282",
+      "name": "Stato 282",
+      "type": "Stato"
+    },
+    {
+      "id": "283",
+      "name": "Stato 283",
+      "type": "Stato"
+    },
+    {
+      "id": "285",
+      "name": "Stato 285",
+      "type": "Stato"
+    },
+    {
+      "id": "287",
+      "name": "Stato 287",
+      "type": "Stato"
+    },
+    {
+      "id": "288",
+      "name": "Stato 288",
+      "type": "Stato"
+    },
+    {
+      "id": "289",
+      "name": "Stato 289",
+      "type": "Stato"
+    },
+    {
+      "id": "290",
+      "name": "Stato 290",
+      "type": "Stato"
+    },
+    {
+      "id": "291",
+      "name": "Stato 291",
+      "type": "Stato"
+    },
+    {
+      "id": "292",
+      "name": "Stato 292",
+      "type": "Stato"
+    },
+    {
+      "id": "293",
+      "name": "Stato 293",
+      "type": "Stato"
+    },
+    {
+      "id": "294",
+      "name": "Stato 294",
+      "type": "Stato"
+    },
+    {
+      "id": "295",
+      "name": "Stato 295",
+      "type": "Stato"
+    },
+    {
+      "id": "296",
+      "name": "Stato 296",
+      "type": "Stato"
+    },
+    {
+      "id": "297",
+      "name": "Stato 297",
+      "type": "Stato"
+    },
+    {
+      "id": "298",
+      "name": "Stato 298",
+      "type": "Stato"
+    },
+    {
+      "id": "299",
+      "name": "Stato 299",
+      "type": "Stato"
+    },
+    {
+      "id": "300",
+      "name": "Stato 300",
+      "type": "Stato"
+    },
+    {
+      "id": "301",
+      "name": "Stato 301",
+      "type": "Stato"
+    },
+    {
+      "id": "302",
+      "name": "Stato 302",
+      "type": "Stato"
+    },
+    {
+      "id": "303",
+      "name": "Stato 303",
+      "type": "Stato"
+    },
+    {
+      "id": "304",
+      "name": "Stato 304",
+      "type": "Stato"
+    },
+    {
+      "id": "305",
+      "name": "Stato 305",
+      "type": "Stato"
+    },
+    {
+      "id": "306",
+      "name": "Stato 306",
+      "type": "Stato"
+    },
+    {
+      "id": "307",
+      "name": "Stato 307",
+      "type": "Stato"
+    },
+    {
+      "id": "308",
+      "name": "Stato 308",
+      "type": "Stato"
+    },
+    {
+      "id": "309",
+      "name": "Stato 309",
+      "type": "Stato"
+    },
+    {
+      "id": "310",
+      "name": "Stato 310",
+      "type": "Stato"
+    },
+    {
+      "id": "311",
+      "name": "Stato 311",
+      "type": "Stato"
+    },
+    {
+      "id": "312",
+      "name": "Stato 312",
+      "type": "Stato"
+    },
+    {
+      "id": "313",
+      "name": "Stato 313",
+      "type": "Stato"
+    },
+    {
+      "id": "314",
+      "name": "Stato 314",
+      "type": "Stato"
+    },
+    {
+      "id": "315",
+      "name": "Stato 315",
+      "type": "Stato"
+    },
+    {
+      "id": "316",
+      "name": "Stato 316",
+      "type": "Stato"
+    },
+    {
+      "id": "317",
+      "name": "Stato 317",
+      "type": "Stato"
+    },
+    {
+      "id": "318",
+      "name": "Stato 318",
+      "type": "Stato"
+    },
+    {
+      "id": "319",
+      "name": "Stato 319",
+      "type": "Stato"
+    },
+    {
+      "id": "320",
+      "name": "Stato 320",
+      "type": "Stato"
+    },
+    {
+      "id": "321",
+      "name": "Stato 321",
+      "type": "Stato"
+    },
+    {
+      "id": "322",
+      "name": "Stato 322",
+      "type": "Stato"
+    },
+    {
+      "id": "323",
+      "name": "Stato 323",
+      "type": "Stato"
+    },
+    {
+      "id": "324",
+      "name": "Stato 324",
+      "type": "Stato"
+    },
+    {
+      "id": "325",
+      "name": "Stato 325",
+      "type": "Stato"
+    },
+    {
+      "id": "326",
+      "name": "Stato 326",
+      "type": "Stato"
+    },
+    {
+      "id": "327",
+      "name": "Stato 327",
+      "type": "Stato"
+    },
+    {
+      "id": "328",
+      "name": "Stato 328",
+      "type": "Stato"
+    },
+    {
+      "id": "329",
+      "name": "Stato 329",
+      "type": "Stato"
+    },
+    {
+      "id": "330",
+      "name": "Stato 330",
+      "type": "Stato"
+    },
+    {
+      "id": "331",
+      "name": "Stato 331",
+      "type": "Stato"
+    },
+    {
+      "id": "332",
+      "name": "Stato 332",
+      "type": "Stato"
+    },
+    {
+      "id": "333",
+      "name": "Stato 333",
+      "type": "Stato"
+    },
+    {
+      "id": "334",
+      "name": "Stato 334",
+      "type": "Stato"
+    },
+    {
+      "id": "335",
+      "name": "Stato 335",
+      "type": "Stato"
+    },
+    {
+      "id": "336",
+      "name": "Stato 336",
+      "type": "Stato"
+    },
+    {
+      "id": "337",
+      "name": "Stato 337",
+      "type": "Stato"
+    },
+    {
+      "id": "338",
+      "name": "Stato 338",
+      "type": "Stato"
+    },
+    {
+      "id": "339",
+      "name": "Stato 339",
+      "type": "Stato"
+    },
+    {
+      "id": "340",
+      "name": "Stato 340",
+      "type": "Stato"
+    },
+    {
+      "id": "341",
+      "name": "Stato 341",
+      "type": "Stato"
+    },
+    {
+      "id": "342",
+      "name": "Stato 342",
+      "type": "Stato"
+    },
+    {
+      "id": "343",
+      "name": "Stato 343",
+      "type": "Stato"
+    },
+    {
+      "id": "344",
+      "name": "Stato 344",
+      "type": "Stato"
+    },
+    {
+      "id": "345",
+      "name": "Stato 345",
+      "type": "Stato"
+    },
+    {
+      "id": "346",
+      "name": "Stato 346",
+      "type": "Stato"
+    },
+    {
+      "id": "347",
+      "name": "Stato 347",
+      "type": "Stato"
+    },
+    {
+      "id": "348",
+      "name": "Stato 348",
+      "type": "Stato"
+    },
+    {
+      "id": "349",
+      "name": "Stato 349",
+      "type": "Stato"
+    },
+    {
+      "id": "350",
+      "name": "Stato 350",
+      "type": "Stato"
+    },
+    {
+      "id": "351",
+      "name": "Stato 351",
+      "type": "Stato"
+    },
+    {
+      "id": "352",
+      "name": "Stato 352",
+      "type": "Stato"
+    },
+    {
+      "id": "353",
+      "name": "Stato 353",
+      "type": "Stato"
+    },
+    {
+      "id": "354",
+      "name": "Stato 354",
+      "type": "Stato"
+    },
+    {
+      "id": "355",
+      "name": "Stato 355",
+      "type": "Stato"
+    },
+    {
+      "id": "356",
+      "name": "Stato 356",
+      "type": "Stato"
+    },
+    {
+      "id": "357",
+      "name": "Stato 357",
+      "type": "Stato"
+    },
+    {
+      "id": "358",
+      "name": "Stato 358",
+      "type": "Stato"
+    },
+    {
+      "id": "359",
+      "name": "Stato 359",
+      "type": "Stato"
+    },
+    {
+      "id": "360",
+      "name": "Stato 360",
+      "type": "Stato"
+    },
+    {
+      "id": "361",
+      "name": "Stato 361",
+      "type": "Stato"
+    },
+    {
+      "id": "362",
+      "name": "Stato 362",
+      "type": "Stato"
+    },
+    {
+      "id": "363",
+      "name": "Stato 363",
+      "type": "Stato"
+    },
+    {
+      "id": "364",
+      "name": "Stato 364",
+      "type": "Stato"
+    },
+    {
+      "id": "365",
+      "name": "Stato 365",
+      "type": "Stato"
+    },
+    {
+      "id": "366",
+      "name": "Stato 366",
+      "type": "Stato"
+    },
+    {
+      "id": "367",
+      "name": "Stato 367",
+      "type": "Stato"
+    },
+    {
+      "id": "368",
+      "name": "Stato 368",
+      "type": "Stato"
+    },
+    {
+      "id": "369",
+      "name": "Stato 369",
+      "type": "Stato"
+    },
+    {
+      "id": "370",
+      "name": "Stato 370",
+      "type": "Stato"
+    },
+    {
+      "id": "371",
+      "name": "Stato 371",
+      "type": "Stato"
+    },
+    {
+      "id": "372",
+      "name": "Stato 372",
+      "type": "Stato"
+    },
+    {
+      "id": "373",
+      "name": "Stato 373",
+      "type": "Stato"
+    },
+    {
+      "id": "374",
+      "name": "Stato 374",
+      "type": "Stato"
+    },
+    {
+      "id": "375",
+      "name": "Stato 375",
+      "type": "Stato"
+    },
+    {
+      "id": "376",
+      "name": "Stato 376",
+      "type": "Stato"
+    },
+    {
+      "id": "377",
+      "name": "Stato 377",
+      "type": "Stato"
+    },
+    {
+      "id": "378",
+      "name": "Stato 378",
+      "type": "Stato"
+    },
+    {
+      "id": "379",
+      "name": "Stato 379",
+      "type": "Stato"
+    },
+    {
+      "id": "380",
+      "name": "Stato 380",
+      "type": "Stato"
+    },
+    {
+      "id": "381",
+      "name": "Stato 381",
+      "type": "Stato"
+    },
+    {
+      "id": "382",
+      "name": "Stato 382",
+      "type": "Stato"
+    },
+    {
+      "id": "383",
+      "name": "Stato 383",
+      "type": "Stato"
+    },
+    {
+      "id": "384",
+      "name": "Stato 384",
+      "type": "Stato"
+    },
+    {
+      "id": "385",
+      "name": "Stato 385",
+      "type": "Stato"
+    },
+    {
+      "id": "386",
+      "name": "Stato 386",
+      "type": "Stato"
+    },
+    {
+      "id": "387",
+      "name": "Stato 387",
+      "type": "Stato"
+    },
+    {
+      "id": "388",
+      "name": "Stato 388",
+      "type": "Stato"
+    },
+    {
+      "id": "389",
+      "name": "Stato 389",
+      "type": "Stato"
+    },
+    {
+      "id": "390",
+      "name": "Stato 390",
+      "type": "Stato"
+    },
+    {
+      "id": "391",
+      "name": "Stato 391",
+      "type": "Stato"
+    },
+    {
+      "id": "392",
+      "name": "Stato 392",
+      "type": "Stato"
+    },
+    {
+      "id": "394",
+      "name": "Stato 394",
+      "type": "Stato"
+    },
+    {
+      "id": "396",
+      "name": "Stato 396",
+      "type": "Stato"
+    },
+    {
+      "id": "397",
+      "name": "Stato 397",
+      "type": "Stato"
+    },
+    {
+      "id": "398",
+      "name": "Stato 398",
+      "type": "Stato"
+    },
+    {
+      "id": "400",
+      "name": "Stato 400",
+      "type": "Stato"
+    },
+    {
+      "id": "402",
+      "name": "Stato 402",
+      "type": "Stato"
+    },
+    {
+      "id": "404",
+      "name": "Stato 404",
+      "type": "Stato"
+    },
+    {
+      "id": "406",
+      "name": "Stato 406",
+      "type": "Stato"
+    },
+    {
+      "id": "408",
+      "name": "Stato 408",
+      "type": "Stato"
+    },
+    {
+      "id": "410",
+      "name": "Stato 410",
+      "type": "Stato"
+    },
+    {
+      "id": "412",
+      "name": "Stato 412",
+      "type": "Stato"
+    },
+    {
+      "id": "413",
+      "name": "Stato 413",
+      "type": "Stato"
+    },
+    {
+      "id": "414",
+      "name": "Stato 414",
+      "type": "Stato"
+    },
+    {
+      "id": "416",
+      "name": "Stato 416",
+      "type": "Stato"
+    },
+    {
+      "id": "418",
+      "name": "Stato 418",
+      "type": "Stato"
+    },
+    {
+      "id": "419",
+      "name": "Stato 419",
+      "type": "Stato"
+    },
+    {
+      "id": "420",
+      "name": "Stato 420",
+      "type": "Stato"
+    },
+    {
+      "id": "422",
+      "name": "Stato 422",
+      "type": "Stato"
+    },
+    {
+      "id": "423",
+      "name": "Stato 423",
+      "type": "Stato"
+    },
+    {
+      "id": "424",
+      "name": "Stato 424",
+      "type": "Stato"
+    },
+    {
+      "id": "425",
+      "name": "Stato 425",
+      "type": "Stato"
+    },
+    {
+      "id": "426",
+      "name": "Stato 426",
+      "type": "Stato"
+    },
+    {
+      "id": "427",
+      "name": "Stato 427",
+      "type": "Stato"
+    },
+    {
+      "id": "428",
+      "name": "Stato 428",
+      "type": "Stato"
+    },
+    {
+      "id": "429",
+      "name": "Stato 429",
+      "type": "Stato"
+    },
+    {
+      "id": "430",
+      "name": "Stato 430",
+      "type": "Stato"
+    },
+    {
+      "id": "431",
+      "name": "Stato 431",
+      "type": "Stato"
+    },
+    {
+      "id": "432",
+      "name": "Stato 432",
+      "type": "Stato"
+    },
+    {
+      "id": "433",
+      "name": "Stato 433",
+      "type": "Stato"
+    },
+    {
+      "id": "434",
+      "name": "Stato 434",
+      "type": "Stato"
+    },
+    {
+      "id": "435",
+      "name": "Stato 435",
+      "type": "Stato"
+    },
+    {
+      "id": "436",
+      "name": "Stato 436",
+      "type": "Stato"
+    },
+    {
+      "id": "437",
+      "name": "Stato 437",
+      "type": "Stato"
+    },
+    {
+      "id": "438",
+      "name": "Stato 438",
+      "type": "Stato"
+    },
+    {
+      "id": "439",
+      "name": "Stato 439",
+      "type": "Stato"
+    },
+    {
+      "id": "440",
+      "name": "Stato 440",
+      "type": "Stato"
+    },
+    {
+      "id": "441",
+      "name": "Stato 441",
+      "type": "Stato"
+    },
+    {
+      "id": "442",
+      "name": "Stato 442",
+      "type": "Stato"
+    },
+    {
+      "id": "443",
+      "name": "Stato 443",
+      "type": "Stato"
+    },
+    {
+      "id": "444",
+      "name": "Stato 444",
+      "type": "Stato"
+    },
+    {
+      "id": "445",
+      "name": "Stato 445",
+      "type": "Stato"
+    },
+    {
+      "id": "446",
+      "name": "Stato 446",
+      "type": "Stato"
+    },
+    {
+      "id": "447",
+      "name": "Stato 447",
+      "type": "Stato"
+    },
+    {
+      "id": "448",
+      "name": "Stato 448",
+      "type": "Stato"
+    },
+    {
+      "id": "449",
+      "name": "Stato 449",
+      "type": "Stato"
+    },
+    {
+      "id": "450",
+      "name": "Stato 450",
+      "type": "Stato"
+    },
+    {
+      "id": "451",
+      "name": "Stato 451",
+      "type": "Stato"
+    },
+    {
+      "id": "452",
+      "name": "Stato 452",
+      "type": "Stato"
+    },
+    {
+      "id": "453",
+      "name": "Stato 453",
+      "type": "Stato"
+    },
+    {
+      "id": "454",
+      "name": "Stato 454",
+      "type": "Stato"
+    },
+    {
+      "id": "455",
+      "name": "Stato 455",
+      "type": "Stato"
+    },
+    {
+      "id": "456",
+      "name": "Stato 456",
+      "type": "Stato"
+    },
+    {
+      "id": "457",
+      "name": "Stato 457",
+      "type": "Stato"
+    },
+    {
+      "id": "458",
+      "name": "Stato 458",
+      "type": "Stato"
+    },
+    {
+      "id": "459",
+      "name": "Stato 459",
+      "type": "Stato"
+    },
+    {
+      "id": "460",
+      "name": "Stato 460",
+      "type": "Stato"
+    },
+    {
+      "id": "461",
+      "name": "Stato 461",
+      "type": "Stato"
+    },
+    {
+      "id": "462",
+      "name": "Stato 462",
+      "type": "Stato"
+    },
+    {
+      "id": "463",
+      "name": "Stato 463",
+      "type": "Stato"
+    },
+    {
+      "id": "464",
+      "name": "Stato 464",
+      "type": "Stato"
+    },
+    {
+      "id": "465",
+      "name": "Stato 465",
+      "type": "Stato"
+    },
+    {
+      "id": "466",
+      "name": "Stato 466",
+      "type": "Stato"
+    },
+    {
+      "id": "467",
+      "name": "Stato 467",
+      "type": "Stato"
+    },
+    {
+      "id": "468",
+      "name": "Stato 468",
+      "type": "Stato"
+    },
+    {
+      "id": "469",
+      "name": "Stato 469",
+      "type": "Stato"
+    },
+    {
+      "id": "470",
+      "name": "Stato 470",
+      "type": "Stato"
+    },
+    {
+      "id": "471",
+      "name": "Stato 471",
+      "type": "Stato"
+    },
+    {
+      "id": "472",
+      "name": "Stato 472",
+      "type": "Stato"
+    },
+    {
+      "id": "473",
+      "name": "Stato 473",
+      "type": "Stato"
+    },
+    {
+      "id": "474",
+      "name": "Stato 474",
+      "type": "Stato"
+    },
+    {
+      "id": "475",
+      "name": "Stato 475",
+      "type": "Stato"
+    },
+    {
+      "id": "476",
+      "name": "Stato 476",
+      "type": "Stato"
+    },
+    {
+      "id": "477",
+      "name": "Stato 477",
+      "type": "Stato"
+    },
+    {
+      "id": "478",
+      "name": "Stato 478",
+      "type": "Stato"
+    },
+    {
+      "id": "479",
+      "name": "Stato 479",
+      "type": "Stato"
+    },
+    {
+      "id": "480",
+      "name": "Stato 480",
+      "type": "Stato"
+    },
+    {
+      "id": "481",
+      "name": "Stato 481",
+      "type": "Stato"
+    },
+    {
+      "id": "482",
+      "name": "Stato 482",
+      "type": "Stato"
+    },
+    {
+      "id": "483",
+      "name": "Stato 483",
+      "type": "Stato"
+    },
+    {
+      "id": "484",
+      "name": "Stato 484",
+      "type": "Stato"
+    },
+    {
+      "id": "485",
+      "name": "Stato 485",
+      "type": "Stato"
+    },
+    {
+      "id": "486",
+      "name": "Stato 486",
+      "type": "Stato"
+    },
+    {
+      "id": "487",
+      "name": "Stato 487",
+      "type": "Stato"
+    },
+    {
+      "id": "488",
+      "name": "Stato 488",
+      "type": "Stato"
+    },
+    {
+      "id": "489",
+      "name": "Stato 489",
+      "type": "Stato"
+    },
+    {
+      "id": "490",
+      "name": "Stato 490",
+      "type": "Stato"
+    },
+    {
+      "id": "491",
+      "name": "Stato 491",
+      "type": "Stato"
+    },
+    {
+      "id": "492",
+      "name": "Stato 492",
+      "type": "Stato"
+    },
+    {
+      "id": "493",
+      "name": "Stato 493",
+      "type": "Stato"
+    },
+    {
+      "id": "494",
+      "name": "Stato 494",
+      "type": "Stato"
+    },
+    {
+      "id": "495",
+      "name": "Stato 495",
+      "type": "Stato"
+    },
+    {
+      "id": "496",
+      "name": "Stato 496",
+      "type": "Stato"
+    },
+    {
+      "id": "497",
+      "name": "Stato 497",
+      "type": "Stato"
+    },
+    {
+      "id": "498",
+      "name": "Stato 498",
+      "type": "Stato"
+    },
+    {
+      "id": "499",
+      "name": "Stato 499",
+      "type": "Stato"
+    },
+    {
+      "id": "500",
+      "name": "Stato 500",
+      "type": "Stato"
+    },
+    {
+      "id": "501",
+      "name": "Stato 501",
+      "type": "Stato"
+    },
+    {
+      "id": "502",
+      "name": "Stato 502",
+      "type": "Stato"
+    },
+    {
+      "id": "503",
+      "name": "Stato 503",
+      "type": "Stato"
+    },
+    {
+      "id": "504",
+      "name": "Stato 504",
+      "type": "Stato"
+    },
+    {
+      "id": "505",
+      "name": "Stato 505",
+      "type": "Stato"
+    },
+    {
+      "id": "506",
+      "name": "Stato 506",
+      "type": "Stato"
+    },
+    {
+      "id": "507",
+      "name": "Stato 507",
+      "type": "Stato"
+    },
+    {
+      "id": "508",
+      "name": "Stato 508",
+      "type": "Stato"
+    },
+    {
+      "id": "509",
+      "name": "Stato 509",
+      "type": "Stato"
+    }
+  ],
+  "links": [
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "type": "Path"
+    },
+    {
+      "source": "10",
+      "target": "18",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "type": "Path"
+    },
+    {
+      "source": "10",
+      "target": "20",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "type": "Path"
+    },
+    {
+      "source": "9",
+      "target": "13",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "type": "Path"
+    },
+    {
+      "source": "11",
+      "target": "14",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "type": "Path"
+    },
+    {
+      "source": "11",
+      "target": "14",
+      "type": "Path"
+    },
+    {
+      "source": "14",
+      "target": "24",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "type": "Path"
+    },
+    {
+      "source": "11",
+      "target": "14",
+      "type": "Path"
+    },
+    {
+      "source": "14",
+      "target": "25",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "type": "Path"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "type": "Path"
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "type": "Path"
+    },
+    {
+      "source": "10",
+      "target": "19",
+      "type": "Path"
+    },
+    {
+      "source": "19",
+      "target": "28",
+      "type": "Path"
+    },
+    {
+      "source": "28",
+      "target": "43",
+      "type": "Path"
+    },
+    {
+      "source": "43",
+      "target": "14",
+      "type": "Path"
+    },
+    {
+      "source": "14",
+      "target": "25",
+      "type": "Path"
+    },
+    {
+      "source": "25",
+      "target": "36",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "type": "Path"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "type": "Path"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "type": "Path"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "type": "Path"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "type": "Path"
+    }
+  ]
+};</script>
+</body>
+</html>

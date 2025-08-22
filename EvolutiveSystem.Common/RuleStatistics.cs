@@ -38,6 +38,16 @@ namespace EvolutiveSystem.Common
         /// </summary>
         public DateTime LastApplicationTimestamp { get; set; }
 
+        /// <summary>
+        /// La somma totale delle profondità a cui questa regola è stata applicata.
+        /// </summary>
+        public double TotalDepthSum { get; set; }
+
+        /// <summary>
+        /// Il calcolo della stima di profondità media.
+        /// </summary>
+        public double AverageDepth => ApplicationCount > 0 ? TotalDepthSum / ApplicationCount : 0;
+
         public RuleStatistics()
         {
             // Inizializza i conteggi a zero

@@ -32,6 +32,9 @@ namespace EvolutionarySystem.Core.Models
         public DbSet<MIUPath> MIUPaths { get; set; }
         public DbSet<MIURuleApplication> MIURuleApplications { get; set; }
 
+        // AGGIUNTA FONDAMENTALE PER RISOLVERE L'ERRORE
+        public DbSet<MIUStateHistory> MIUStatesHistory { get; set; }
+
         // È un buon posto per configurare manualmente il mapping se
         // i nomi delle tabelle o delle colonne non coincidono.
         // Ad esempio: modelBuilder.Entity<ExplorationAnomaly>().ToTable("Anomalies");

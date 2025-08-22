@@ -6,7 +6,7 @@
 //              operando su un thread separato.
 //              Ora gestisce la registrazione delle ricerche, la persistenza di stati e applicazioni di regole,
 //              e l'aggiornamento delle statistiche di apprendimento.
-
+// 2025.08.22 Aggiorna la stima della profondità media delle regole nel database.
 using System;
 using System.Collections.Generic; // Necessario per Dictionary e List
 using System.Linq; // Necessario per LINQ (.Any(), .FirstOrDefault())
@@ -20,27 +20,6 @@ using EvolutiveSystem.Common.Events; // 25.07.11  Per SearchCompletedEvent e Ano
 
 namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progetto
 {
-
-    ///// <summary>
-    ///// *** CLASSE EVENTARGS PER L'EVENTO OnNewStringDiscovered DEL MOTORE 
-    ///// </summary>
-    //public class NewMiuStringFoundEventArgs : EventArgs
-    //{
-    //    public string NewMiuString { get; }
-    //    public string DerivationPath { get; }
-
-    //    public NewMiuStringFoundEventArgs(string newMiuString, string derivationPath)
-    //    {
-    //        NewMiuString = newMiuString;
-    //        DerivationPath = derivationPath;
-    //    }
-    //}
-    /// <summary>
-    /// Motore di derivazione per il sistema MIU.
-    /// Implementa IMIUDataProcessingService per orchestrare l'esplorazione dello spazio degli stati,
-    /// la persistenza dei dati nel database e la gestione del cursore di esplorazione.
-    /// Opera su un thread separato per non bloccare l'applicazione.
-    /// </summary>
     public class MIUDerivationEngine : IMIUDataProcessingService
     {
         private readonly IMIUDataManager _dataManager;
@@ -48,19 +27,14 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
         // I suoi metodi saranno chiamati staticamente.
         private readonly Logger _logger;
         private readonly LearningStatisticsManager _learningStatsManager; // Gestisce il caricamento/salvataggio delle statistiche
-
         private CancellationTokenSource _cancellationTokenSource;
         private Task _explorationTask;
-
         private long _currentSearchId; // ID della ricerca corrente gestito dal motore
         private Dictionary<long, RuleStatistics> _ruleStatistics; // Statistiche delle regole in memoria
         private Dictionary<Tuple<string, long>, TransitionStatistics> _transitionStatistics; // Statistiche delle transizioni in memoria
-
         public bool IsExplorationRunning { get; private set; }
-
         public event EventHandler<string> OnExplorationStatusChanged;
         public event EventHandler<int> OnNodesExploredCountChanged;
-        // public event EventHandler<NewMiuStringFoundEventArgs> OnNewStringDiscovered;
         public event EventHandler<NewMiuStringDiscoveredEventArgs> OnNewStringDiscovered; // MODIFIED: Ora usa NewMiuStringDiscoveredEventArgs
         private readonly EventBus _eventBus; // 25.07.11 Aggiunta la dipendenza EventBus
 
@@ -88,7 +62,24 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
 
             _logger.Log(LogLevel.INFO, "[MIUDerivationEngine] Motore di derivazione inizializzato.");
         }
-
+        /// <summary>
+        /// 2025.08.21
+        /// Metodo privato per la gestione centralizzata delle anomalie.
+        /// Registra l'anomalia nel database ExplorationAnomalies.
+        /// </summary>
+        private void HandleExplorationAnomaly(AnomalyType type, int? ruleId, string contextSample, string description, long searchId, string severity = "WARNING")
+        {
+            var anomaly = new ExplorationAnomaly(
+                type: type,
+                ruleId: ruleId,
+                contextPatternHash: null,
+                contextPatternSample: contextSample,
+                description: description
+            );
+            anomaly.SearchID = searchId;
+            anomaly.Severity = severity;
+            _dataManager.UpsertExplorationAnomaly(anomaly);
+        }
         // Metodo protetto per sollevare l'evento OnNewStringDiscovered
         protected virtual void OnNewStringDiscoveredInternal(NewMiuStringDiscoveredEventArgs e) // MODIFIED: Ora usa NewMiuStringDiscoveredEventArgs
         {
@@ -147,7 +138,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     // Se non ci sono ID salvati nel cursore, persistiamo la stringa iniziale
                     if (!string.IsNullOrEmpty(initialString)) // Se lo scheduler ha fornito una stringa iniziale valida
                     {
-                        Tuple<long, bool> result = _dataManager.UpsertMIUState(initialString);
+                        Tuple<long, bool> result = _dataManager.UpsertMIUStateHistory(initialString);
                         initialStringStateId = result.Item1;
                         actualInitialString = initialString; // Assicurati che sia la stringa passata
 
@@ -166,7 +157,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                         else
                         {
                             _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine] Impossibile trovare stato con ID {cursor.CurrentSourceIndex}. Riavvio da '{initialString}'.");
-                            Tuple<long, bool> result = _dataManager.UpsertMIUState(string.Empty);
+                            Tuple<long, bool> result = _dataManager.UpsertMIUStateHistory(string.Empty);
                             initialStringStateId = result.Item1;
                             actualInitialString = string.Empty;
                         }
@@ -174,7 +165,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     else
                     {
                         _logger.Log(LogLevel.INFO, "[MIUDerivationEngine] Inizializzato stato di partenza (nessun input/cursore). Inizio da stringa vuota.", true, 250);
-                        Tuple<long, bool> result = _dataManager.UpsertMIUState(string.Empty); // Inizia con stringa vuota
+                        Tuple<long, bool> result = _dataManager.UpsertMIUStateHistory(string.Empty); // Inizia con stringa vuota
                         initialStringStateId = result.Item1;
                         actualInitialString = string.Empty;
                     }
@@ -206,8 +197,9 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                         compressedInitial,
                         compressedTarget,
                         _cancellationTokenSource.Token, // Passa il CancellationToken
-                        _dataManager // NEW: Passa l'istanza di IMIUDataManager
-                    );
+                        _dataManager,// NEW: Passa l'istanza di IMIUDataManager
+                        HandleExplorationAnomaly 
+                    ); // <- errore cs70036
 
                     // Dopo che TrovaDerivazioneAutomatica è terminato (o annullato), aggiorna la ricerca finale
                     // La logica di UpdateSearch e il salvataggio finale delle statistiche si trova in HandleSolutionFound
@@ -257,6 +249,8 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                 finally
                 {
                     IsExplorationRunning = false;
+                    // NEW: Aggiorna la stima della profondità media delle regole nel database
+                    UpdateRuleAverageDepthInDatabase();
                     // Disiscrizione dagli eventi per evitare memory leak o chiamate a oggetto dismesso
                     RegoleMIUManager.OnRuleApplied -= HandleRuleApplied;
                     RegoleMIUManager.OnSolutionFound -= HandleSolutionFound;
@@ -332,7 +326,20 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
 
             return _explorationTask;
         }
-
+        /// <summary>
+        /// 2025.08.22
+        /// Aggiorna la stima della profondità media delle regole nel database.
+        /// Questo metodo deve essere chiamato alla fine di ogni sessione di ricerca.
+        /// </summary>
+        public void UpdateRuleAverageDepthInDatabase()
+        {
+            foreach (var stat in _ruleStatistics.Values)
+            {
+                // Il calcolo della media è già gestito dalla proprietà AverageDepth
+                // Chiamata al DataManager per persistere il valore
+                _dataManager.UpdateRuleAverageDepth(stat.RuleID, stat.AverageDepth);
+            }
+        }
         /// <summary>
         /// Richiede l'interruzione dell'esplorazione corrente.
         /// </summary>
@@ -365,10 +372,10 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
 
             // Persistenza dello stato originale e del nuovo stato
 
-            Tuple<long, bool> parentStateResult = _dataManager.UpsertMIUState(e.OriginalString);
+            Tuple<long, bool> parentStateResult = _dataManager.UpsertMIUStateHistory(e.OriginalString);
             long parentStateId = parentStateResult.Item1;
 
-            Tuple<long, bool> newStateResult = _dataManager.UpsertMIUState(e.NewString);
+            Tuple<long, bool> newStateResult = _dataManager.UpsertMIUStateHistory(e.NewString);
             long newStateId = newStateResult.Item1;
             bool isNewString = newStateResult.Item2; // Questo flag ci dice se la stringa è nuova
 
@@ -388,6 +395,7 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                 _ruleStatistics[e.AppliedRuleID] = new RuleStatistics { RuleID = e.AppliedRuleID };
             }
             _ruleStatistics[e.AppliedRuleID].ApplicationCount++;
+            _ruleStatistics[e.AppliedRuleID].TotalDepthSum += e.CurrentDepth;
             _ruleStatistics[e.AppliedRuleID].LastApplicationTimestamp = DateTime.Now;
             _ruleStatistics[e.AppliedRuleID].RecalculateEffectiveness();
             _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Learning] Rule {e.AppliedRuleID} ({RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == e.AppliedRuleID)?.Nome ?? "Unknown"}) ApplicationCount incremented to {_ruleStatistics[e.AppliedRuleID].ApplicationCount}.");
@@ -449,11 +457,34 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
             _logger.Log(e.Success ? LogLevel.INFO : LogLevel.WARNING, $"[MIUDerivationEngine - Solution Found] {message}", true, 250);
             OnExplorationStatusChanged?.Invoke(this, e.Success ? "Soluzione trovata!" : "Soluzione non trovata.");
 
+            // NUOVO BLOCCO: Gestisce il caso in cui la ricerca non ha trovato una soluzione.
+            if (!e.Success)
+            {
+                // Crea l'oggetto ExplorationAnomaly utilizzando il costruttore esistente
+                var anomaly = new ExplorationAnomaly(
+                    type: AnomalyType.SearchFailure, // Utilizza un tipo di anomalia specifico
+                    ruleId: null,
+                    contextPatternHash: null,
+                    contextPatternSample: null,
+                    description: $"Nessuna soluzione trovata. Limiti raggiunti: Nodi esplorati={e.NodesExplored}, Profondità={e.MaxDepthReached}."
+                );
 
+                // Assegna le nuove proprietà specifiche per il fallimento di ricerca
+                anomaly.SearchID = e.SearchID;
+                anomaly.SourceString = e.InitialString;
+                anomaly.TargetString = e.TargetString;
+                anomaly.Severity = "WARNING";
+
+                // Passa l'oggetto al metodo di gestione del database
+                _dataManager.UpsertExplorationAnomaly(anomaly);
+
+                // Termina il metodo qui, non c'è altro da fare in caso di fallimento
+                return;
+            }
             // Aggiorna la ricerca nel DB
             _dataManager.UpdateSearch(e.SearchID, e.Success, e.ElapsedMilliseconds, e.StepsTaken, e.NodesExplored, e.MaxDepthReached);
 
-            if (e.Success && e.SolutionPathSteps != null)
+            if (e.SolutionPathSteps != null)
             {
                 foreach (PathStepInfo step in e.SolutionPathSteps)
                 {
@@ -529,5 +560,6 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                 }
             });
         }
+
     }
 }

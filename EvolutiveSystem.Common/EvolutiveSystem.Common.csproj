@@ -59,7 +59,10 @@
     <Compile Include="MiuNotificationEventArgs.cs" />
     <Compile Include="MiuPatternDefinitions.cs" />
     <Compile Include="MIURule.cs" />
+    <Compile Include="MIURuleApplication.cs" />
     <Compile Include="MIUState.cs" />
+    <Compile Include="MIUStateDb.cs" />
+    <Compile Include="MIUStateHistoryDb.cs" />
     <Compile Include="MiuStateInfo.cs" />
     <Compile Include="MIUStringTopologyDataModels.cs" />
     <Compile Include="PIDParameterKeys.cs" />

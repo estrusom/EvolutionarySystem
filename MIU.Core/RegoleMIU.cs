@@ -125,7 +125,8 @@ namespace MIU.Core
         private static int _MAX_STRING_LENGTH = 1000;
         private static int _STRING_LENGTH_PENALTY_THRESHOLD = 20; // Soglia arbitraria: oltre 20 caratteri, inizia la penalità. Puoi calibrare.
         private static double _STRING_LENGTH_PENALTY_FACTOR = 5.0; // Quanto penalizzare per ogni carattere oltre la soglia. Valore più alto = penalità più aggressiva.
-        
+        // per evitare la referenza circolare tra RegoleMIUManager e EvolutiveSystem.Engine. usiamo un delegato per gli eventi di esplorazione delle anomalie
+        public delegate void ExplorationAnomalyHandler(AnomalyType type, int? ruleID, string stateString, string message, long searchID, string logType);
 
         /// <summary>
         /// imposta la lunghezza massima delle stringhe di ricerca
@@ -153,7 +154,7 @@ namespace MIU.Core
         /// Maximum number of steps/nodes to explore for Breadth-First Searches (BFS).
         /// Set by the orchestrator at startup.
         /// </summary>
-        public static long MassimoPassiRicerca { get; set; }
+        public static long MaxNodiDaEsplorare{ get; set; }
 
         // NEW: Static property to access current RuleStatistics loaded by the orchestrator
         /// <summary>
@@ -322,7 +323,7 @@ namespace MIU.Core
         /// Uses the static property MaxProfonditaRicerca for the depth limit.
         /// </summary>
         /// <param name="searchId">The ID of the current search for persistence.</param>
-        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed, IMIUDataManager dataManager, CancellationToken cancellationToken) // MODIFIED SIGNATURE
+        public static List<PathStepInfo> TrovaDerivazioneDFS(long searchId, string startStringCompressed, string targetStringCompressed, IMIUDataManager dataManager, CancellationToken cancellationToken, ExplorationAnomalyHandler onAnomalyDetected) // MODIFIED SIGNATURE
         {
             // Decompress initial and target strings for internal search
             string startStringStandard = MIUStringConverter.InflateMIUString(startStringCompressed);
@@ -341,7 +342,7 @@ namespace MIU.Core
                 AppliedRuleID = null, // No rule applied for initial state
                 ParentStateStringStandard = null, // No parent for initial state
                 // Inizializzazione delle nuove proprietà per il passo inizialecv 
-                StateID = dataManager.UpsertMIUState(startStringCompressed).Item1,
+                StateID = dataManager.UpsertMIUStateHistory(startStringCompressed).Item1,
                 ParentStateID = null, // Verrà aggiornato dal repository
                 Depth = 0,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
@@ -391,6 +392,7 @@ namespace MIU.Core
 
                 if (currentPath.Count - 1 >= MaxProfonditaRicerca)
                 {
+                    //L'EVENTO DI MAX PROFONDITA RICERCA VIENE SCATENATO QUI
                     LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Maximum depth reached ({MaxProfonditaRicerca}) for '{currentStandard}'. Pruning this branch.", true);
                     continue; // Maximum depth reached
                 }
@@ -463,9 +465,40 @@ namespace MIU.Core
                         // Log che la regola è stata applicata
                         LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
 
-                        // Controllo della lunghezza della stringa generata
-                        if (newStringStandard.Length > MAX_STRING_LENGTH) // QUESTA E' UNA CAZZATA
+                        // Passo 1: Calcola i valori per i nuovi campi (devi implementare questa logica)
+                        int usageCount = CalcolaConteggioUtilizzo(newStringStandard);
+                        string detectedHashes = TrovaPatternRilevati(newStringStandard);
+
+
+                        var newState = new MIUStateHistoryDb
                         {
+                            MIUString = MIUStringConverter.DeflateMIUString(newStringStandard),
+                            Hash = MIUStringConverter.DeflateMIUString(newStringStandard),
+                            FirstDiscoveredByRuleId = rule.ID,
+                            Depth = currentPath.Count,
+                            TimesFound = 1,
+                            Timestamp = DateTime.UtcNow.ToString("o"),
+                            UsageCount = usageCount, // Valore calcolato qui
+                            DetectedPatternHashes_SCSV = detectedHashes // Valore calcolato qui
+                        };
+
+                        // Passo 3: Chiama il nuovo metodo di persistenza con l'oggetto completo
+                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUStateHistory(newState);
+                        long newStateId = upsertResult.Item1;
+                        bool isNewToDatabase = upsertResult.Item2;
+
+                        // Controllo della lunghezza della stringa generata
+                        if (newStringStandard.Length > MAX_STRING_LENGTH) 
+                        {
+                            // L'EVENTO DI MAX LUNGHEZZA STRINGA VIENE SCATENATO QUI
+                            onAnomalyDetected?.Invoke(
+                                AnomalyType.ExcessiveLengthGeneration,
+                                (int)rule.ID,
+                                newStringStandard,
+                                $"Regola {rule.ID} ha generato una stringa di lunghezza eccessiva ({newStringStandard.Length} > {MAX_STRING_LENGTH}).",
+                                searchId,
+                                "WARNING"
+                            );
                             LoggerInstance?.Log(LogLevel.INFO, $"[DFS] Stringa '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...' troppo lunga ({newStringStandard.Length} > {MAX_STRING_LENGTH}). Saltata.", true);
                             continue; // Salta questa stringa e passa alla prossima regola/iterazione
                         }
@@ -482,7 +515,7 @@ namespace MIU.Core
                         });
 
                         // Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
-                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUState(MIUStringConverter.DeflateMIUString(newStringStandard));
+                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUStateHistory(MIUStringConverter.DeflateMIUString(newStringStandard));
                         long newStateId = upsertResult.Item1;
                         bool isNewToDatabase = upsertResult.Item2;
 
@@ -558,7 +591,7 @@ namespace MIU.Core
         /// <param name="targetStringCompressed">The compressed target string.</param>
         /// <param name="cancellationToken">A cancellation token for early termination.</param>
         /// <returns>The list of PathStepInfo that constitutes the solution, or null if not found.</returns>
-        public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken, IMIUDataManager dataManager) // MODIFIED SIGNATURE
+        public static List<PathStepInfo> TrovaDerivazioneBFS(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken, IMIUDataManager dataManager, ExplorationAnomalyHandler onAnomalyDetected) // MODIFIED SIGNATURE
         {
             string startStringStandard = MIUStringConverter.InflateMIUString(startStringCompressed);
             string targetStringStandard = MIUStringConverter.InflateMIUString(targetStringCompressed);
@@ -584,7 +617,7 @@ namespace MIU.Core
                 StateStringStandard = startStringStandard,
                 AppliedRuleID = null, // No rule applied for initial state
                 ParentStateStringStandard = null, // No parent for initial state
-                StateID = dataManager.UpsertMIUState(startStringCompressed).Item1,
+                StateID = dataManager.UpsertMIUStateHistory(startStringCompressed).Item1,
                 ParentStateID = null, // Verrà aggiornato dal repository
                 Depth = 0,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
@@ -602,7 +635,7 @@ namespace MIU.Core
             int nodesExplored = 0;
             int maxDepthReached = 0;
 
-            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max steps: {MassimoPassiRicerca}, Max Depth: {MaxProfonditaRicerca})", true);
+            LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Starting search from '{startStringStandard}' to '{targetStringStandard}' (Max nodi da esplorare: {MaxNodiDaEsplorare}, Max Depth: {MaxProfonditaRicerca})", true);
 
             while (priorityQueue.Count > 0) // Il ciclo ora opera sulla nostra lista a priorità
             {
@@ -643,19 +676,39 @@ namespace MIU.Core
                 }
 
                 // Limite di passi di esplorazione raggiunto (ora `nodesExplored` si riferisce ai nodi *estratti* dalla coda)
-                if (nodesExplored >= MassimoPassiRicerca)
+                                    // L'EVENTO DI MAX NODI DA ESPLORARE VIENE SCATENATO QUI
+                if (nodesExplored >= MaxNodiDaEsplorare)
                 {
-                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Maximum exploration steps reached ({MassimoPassiRicerca}). Terminating search.");
-                    break; // Esci dal loop
+                    // L'EVENTO DI MAX NODI DA ESPLORARE VIENE SCATENATO QUI
+                    onAnomalyDetected?.Invoke(
+                        AnomalyType.MaxNodesExplored,
+                        null, // Nessuna regola specifica ha causato l'anomalia
+                        currentStandard, // Lo stato corrente in cui si è verificata l'anomalia
+                        $"Massimo numero di nodi da esplorare ({MaxNodiDaEsplorare}) raggiunto.",
+                        searchId,
+                        "WARNING"
+                    );
+                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Maximum exploration steps reached ({MaxNodiDaEsplorare}). Terminating search.");
+                    continue; // Esci dal loop
                 }
 
                 // Limite di profondità raggiunto
                 if (currentPath.Count - 1 >= MaxProfonditaRicerca)
                 {
+                    // L'EVENTO DI MAX PROFONDITA RAGGIUNTA VIENE SCATENATO QUI
+                    onAnomalyDetected?.Invoke(
+                        AnomalyType.MaxNodesExplored,
+                        null, // Nessuna regola specifica ha causato l'anomalia
+                        currentStandard, // Lo stato corrente in cui si è verificata l'anomalia
+                        $"Massimo numero di nodi da esplorare ({MaxNodiDaEsplorare}) raggiunto.",
+                        searchId,
+                        "WARNING"
+                    );
                     LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Maximum depth reached ({MaxProfonditaRicerca}) for '{currentStandard}'. Pruning this branch.", true);
                     continue; // Salta l'esplorazione di questo ramo troppo profondo
                 }
-
+                
+                bool hasValidDerivations = false;
                 // La tua logica precedente di "orderedRules" qui non è più necessaria nello stesso modo,
                 // perché l'ordinamento degli stati da esplorare è ora gestito dalla `priorityQueue`
                 // basata sull'euristica CalculatePriority.
@@ -672,21 +725,22 @@ namespace MIU.Core
                     // Tenta di applicare la regola UNA SOLA VOLTA
                     bool applySuccess = rule.TryApply(currentStandard, out newStringStandard);
 
-                    // Log del risultato di TryApply per RuleID 1
-                    if (rule.ID == 1)
-                    {
-                        LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY-RESULT] TryApply for Rule ID 1 on '{currentStandard.Substring(0, Math.Min(currentStandard.Length, 50))}...' {(applySuccess ? "SUCCEEDED" : "FAILED")}.", true, 250);
-                    }
-
                     // Se la regola è stata applicata con successo, procedi con la logica successiva
                     if (applySuccess)
                     {
-                        // Log che la regola è stata applicata (POSIZIONAMENTO CORRETTO: qui, indipendentemente dalla lunghezza)
-                        LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
 
                         // Controllo della lunghezza della stringa generata
                         if (newStringStandard.Length > MAX_STRING_LENGTH)
                         {
+                            // L'EVENTO DI MAX LUNGHEZZA STRINGA VIENE SCATENATO QUI
+                            onAnomalyDetected?.Invoke(
+                                AnomalyType.ExcessiveLengthGeneration,
+                                (int)rule.ID,
+                                newStringStandard,
+                                $"Regola {rule.ID} ha generato una stringa di lunghezza eccessiva ({newStringStandard.Length} > {MAX_STRING_LENGTH}).",
+                                searchId,
+                                "WARNING"
+                            );
                             // Questo log indica che la stringa è stata scartata DOPO essere stata generata
                             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Stringa '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...' troppo lunga ({newStringStandard.Length} > {MAX_STRING_LENGTH}). Saltata. (Generated by Rule {rule.ID})", true); // Added rule ID for clarity
                             continue; // Salta questa stringa e passa alla prossima regola/iterazione
@@ -704,7 +758,7 @@ namespace MIU.Core
                         });
 
                         // Tentativo di inserire/aggiornare la stringa nel database e ottenere il flag isNewToDatabase
-                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUState(MIUStringConverter.DeflateMIUString(newStringStandard));
+                        Tuple<long, bool> upsertResult = dataManager.UpsertMIUStateHistory(MIUStringConverter.DeflateMIUString(newStringStandard));
                         long newStateId = upsertResult.Item1;
                         bool isNewToDatabase = upsertResult.Item2;
 
@@ -742,12 +796,25 @@ namespace MIU.Core
                             priorityQueue.Enqueue(new BFSQueueItem(newStringStandard, newPath, newPriority), (float)-newPriority);
 
                             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Added new state: '{newStringStandard}' (from '{currentStandard}' with rule '{rule.Nome}'). Depth: {newPathStep.Depth}. Priority: {newPriority:F4}. Queue Size: {priorityQueue.Count}", true);
+                            hasValidDerivations = true;
                         }
                         else
                         {
                             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] State '{newStringStandard}' already visited. Skipping.", true);
                         }
                     }
+                }
+                if (!hasValidDerivations)
+                {
+                    onAnomalyDetected?.Invoke(
+                        AnomalyType.DeadEndString,
+                        null,
+                        currentStandard,
+                        $"Nessuna regola ha generato una nuova stringa valida dallo stato '{currentStandard}'.",
+                        searchId,
+                        "WARNING"
+                    );
+                    LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Dead-end detected for state: '{currentStandard}'. No new valid paths.", true);
                 }
             }
 
@@ -770,7 +837,8 @@ namespace MIU.Core
             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] No solution found: '{startStringStandard}' -> '{targetStringCompressed}'. Nodes explored: {nodesExplored}, Max Depth: {maxDepthReached}. Time: {stopwatch.ElapsedMilliseconds} ms.");
             LoggerInstance?.Log(LogLevel.INFO, $"[BFS-Intelligent] Nessuna soluzione trovata o limiti raggiunti per ricerca ID: {searchId}. Restituisco null."); // 25.07.08
             return null;
-        }
+            }
+        
 
         /// <summary>
         /// Calcola la priorità di un nuovo stato da esplorare.
@@ -880,7 +948,7 @@ namespace MIU.Core
         /// <param name="targetStringCompressed">The compressed target string.</param>
         /// <param name="cancellationToken"> Un token di cancellazione che può essere usato per richiedere l'interruzione anticipata della ricerca.</param>
         /// <returns>The list of PathStepInfo that constitutes the solution, or null if not found.</returns>
-        public static List<PathStepInfo> TrovaDerivazioneAutomatica(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken, IMIUDataManager dataManager) // MODIFIED: Usa IMIUDataManager - MODIFIED SIGNATURE: Aggiunto dataManager
+        public static List<PathStepInfo> TrovaDerivazioneAutomatica(long searchId, string startStringCompressed, string targetStringCompressed, CancellationToken cancellationToken, IMIUDataManager dataManager, ExplorationAnomalyHandler onAnomalyDetected) // MODIFIED: Usa IMIUDataManager - MODIFIED SIGNATURE: Aggiunto dataManager
         {
             LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Automatic search requested from '{startStringCompressed}' to '{targetStringCompressed}'.", true, 250);
 
@@ -898,13 +966,13 @@ namespace MIU.Core
             {
                 chosenAlgorithm = "DFS (Automatic)";
                 LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Target string is longer. Chosen algorithm DFS.");
-                resultPath = TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed, dataManager, cancellationToken); 
+                resultPath = TrovaDerivazioneDFS(searchId, startStringCompressed, targetStringCompressed, dataManager, cancellationToken, onAnomalyDetected); 
             }
             else
             {
                 chosenAlgorithm = "BFS (Automatic)";
                 LoggerInstance?.Log(LogLevel.INFO, $"[AutoSearch] Target string is not significantly longer. Chosen algorithm BFS.");
-                resultPath = TrovaDerivazioneBFS(searchId, startStringCompressed, targetStringCompressed, cancellationToken, dataManager); 
+                resultPath = TrovaDerivazioneBFS(searchId, startStringCompressed, targetStringCompressed, cancellationToken, dataManager, onAnomalyDetected); ;
             }
 
             // The OnSolutionFound event is already invoked by the BFS/DFS methods,

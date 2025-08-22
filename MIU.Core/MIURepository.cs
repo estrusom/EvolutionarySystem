@@ -124,7 +124,7 @@ namespace MIU.Core
         {
             _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta UpsertMIUState per '{miuString}'.");
             // *** MODIFICA QUI: ORA RESTITUISCE IL Tuple COMPLETO ***
-            return _dataManager.UpsertMIUState(miuString); // Nessun errore di conversione implicita
+            return _dataManager.UpsertMIUStateHistory(miuString); // Nessun errore di conversione implicita
         }
 
         /// <summary>

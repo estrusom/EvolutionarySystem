@@ -13,6 +13,7 @@
 // necessarie per la delega da LearningStatisticsManager.
 // AGGIORNATO 21.06.2025: Aggiunta firma per SetJournalMode per incapsulare PRAGMA in MIUDatabaseManager.
 // AGGIORNATO 23.06.2025: Metodi resi asincroni per I/O e modificata gestione cursore esplorazione.
+// 2025.08.22 Aggiorna la stima della profondità media per una specifica regola.
 
 using System;
 using System.Collections.Generic;
@@ -58,7 +59,7 @@ namespace EvolutiveSystem.Common
         /// </summary>
         /// <param name="miuString">La stringa MIU da inserire/aggiornare.</param>
         /// <returns>Un Tuple dove Item1 è l'ID dello stato e Item2 è true se la stringa è stata appena inserita (nuova), false se esisteva già.</returns>
-        Tuple<long, bool> UpsertMIUState(string miuString);
+        Tuple<long, bool> UpsertMIUStateHistory(string miuString);
         // Reso asincrono per l'I/O del database
         Task<List<MiuStateInfo>> LoadMIUStatesAsync();
         bool SearchExists(string initialString, string targetString);
@@ -73,6 +74,13 @@ namespace EvolutiveSystem.Common
         // Operazioni per RegoleMIU
         List<RegolaMIU> LoadRegoleMIU();
         void UpsertRegoleMIU(List<RegolaMIU> regole);
+        /// <summary>
+        /// 2025.08.22
+        /// Aggiorna la stima della profondità media per una specifica regola.
+        /// </summary>
+        /// <param name="ruleId">L'ID della regola.</param>
+        /// <param name="averageDepth">Il valore della profondità media da salvare.</param>
+        void UpdateRuleAverageDepth(long ruleId, double averageDepth);
         /// <summary>
         /// Aggiunge o aggiorna una singola regola MIU nel database.
         /// </summary>
@@ -130,5 +138,10 @@ namespace EvolutiveSystem.Common
         /// </summary>
         /// <returns>Una lista di oggetti ExplorationAnomaly.</returns>
         List<ExplorationAnomaly> GetAllExplorationAnomalies();
+        /// <summary>
+        /// Carica tutte le applicazioni di regole MIU dal database.
+        /// </summary>
+        /// <returns>Una lista di oggetti MIURuleApplication.</returns>
+        List<MIURuleApplication> LoadAllRuleApplications();
     }
 }

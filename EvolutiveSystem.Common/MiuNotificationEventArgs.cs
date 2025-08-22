@@ -52,7 +52,7 @@ namespace EvolutiveSystem.Common // Namespace per le utilità comuni MIU-specifi
     {
         public long SearchID { get; set; } // L'ID della ricerca corrente
         public string DiscoveredString { get; set; } // La stringa MIU standard scoperta
-        public bool IsTrulyNewToDatabase { get; set; } // Indica se è anche nuova al DB (risultato di UpsertMIUState)
+        public bool IsTrulyNewToDatabase { get; set; } // Indica se è anche nuova al DB (risultato di UpsertMIUStateHistory)
         public long StateID { get; set; } // L'ID assegnato o recuperato dal DB
         public int Depth { get; set; } // 2025.07.18 Profondità a cui la stringa è stata scoperta
     }

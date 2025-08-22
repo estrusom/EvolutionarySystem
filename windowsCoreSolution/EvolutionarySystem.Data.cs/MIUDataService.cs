@@ -22,7 +22,16 @@ namespace EvolutionarySystem.Data
             _context = context;
         }
 
+        public async Task<(List<MIUPath> Paths, List<MIURuleApplication> RuleApplications, List<MIUStateHistory> StatesHistory)> GetAllDataAsync()
+        {
+            var paths = await _context.MIUPaths.ToListAsync();
+            var ruleApplications = await _context.MIURuleApplications.ToListAsync();
+            var statesHistory = await _context.MIUStatesHistory.ToListAsync(); // AGGIUNTA
+
+            return (paths, ruleApplications, statesHistory);
+        }
         // Metodo corretto che implementa l'interfaccia
+        /*
         public async Task<(List<MIUPath> Paths, List<MIURuleApplication> RuleApplications)> GetAllDataAsync()
         {
             // Uso i nomi delle proprietà corretti: MIUPaths e MIURuleApplications
@@ -31,5 +40,6 @@ namespace EvolutionarySystem.Data
 
             return (paths, ruleApplications);
         }
+        */
     }
 }

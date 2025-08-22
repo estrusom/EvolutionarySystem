@@ -18,15 +18,19 @@ namespace MIUtopologyApp
         public string Id { get; }
         public string Name { get; set; }
         public string Type { get; set; }
+        public int UsageCount { get; set; }
+        public string DetectedPatternHashes_SCSV { get; set; }
 
-        public MemoryUnit(string id, string name, string type)
+        public MemoryUnit(string id, string name, string type, int usageCount, string detectedPatternHashes)
         {
             Id = id;
             Name = name;
             Type = type;
+            UsageCount = usageCount;
+            DetectedPatternHashes_SCSV = detectedPatternHashes;
         }
 
-        public override string ToString() => $"MU: {Name} (ID: {Id}, Tipo: {Type})";
+        public override string ToString() => $"MU: {Name} (ID: {Id}, Tipo: {Type}, Usage: {UsageCount})";
     }
 
     public class Link
@@ -167,7 +171,23 @@ namespace MIUtopologyApp
                 _logger.Log(LogLevel.INFO, "Avvio del caricamento della topologia dal database.");
 
                 // Accede ai dati usando la destructurazione della tupla
-                var (paths, ruleApplications) = await _dataService.GetAllDataAsync();
+                var (paths, ruleApplications, statesHistory) = await _dataService.GetAllDataAsync();
+
+                var stateHistoryMap = statesHistory.ToDictionary(s => s.Id, s => s);
+
+                using (StreamWriter rawData = new StreamWriter("rawData.txt", false))
+                {
+                    rawData.WriteLine("MIUPaths:");
+                    foreach (var path in paths)
+                    {
+                        rawData.WriteLine($"ID: {path.StateID}, Parent: {path.ParentStateID}, IsTarget: {path.IsTarget}, IsSuccess: {path.IsSuccess}");
+                    }
+                    rawData.WriteLine("ruleApplications:");
+                    foreach (var ruleApp in ruleApplications)
+                    {
+                        rawData.WriteLine($"NewStateID: {ruleApp.NewStateID}, AppliedRuleID: {ruleApp.AppliedRuleID}");
+                    }
+                }
 
                 _topology = new TopologyGraph();
                 var addedNodes = new Dictionary<int, MemoryUnit>();
@@ -178,14 +198,17 @@ namespace MIUtopologyApp
                     // Aggiunge i nodi se non esistono già
                     if (!addedNodes.ContainsKey(path.StateID))
                     {
-                        var node = new MemoryUnit(path.StateID.ToString(), $"Stato {path.StateID}", "Stato");
+                        var historyData = stateHistoryMap[path.StateID];
+                        var node = new MemoryUnit(path.StateID.ToString(), $"Stato {path.StateID}", "Stato", (int)historyData.UsageCount, historyData.DetectedPatternHashes_SCSV);
+
                         _topology.AddNode(node);
                         addedNodes.Add(path.StateID, node);
                     }
 
                     if (path.ParentStateID.HasValue && !addedNodes.ContainsKey(path.ParentStateID.Value))
                     {
-                        var parentNode = new MemoryUnit(path.ParentStateID.Value.ToString(), $"Stato {path.ParentStateID.Value}", "Stato");
+                        var historyData = stateHistoryMap[path.ParentStateID.Value];
+                        var parentNode = new MemoryUnit(path.ParentStateID.Value.ToString(), $"Stato {path.ParentStateID.Value}", "Stato", (int)historyData.UsageCount, historyData.DetectedPatternHashes_SCSV);
                         _topology.AddNode(parentNode);
                         addedNodes.Add(path.ParentStateID.Value, parentNode);
                     }
@@ -203,7 +226,9 @@ namespace MIUtopologyApp
                     // Correzione: uso NewStateID, che è il campo corretto
                     if (!addedNodes.ContainsKey(ruleApp.NewStateID))
                     {
-                        var node = new MemoryUnit(ruleApp.NewStateID.ToString(), $"Stato {ruleApp.NewStateID}", "Stato");
+                        var historyData = stateHistoryMap[ruleApp.NewStateID];
+                        var node = new MemoryUnit(ruleApp.NewStateID.ToString(), $"Stato {ruleApp.NewStateID}", "Stato",
+                    (int)historyData.UsageCount, historyData.DetectedPatternHashes_SCSV);
                         _topology.AddNode(node);
                         addedNodes.Add(ruleApp.NewStateID, node);
                     }

@@ -25,8 +25,18 @@ namespace EvolutiveSystem.Common
         /// Indica che una stringa generata non è riuscita a innescare ulteriori derivazioni utili.
         /// </summary>
         DeadEndString = 4,
-        // Puoi aggiungere altri tipi di anomalie man mano che il sistema evolve la sua comprensione
-        // Ad esempio: LoopDetection, TargetProximityStagnation, etc.
+        /// <summary>
+        /// Indica che una ricerca completa è fallita (e.g. per aver raggiunto i limiti di esplorazione).
+        /// </summary>
+        SearchFailure = 5,
+        /// <summary>
+        /// Indica che la ricerca ha superato il numero massimo di nodi da esplorare.
+        /// </summary>
+        MaxNodesExplored = 6,
+        /// <summary>
+        /// Indica che la ricerca ha raggiunto la massima profondità consentita, portando al "potamento" del ramo.
+        /// </summary>
+        MaxDepthReached = 7
     }
 
     /// <summary>
@@ -47,6 +57,11 @@ namespace EvolutiveSystem.Common
         public string Description { get; set; } // Descrizione generata dell'anomalia
         public bool IsNewCategory { get; set; } // Indica se questa è una categoria di anomalia appena identificata
         public DateTime CreatedDate { get; set; } // Data di creazione della voce nel DB
+                                                  // Nuove proprietà per le anomalie di tipo 'SearchFailure'
+        public long? SearchID { get; set; }
+        public string SourceString { get; set; }
+        public string TargetString { get; set; }
+        public string Severity { get; set; }
 
         /// <summary>
         /// Costruttore per facilitare la creazione di nuove istanze di anomalie in memoria.

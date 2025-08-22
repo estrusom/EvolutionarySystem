@@ -16,10 +16,12 @@ using MasterLog;
 using System.Globalization;
 using System.Text; // Necessario per StringBuilder in LoadRegoleMIU o altri metodi di utilità
 using EvolutiveSystem.Common; // Aggiunto per le classi modello spostate
-using System.Threading.Tasks; // NECESSARIO PER I METODI ASINCRONI
+using System.Threading.Tasks;
+using System.Web; // NECESSARIO PER I METODI ASINCRONI
 
 namespace EvolutiveSystem.SQL.Core
 {
+    
     /// <summary>
     /// Gestore del database MIU. Questa classe fornisce un'interfaccia di alto livello
     /// per la persistenza dei dati relativi al sistema MIU (ricerche, stati, regole, statistiche, configurazione).
@@ -165,7 +167,7 @@ namespace EvolutiveSystem.SQL.Core
         /// </summary>
         /// <param name="miuString">La stringa MIU da inserire/aggiornare.</param>
         /// <returns>Una tupla contenente l'ID dello stato e un booleano che indica se lo stato è nuovo (true) o aggiornato (false).</returns>
-        public Tuple<long, bool> UpsertMIUState(string miuString)
+        public Tuple<long, bool> UpsertMIUStateHistory(string miuString)
         {
             if (string.IsNullOrEmpty(miuString))
             {
@@ -245,60 +247,97 @@ namespace EvolutiveSystem.SQL.Core
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        _logger.Log(LogLevel.ERROR, $"Errore in UpsertMIUState: {ex.Message}");
+                        _logger.Log(LogLevel.ERROR, $"Errore in UpsertMIUStateHistory: {ex.Message}");
                         return Tuple.Create(-1L, false);
                     }
                 }
             }
         }
-        /*
         /// <summary>
-        /// Inserisce o aggiorna uno stato MIU (una stringa MIU).
-        /// Se lo stato esiste già, ne incrementa l'uso. Altrimenti, lo inserisce.
+        /// metodo privato per mantenere la compatibilità con UpsertMIUStateHistory esposta dall'interfaccia IMIUDataManager.
         /// </summary>
-        /// <param name="miuString">La stringa MIU standard (non compressa).</param>
-        /// <returns>L'ID dello stato MIU nel database.</returns>
-        public Tuple<long, bool> UpsertMIUState(string miuString)
+        /// <param name="state"></param>
+        /// <returns></returns>
+        private Tuple<long, bool> InternalUpsertMIUState(MIUStateHistoryDb state)
         {
-            long stateId = -1;
-            bool isNewString = false; // Flag per indicare se la stringa è nuova
-            try
+            long id = -1;
+            bool isNewState = false;
+
+            using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
             {
-                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
                 {
-                    connection.Open();
-                    string selectSql = "SELECT StateID FROM MIU_States WHERE CurrentString = @miuString";
-                    using (var selectCommand = new SQLiteCommand(selectSql, connection))
+                    try
                     {
-                        selectCommand.Parameters.AddWithValue("@miuString", miuString);
-                        object result = selectCommand.ExecuteScalar();
-                        if (result != null)
+                        // La logica di verifica, aggiornamento e inserimento è qui
+                        string checkSql = "SELECT Id FROM MIU_States_History WHERE Hash = @hash;";
+                        using (var checkCmd = new SQLiteCommand(checkSql, connection, transaction))
                         {
-                            stateId = (long)result;
-                            string updateSql = "UPDATE MIU_States SET UsageCount = UsageCount + 1, DiscoveryTime_Int = @timeInt, DiscoveryTime_Text = @timeText WHERE StateID = @stateId";
-                            using (var updateCommand = new SQLiteCommand(updateSql, connection))
+                            checkCmd.Parameters.AddWithValue("@hash", state.Hash);
+                            var result = checkCmd.ExecuteScalar();
+
+                            if (result != null)
                             {
-                                updateCommand.Parameters.AddWithValue("@timeInt", DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-                                updateCommand.Parameters.AddWithValue("@timeText", DateTime.UtcNow.ToString("yyyy/MM/dd HH:mm:ss"));
-                                updateCommand.Parameters.AddWithValue("@stateId", stateId);
-                                updateCommand.ExecuteNonQuery();
+                                isNewState = false;
+                                id = (long)result;
+
+                                string updateSql = @"
+                        UPDATE MIU_States_History
+                        SET TimesFound = TimesFound + 1,
+                            UsageCount = @usageCount,
+                            DetectedPatternHashes_SCSV = @detectedPatternHashes
+                        WHERE Id = @id;";
+
+                                using (var updateCmd = new SQLiteCommand(updateSql, connection, transaction))
+                                {
+                                    updateCmd.Parameters.AddWithValue("@id", id);
+                                    updateCmd.Parameters.AddWithValue("@usageCount", state.UsageCount);
+                                    updateCmd.Parameters.AddWithValue("@detectedPatternHashes", state.DetectedPatternHashes_SCSV);
+                                    updateCmd.ExecuteNonQuery();
+                                }
+                                _logger.Log(LogLevel.DEBUG, $"MIUState '{state.MIUString}' aggiornato. ID: {id}", true);
                             }
-                            _logger.Log(LogLevel.DEBUG, $"MIUState '{miuString}' aggiornato. ID: {stateId}");
+                            else
+                            {
+                                isNewState = true;
+                                string insertSql = @"
+                        INSERT INTO MIU_States_History (
+                            MIUString, Hash, FirstDiscoveredByRuleId, Depth, TimesFound, Timestamp, UsageCount, DetectedPatternHashes_SCSV
+                        )
+                        VALUES (
+                            @miuString, @hash, @ruleId, @depth, @timesFound, @timestamp, @usageCount, @detectedPatternHashes
+                        );
+                        SELECT last_insert_rowid();";
+
+                                using (var insertCmd = new SQLiteCommand(insertSql, connection, transaction))
+                                {
+                                    insertCmd.Parameters.AddWithValue("@miuString", state.MIUString);
+                                    insertCmd.Parameters.AddWithValue("@hash", state.Hash);
+                                    insertCmd.Parameters.AddWithValue("@ruleId", state.FirstDiscoveredByRuleId);
+                                    insertCmd.Parameters.AddWithValue("@depth", state.Depth);
+                                    insertCmd.Parameters.AddWithValue("@timesFound", state.TimesFound);
+                                    insertCmd.Parameters.AddWithValue("@timestamp", state.Timestamp);
+                                    insertCmd.Parameters.AddWithValue("@usageCount", state.UsageCount);
+                                    insertCmd.Parameters.AddWithValue("@detectedPatternHashes", state.DetectedPatternHashes_SCSV);
+
+                                    id = (long)insertCmd.ExecuteScalar();
+                                }
+                                _logger.Log(LogLevel.DEBUG, $"Nuova stringa individuata: '{state.MIUString}'. ID: {id}");
+                            }
                         }
-                        else
-                        {
-                            _logger.Log(LogLevel.DEBUG, $"Nuova stringa individuata: '{miuString}'. ID: {stateId}");
-                        }
+                        transaction.Commit();
+                        return Tuple.Create(id, isNewState);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        _logger.Log(LogLevel.ERROR, $"Errore in InternalUpsertMIUState: {ex.Message}");
+                        return Tuple.Create(-1L, false);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.Log(LogLevel.ERROR, $"Errore in UpsertMIUState: {ex.Message}");
-            }
-            return Tuple.Create(stateId, isNewString);
         }
-        */
         /// <summary>
         /// Registra un'applicazione di una regola MIU come parte di una ricerca.
         /// </summary>
@@ -452,6 +491,33 @@ namespace EvolutiveSystem.SQL.Core
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, $"Errore salvataggio RegoleMIU: {ex.Message}");
+            }
+        }
+        /// <summary>
+        /// Aggiorna la stima della profondità media per una specifica regola.
+        /// </summary>
+        /// <param name="ruleId">L'ID della regola.</param>
+        /// <param name="averageDepth">Il valore della profondità media da salvare.</param>
+        public void UpdateRuleAverageDepth(long ruleId, double averageDepth)
+        {
+            try
+            {
+                _logger.Log(LogLevel.DEBUG, $"Aggiornamen to di {ruleId} col valore: {averageDepth}");
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "UPDATE RegoleMIU SET StimaProfonditaMedia = @averageDepth WHERE ID = @ruleId";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@averageDepth", averageDepth);
+                        command.Parameters.AddWithValue("@ruleId", ruleId);
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"Errore nell'aggiornare la profondità media per la regola {ruleId}: {ex.Message}");
             }
         }
         /// <summary>
@@ -1135,19 +1201,19 @@ namespace EvolutiveSystem.SQL.Core
                         // Array delle tabelle da pulire
                         string[] tablesToClear = new string[]
                         {
-                            //"AntithesisEvent",
+                            "AntithesisEvent",
                             "ExplorationAnomalies",
-                            //"Learning_RuleStatistics",
-                            //"Learning_TransitionStatistics",
-                            //"LlmArchitectureLog",
-                            //"LlmSemanticInterpretation",
-                            //"MIU_Actions", // Inserita come richiesto, se esiste
-                            //"MIU_Paths",
-                            //"MIU_RuleApplications",
-                            //"MIU_Searches",
-                            //"MiuPattern",
-                            //"MIU_States_History",
-                            //"PatternStatistics"
+                            "Learning_RuleStatistics",
+                            "Learning_TransitionStatistics",
+                            "LlmArchitectureLog",
+                            "LlmSemanticInterpretation",
+                            "MIU_Actions", // Inserita come richiesto, se esiste
+                            "MIU_Paths",
+                            "MIU_RuleApplications",
+                            "MIU_Searches",
+                            "MiuPattern",
+                            "MIU_States_History",
+                            "PatternStatistics"
                         };
 
                         foreach (var tableName in tablesToClear)
@@ -1270,74 +1336,6 @@ namespace EvolutiveSystem.SQL.Core
             }
         }
 
-        ///// <summary>
-        ///// Inserisce o aggiorna un record di ExplorationAnomaly nel database.
-        ///// Se l'anomalia esiste già (stesso Type, RuleId, ContextPatternHash), viene aggiornata.
-        ///// Altrimenti, viene inserita come nuovo record.
-        ///// </summary>
-        ///// <param name="anomaly">L'oggetto ExplorationAnomaly da salvare.</param>
-        //public void UpsertExplorationAnomaly(ExplorationAnomaly anomaly)
-        //{
-        //    // La query INSERT OR REPLACE è specifica di SQLite e gestisce l'upsert.
-        //    // Se un record con la stessa combinazione di (Type, RuleId, ContextPatternHash) esiste,
-        //    // viene rimpiazzato. Altrimenti, viene inserito un nuovo record.
-        //    string sql = @"
-        //    INSERT OR REPLACE INTO ExplorationAnomalies (
-        //        Id, Type, RuleId, ContextPatternHash, ContextPatternSample,
-        //        Count, AverageValue, AverageDepth, LastDetected, Description, IsNewCategory, CreatedDate
-        //    ) VALUES (
-        //        -- Se l'anomalia ha già un Id (cioè è stata letta dal DB), lo usiamo.
-        //        -- Altrimenti, passiamo NULL per far sì che AUTOINCREMENT generi un nuovo Id.
-        //        (SELECT Id FROM ExplorationAnomalies WHERE Type = @Type AND RuleId = @RuleId AND ContextPatternHash = @ContextPatternHash),
-        //        @Type, @RuleId, @ContextPatternHash, @ContextPatternSample,
-        //        @Count, @AverageValue, @AverageDepth, @LastDetected, @Description, @IsNewCategory, @CreatedDate
-        //    );";
-
-        //    try // Inizio blocco try
-        //    {
-        //        using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString)) // Inizio using (connection)
-        //        {
-        //            connection.Open();
-        //            using (var command = new SQLiteCommand(sql, connection)) // Inizio using (command)
-        //            {
-        //                // Gestione dei valori nullable (RuleId, ContextPatternHash, ContextPatternSample)
-        //                // e conversione dei tipi per il database.
-        //                command.Parameters.AddWithValue("@Id", anomaly.Id == 0 ? (object)DBNull.Value : anomaly.Id);
-        //                command.Parameters.AddWithValue("@Type", (int)anomaly.Type);
-        //                command.Parameters.AddWithValue("@RuleId", anomaly.RuleId.HasValue ? (object)anomaly.RuleId.Value : DBNull.Value);
-        //                command.Parameters.AddWithValue("@ContextPatternHash", anomaly.ContextPatternHash.HasValue ? (object)anomaly.ContextPatternHash.Value : DBNull.Value);
-        //                command.Parameters.AddWithValue("@ContextPatternSample", anomaly.ContextPatternSample ?? (object)DBNull.Value);
-        //                command.Parameters.AddWithValue("@Count", anomaly.Count);
-        //                command.Parameters.AddWithValue("@AverageValue", anomaly.AverageValue);
-        //                command.Parameters.AddWithValue("@AverageDepth", anomaly.AverageDepth);
-        //                // Formato ISO 8601 con millisecondi per precisione e compatibilità SQLite
-        //                command.Parameters.AddWithValue("@LastDetected", anomaly.LastDetected.ToString("yyyy-MM-dd HH:mm:ss.ffffff", CultureInfo.InvariantCulture));
-        //                command.Parameters.AddWithValue("@Description", anomaly.Description);
-        //                command.Parameters.AddWithValue("@IsNewCategory", anomaly.IsNewCategory ? 1 : 0); // SQLite usa 0/1 per booleani
-        //                command.Parameters.AddWithValue("@CreatedDate", anomaly.CreatedDate.ToString("yyyy-MM-dd HH:mm:ss.ffffff", CultureInfo.InvariantCulture));
-
-        //                command.ExecuteNonQuery();
-
-        //                // Se l'anomalia era nuova (Id == 0 prima dell'insert), aggiorniamo l'Id dell'oggetto C#
-        //                // con quello generato dal database. Questo è utile se l'oggetto viene riutilizzato in memoria.
-        //                if (anomaly.Id == 0)
-        //                {
-        //                    anomaly.Id = connection.LastInsertRowId;
-        //                }
-        //            } // Fine using (command)
-        //        } // Fine using (connection)
-        //    } // Fine blocco try
-        //    catch (Exception ex) // Inizio blocco catch
-        //    {
-        //        _logger.Log(LogLevel.ERROR, $"Errore durante l'upsert dell'anomalia di esplorazione: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
-        //        // Non rilanciamo l'eccezione qui per permettere al chiamante di continuare,
-        //        // ma il log è essenziale per il debug.
-        //    } // Fine blocco catch
-        //} // Fine del metodo UpsertExplorationAnomaly
-        /// <summary>
-        /// Recupera tutte le anomalie di esplorazione persistite nel database.
-        /// </summary>
-        /// <returns>Una lista di oggetti ExplorationAnomaly.</returns>
         public List<ExplorationAnomaly> GetAllExplorationAnomalies()
         {
             List<ExplorationAnomaly> anomalies = new List<ExplorationAnomaly>();
@@ -1381,6 +1379,43 @@ namespace EvolutiveSystem.SQL.Core
                 return new List<ExplorationAnomaly>(); // Restituisce una lista vuota in caso di errore
             }
             return anomalies;
+        }
+        public List<MIURuleApplication> LoadAllRuleApplications()
+        {
+            var ruleApplications = new List<MIURuleApplication>();
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    connection.Open();
+                    string sql = "SELECT SearchID, ParentStateID, NewStateID, AppliedRuleID, CurrentDepth FROM MIU_RuleApplications";
+                    using (var command = new SQLiteCommand(sql, connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                var application = new MIURuleApplication
+                                {
+                                    SearchID = reader.GetInt64(reader.GetOrdinal("SearchID")),
+                                    ParentStateID = reader.GetInt64(reader.GetOrdinal("ParentStateID")),
+                                    NewStateID = reader.GetInt64(reader.GetOrdinal("NewStateID")),
+                                    AppliedRuleID = reader.GetInt64(reader.GetOrdinal("AppliedRuleID")),
+                                    CurrentDepth = reader.GetInt32(reader.GetOrdinal("CurrentDepth"))
+                                };
+                                ruleApplications.Add(application);
+                            }
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.DEBUG, $"[MiuDataManager] Caricate {ruleApplications.Count} applicazioni di regole.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MiuDataManager] Errore caricamento MIU_RuleApplications: {ex.Message}. Restituisco lista vuota.");
+                return new List<MIURuleApplication>();
+            }
+            return ruleApplications;
         }
     }
 }

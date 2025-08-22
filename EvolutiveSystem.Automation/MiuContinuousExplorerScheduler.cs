@@ -376,8 +376,8 @@ namespace EvolutiveSystem.Automation // This is the new project's namespace
 
                 // Questo è il passaggio cruciale per far sì che il motore usi i valori corretti.
                 RegoleMIUManager.MaxProfonditaRicerca = maxDepth;
-                RegoleMIUManager.MassimoPassiRicerca = maxSteps;
-                _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Impostate proprietà statiche RegoleMIUManager: MaxProfonditaRicerca={RegoleMIUManager.MaxProfonditaRicerca}, MassimoPassiRicerca={RegoleMIUManager.MassimoPassiRicerca}.");
+                RegoleMIUManager.MaxNodiDaEsplorare = maxSteps;
+                _logger.Log(LogLevel.INFO, $"[MiuContinuousExplorerScheduler] Impostate proprietà statiche RegoleMIUManager: MaxProfonditaRicerca={RegoleMIUManager.MaxProfonditaRicerca}, MassimoPassiRicerca={RegoleMIUManager.MaxNodiDaEsplorare}.");
 
                 while (!cancellationToken.IsCancellationRequested) // The outer loop (implicitly) continues until cancelled
                 {

@@ -114,11 +114,11 @@ CREATE TABLE MIU_Paths (
     FOREIGN KEY (
         StateID
     )
-    REFERENCES MIU_States (StateID),
+    REFERENCES MIU_States_History (HistoryID),
     FOREIGN KEY (
         ParentStateID
     )
-    REFERENCES MIU_States (StateID),
+    REFERENCES MIU_States_History (HistoryID),
     FOREIGN KEY (
         AppliedRuleID
     )
@@ -140,11 +140,11 @@ CREATE TABLE MIU_RuleApplications (
     FOREIGN KEY (
         ParentStateID
     )
-    REFERENCES MIU_States (StateID),
+    REFERENCES MIU_States_History (HistoryID),
     FOREIGN KEY (
         NewStateID
     )
-    REFERENCES MIU_States (StateID),
+    REFERENCES MIU_States_History (HistoryID),
     FOREIGN KEY (
         AppliedRuleID
     )
@@ -183,6 +183,18 @@ CREATE TABLE MIU_States (
     UsageCount                 INTEGER DEFAULT 0,
     SeedingType                INTEGER,
     DetectedPatternHashes_SCSV TEXT
+);
+
+CREATE TABLE MIU_States_History (
+    Id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+    MIUString               TEXT    NOT NULL,
+    Hash                    TEXT    NOT NULL
+                                    UNIQUE,
+    FirstDiscoveredByRuleId INTEGER NOT NULL,
+    Depth                   INTEGER NOT NULL,
+    TimesFound              INTEGER NOT NULL
+                                    DEFAULT 1,
+    Timestamp               TEXT    NOT NULL
 );
 
 CREATE TABLE MIUParameterConfigurator (
@@ -243,3 +255,4 @@ CREATE TABLE RegoleMIU (
     Descrizione          TEXT (512),
     StimaProfonditaMedia REAL
 );
+
