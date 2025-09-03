@@ -50,6 +50,9 @@
     <Compile Include="EvolutiveSystem.SQL.Core.cs" />
     <Compile Include="MIUDatabaseManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TassonomiaAnalyticsManager.cs" />
+    <Compile Include="TassonomiaQueries.cs" />
+    <Compile Include="TaxonomyDataStore.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="RRU_EvolutiveSystem.pfx" />
