@@ -475,6 +475,13 @@ namespace MIU.Core
                     // Se la regola è stata applicata con successo, procedi con la logica successiva
                     if (applySuccess)
                     {
+                        //25.09.05 guardiano stringhe illegali
+                        int i_count = newStringStandard.Count(c => c == 'I');
+                        if (i_count % 3 == 0)
+                        {
+                            // Scarta la stringa "illegale" e salta alla prossima regola.
+                            continue;
+                        }
                         // Log che la regola è stata applicata
                         LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
 
@@ -850,6 +857,13 @@ namespace MIU.Core
                     // Se la regola è stata applicata con successo, procedi con la logica successiva
                     if (applySuccess)
                     {
+                        //25.09.05 guardiano stringhe illegali
+                        int i_count = newStringStandard.Count(c => c == 'I');
+                        if (i_count % 3 == 0)
+                        {
+                            // Scarta la stringa "illegale" e salta alla prossima regola.
+                            continue;
+                        }
                         // Log che la regola è stata applicata
                         LoggerInstance?.Log(MasterLog.LogLevel.INTERNAL_TEST, $"[DEBUG-RULE-TRY] Rule ID: {rule.ID} ('{rule.Nome}') APPLIED. New string: '{newStringStandard.Substring(0, Math.Min(newStringStandard.Length, 50))}...'.", true, 250);
                         
