@@ -69,6 +69,7 @@
     <Compile Include="MIUStateHistoryDb.cs" />
     <Compile Include="MiuStateInfo.cs" />
     <Compile Include="MIUStringTopologyDataModels.cs" />
+    <Compile Include="NodeClassification.cs" />
     <Compile Include="PIDParameterKeys.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegolaMIU.cs" />

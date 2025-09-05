@@ -40,6 +40,7 @@ public class Program
         BuildTopology,
         DetectAnomaly, // Nuova opzione per la rilevazione delle anomalie
         LoadTaxonomy,
+        GenerateNodeTaxonomy, // 25/09/05 topologia dei nodi
         DeleteTable,
         Exit
     }
@@ -57,6 +58,7 @@ public class Program
     private static AnomalyDetectionManager _anomalyDetectionManager; // MODIFICA: Dichiarazione della variabile a livello di classe
     private static LearningStatisticsManager learningStatsManager;
     private static RuleTaxonomyGenerator _taxonomyGenerator;
+    private static NodeTaxonomyGenerator _nodeTaxonomyGenerator;
     private static MIUTopologyService _topologyService; // <--- AGGIUNGI QUESTA RIGA
     private static TassonomiaAnalyticsManager _tassonomiaAnalytics; // Nuovo: Istanza dell'interfaccia
    
@@ -114,6 +116,7 @@ public class Program
             learningStatsManager = new LearningStatisticsManager(iMiuDataManagerInstance, logger);
             _taxonomyGenerator = new RuleTaxonomyGenerator(learningStatsManager, logger);
             _topologyService = new MIUTopologyService(iMiuDataManagerInstance, learningStatsManager, _taxonomyGenerator, logger);
+            _nodeTaxonomyGenerator = new NodeTaxonomyGenerator(_path, logger); // 25/09/05 topologia dei nodi
             _anomalyDetectionManager = new AnomalyDetectionManager(iMiuDataManagerInstance, logger, _eventBus); // MODIFICA: Inizializza AnomalyDetectionManager
             
             // Nuovo: Instanziare la classe concreta e assegnarla all'interfaccia
@@ -330,17 +333,44 @@ public class Program
                             break;
                         case MenuOption.LoadTaxonomy:
                             Console.WriteLine("Avvio della generazione della tassonomia...");
-                            var fullTaxonomy = _taxonomyGenerator.GenerateFullTaxonomy();
+                            var ruleTaxonomy = _taxonomyGenerator.GenerateFullTaxonomy();
 
-                            if (fullTaxonomy != null && fullTaxonomy.Any())
+                            if (ruleTaxonomy != null && ruleTaxonomy.Any())
                             {
-                                string fileName = $"taxonomy_{DateTime.Now:yyyyMMdd_HHmmss}.xml";
-                                await _taxonomyGenerator.SaveTaxonomyAsXmlAsync(fullTaxonomy, fileName);
-                                Console.WriteLine($"Tassonomia salvata con successo nel file: {fileName}");
+                                string outputDirectory = Path.Combine(_path, "output");
+                                Directory.CreateDirectory(outputDirectory);
+
+                                string fileName = $"RuleTaxonomy_{DateTime.Now:yyyyMMdd_HHmmss}.xml";
+                                string fullPath = Path.Combine(outputDirectory, fileName);
+
+                                // Il tuo metodo SaveTaxonomyAsXmlAsync si aspetta il percorso completo
+                                await _taxonomyGenerator.SaveTaxonomyAsXmlAsync(ruleTaxonomy, fullPath);
+                                Console.WriteLine($"Tassonomia delle regole salvata con successo nel file: {fullPath}");
                             }
                             else
                             {
-                                Console.WriteLine("La tassonomia generata è vuota o si è verificato un errore.");
+                                Console.WriteLine("La tassonomia delle regole generata è vuota o si è verificato un errore.");
+                            }
+                            break;
+                        case MenuOption.GenerateNodeTaxonomy: // 25/09/05 topologia dei nodi
+                            Console.WriteLine("Avvio della generazione della tassonomia dei nodi...");
+
+                            var nodeTaxonomy = _nodeTaxonomyGenerator.GenerateNodeTaxonomy();
+
+                            if (nodeTaxonomy != null && nodeTaxonomy.Any())
+                            {
+                                string outputDirectory = Path.Combine(_path, "output");
+                                Directory.CreateDirectory(outputDirectory);
+
+                                string fileName = $"NodeTaxonomy_{DateTime.Now:yyyyMMdd_HHmmss}.xml";
+                                string fullPath = Path.Combine(outputDirectory, fileName);
+
+                                await _nodeTaxonomyGenerator.SaveNodeTaxonomyAsXmlAsync(nodeTaxonomy, fullPath);
+                                Console.WriteLine($"Tassonomia dei nodi salvata con successo nel file: {fullPath}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("La tassonomia dei nodi generata è vuota o si è verificato un errore.");
                             }
                             break;
                         case MenuOption.DeleteTable:
@@ -637,8 +667,9 @@ public class Program
         Console.WriteLine("7. Costruisci la Topologia del Sistema");
         Console.WriteLine("8. Simula Rilevamento Anomalia");
         Console.WriteLine("9. Carica Query Tassonomia");
-        Console.WriteLine("10. Cancella Tabella (non implementato)");
-        Console.WriteLine("11. Esci");
+        Console.WriteLine("10. Tassonomia dei nodi");
+        Console.WriteLine("11. Cancella Tabella");
+        Console.WriteLine("12. Esci");
         Console.Write("Scegli un'opzione: ");
     }
 }

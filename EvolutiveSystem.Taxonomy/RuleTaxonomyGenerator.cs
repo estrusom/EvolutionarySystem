@@ -20,7 +20,7 @@ namespace EvolutiveSystem.Taxonomy
             _learningStatsManager = learningStatsManager;
             _logger = logger;
         }
-
+        /* prima di 25.09.05
         public InefficiencyPatternType ClassifyRuleTransition(TransitionStatistics stats)
         {
             // La tua classe TransitionStatistics ha 'TotalApplications'
@@ -31,7 +31,38 @@ namespace EvolutiveSystem.Taxonomy
 
             return InefficiencyPatternType.None;
         }
+        */
+        // dopo 25.09.05
+        public InefficiencyPatternType ClassifyRuleTransition(TransitionStatistics stats)
+        {
+            // Criterio #1: BlackHole (Regola inefficiente e molto usata)
+            // Se ha un tasso di successo bassissimo ma il sistema insiste a usarla.
+            if (stats.SuccessRate < 0.1 && stats.ApplicationCount > 20)
+            {
+                return InefficiencyPatternType.BlackHole;
+            }
 
+            // Criterio #2: RarelyUsed (Regola usata pochissimo)
+            // Se è stata applicata solo poche volte in totale.
+            // Potrebbe non essere inutile, ma è certamente rara.
+            if (stats.ApplicationCount < 5)
+            {
+                return InefficiencyPatternType.RarelyUsed;
+            }
+
+            // Criterio #3: CyclicPath (Percorso Ciclico)
+            // Questa è la più difficile da rilevare solo con le statistiche.
+            // Una buona approssimazione è una transizione con un tasso di successo pari a ZERO
+            // ma con un numero medio di tentativi. Significa che OGNI volta
+            // che è stata applicata, ha portato a uno stato già noto.
+            if (stats.SuccessRate == 0 && stats.ApplicationCount > 5)
+            {
+                return InefficiencyPatternType.CyclicPath;
+            }
+
+            // Se nessuna delle condizioni sopra è vera, la transizione è considerata "normale".
+            return InefficiencyPatternType.None;
+        }
         // Metodo reso SINCRONO per allinearsi con GetTransitionProbabilities()
         public Dictionary<string, InefficiencyPatternType> GenerateFullTaxonomy()
         {

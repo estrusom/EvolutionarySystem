@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AntithesisPatterns.cs" />
+    <Compile Include="NodeTaxonomyGenerator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RuleTaxonomy.cs" />
     <Compile Include="RuleTaxonomyGenerator.cs" />
