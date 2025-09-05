@@ -9,7 +9,8 @@ using System.Collections.Generic;
 using System.Linq; // Necessario per Linq, se usato in futuro
 using MasterLog;
 using EvolutiveSystem.Common; // Per RuleStatistics, TransitionStatistics
-using MIU.Core; // Per IMIUDataManager
+using MIU.Core;
+using System.Threading.Tasks; // Per IMIUDataManager
 
 namespace EvolutiveSystem.Learning // Nuovo namespace suggerito
 {
@@ -17,7 +18,7 @@ namespace EvolutiveSystem.Learning // Nuovo namespace suggerito
     /// Gestisce le statistiche di apprendimento per il sistema evolutivo.
     /// Si interfaccia con il data manager per ottenere i dati grezzi e poi li aggrega o salva.
     /// </summary>
-    public class LearningStatisticsManager
+    public class LearningStatisticsManager: ILearningStatisticsManager
     {
         private readonly IMIUDataManager _dataManager;
         private readonly Logger _logger;
@@ -89,6 +90,12 @@ namespace EvolutiveSystem.Learning // Nuovo namespace suggerito
                 _logger.Log(LogLevel.ERROR, $"[LearningStatisticsManager] Errore caricamento TransitionStatistics: {ex.Message}. Restituisco dizionario vuoto.");
                 return new Dictionary<Tuple<string, long>, TransitionStatistics>();
             }
+        }
+
+        // Nuovo metodo asincrono
+        public async Task<Dictionary<Tuple<string, long>, TransitionStatistics>> GetTransitionProbabilitiesAsync()
+        {
+            return await Task.Run(() => GetTransitionProbabilities());
         }
 
         /// <summary>

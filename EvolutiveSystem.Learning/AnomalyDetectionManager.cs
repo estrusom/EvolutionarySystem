@@ -36,6 +36,7 @@ namespace EvolutiveSystem.Learning // Namespace corretto per questo progetto
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _logger.Log(LogLevel.DEBUG, "AnomalyDetectionManager istanziato con EventBus.");
         }
+        /* 25.09.03 revisione del sistema di generazione della topologia
         /// <summary>
         /// Simula la costruzione di una topologia di sistema.
         /// Questo metodo è stato aggiunto per supportare il menu di Program.cs.
@@ -49,6 +50,7 @@ namespace EvolutiveSystem.Learning // Namespace corretto per questo progetto
             await Task.Delay(100); // Simulazione di un'operazione asincrona
             _logger.Log(LogLevel.INFO, "[AnomalyDetectionManager] Costruzione della topologia completata.");
         }
+        */
         /// <summary>
         /// Rileva e gestisce un'anomalia di esplorazione.
         /// Questo metodo dovrebbe essere chiamato quando un comportamento anomalo viene identificato.

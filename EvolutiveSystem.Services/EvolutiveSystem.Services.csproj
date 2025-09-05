@@ -59,6 +59,10 @@
       <Project>{65834756-c570-4269-afec-759b174fc02e}</Project>
       <Name>EvolutiveSystem.Learning</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.Taxonomy\EvolutiveSystem.Taxonomy.csproj">
+      <Project>{A8026815-12AE-4CD2-9D45-CF663A76C1C1}</Project>
+      <Name>EvolutiveSystem.Taxonomy</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>
       <Name>MasterLogMutex</Name>

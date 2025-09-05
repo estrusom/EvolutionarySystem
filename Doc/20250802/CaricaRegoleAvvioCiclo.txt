@@ -19,3 +19,14 @@ Limiti ricerca
 	MAX_STRING_LENGTH (stringa troppo lunga)
 	MaxProfonditaRicerca (massima profondità di ricerca)
 	MaxNodiDaEsplorare (numero massimo da esplorare)
+
+
+MERMO RICORSIVO 
+MIU_States è una tabella anagrafica da cui applicando un ciclo annidato con OuterIndex e InnerIndex derivo tutte le possibili combinazioni che vengono inserite in MIU_States_History
+
+MIU_States è una tabella anagrafica da cui applicando un ciclo annidato con OuterIndex e InnerIndex derivo tutte le possibili combinazioni che vengono inserite in MIU_States_History. 
+
+TASSONOMIA
+(AnomalyDetectionManager.cs, AntithesisPatterns.cs, TaxonomyDataStore.cs, RuleTaxonomy.cs, ITassonomiaAnalytics.cs, TassonomiaAnalyticsManager.cs, RuleTaxonomyGenerator.cs, TaxonomyDataStore.cs)
+
+TaxonomyDataStore.cs -> Persistenza dati della tassonomia

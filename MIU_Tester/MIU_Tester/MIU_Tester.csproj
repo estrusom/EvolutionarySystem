@@ -87,9 +87,17 @@
       <Project>{65834756-C570-4269-AFEC-759B174FC02E}</Project>
       <Name>EvolutiveSystem.Learning</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\EvolutiveSystem.Services\EvolutiveSystem.Services.csproj">
+      <Project>{AE2B69FA-9233-411F-98BC-5FD45AF24167}</Project>
+      <Name>EvolutiveSystem.Services</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
       <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
       <Name>EvolutiveSystem.SQL.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\EvolutiveSystem.Taxonomy\EvolutiveSystem.Taxonomy.csproj">
+      <Project>{A8026815-12AE-4CD2-9D45-CF663A76C1C1}</Project>
+      <Name>EvolutiveSystem.Taxonomy</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\MasterLogMutex\MasterLogMutex.csproj">
       <Project>{d990905e-13c5-40e4-95c0-b16737834777}</Project>

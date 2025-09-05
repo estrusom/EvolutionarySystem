@@ -14,7 +14,6 @@ CREATE TABLE AntithesisEvent (
     GeneratedRuleID        INTEGER
 );
 
-
 CREATE TABLE ExplorationAnomalies (
     Id                   INTEGER PRIMARY KEY AUTOINCREMENT,
     Type                 INTEGER NOT NULL,
@@ -112,14 +111,6 @@ CREATE TABLE MIU_Paths (
     )
     REFERENCES MIU_Searches (SearchID),
     FOREIGN KEY (
-        StateID
-    )
-    REFERENCES MIU_States_History (HistoryID),
-    FOREIGN KEY (
-        ParentStateID
-    )
-    REFERENCES MIU_States_History (HistoryID),
-    FOREIGN KEY (
         AppliedRuleID
     )
     REFERENCES RegoleMIU (ID) 
@@ -137,14 +128,6 @@ CREATE TABLE MIU_RuleApplications (
         SearchID
     )
     REFERENCES MIU_Searches (SearchID),
-    FOREIGN KEY (
-        ParentStateID
-    )
-    REFERENCES MIU_States_History (HistoryID),
-    FOREIGN KEY (
-        NewStateID
-    )
-    REFERENCES MIU_States_History (HistoryID),
     FOREIGN KEY (
         AppliedRuleID
     )
@@ -172,29 +155,29 @@ CREATE TABLE MIU_Searches (
 );
 
 CREATE TABLE MIU_States (
-    StateID                    INTEGER PRIMARY KEY AUTOINCREMENT,
-    CurrentString              TEXT    UNIQUE
-                                       NOT NULL,
-    StringLength               INTEGER,
-    DeflateString              TEXT,
-    Hash                       TEXT,
-    DiscoveryTime_Int          INTEGER,
-    DiscoveryTime_Text         TEXT,
-    UsageCount                 INTEGER DEFAULT 0,
-    SeedingType                INTEGER,
-    DetectedPatternHashes_SCSV TEXT
+    StateID            INTEGER PRIMARY KEY AUTOINCREMENT,
+    CurrentString      TEXT    UNIQUE
+                               NOT NULL,
+    StringLength       INTEGER,
+    DeflateString      TEXT,
+    Hash               TEXT,
+    DiscoveryTime_Int  INTEGER,
+    DiscoveryTime_Text TEXT,
+    SeedingType        INTEGER
 );
 
 CREATE TABLE MIU_States_History (
-    Id                      INTEGER PRIMARY KEY AUTOINCREMENT,
-    MIUString               TEXT    NOT NULL,
-    Hash                    TEXT    NOT NULL
-                                    UNIQUE,
-    FirstDiscoveredByRuleId INTEGER NOT NULL,
-    Depth                   INTEGER NOT NULL,
-    TimesFound              INTEGER NOT NULL
-                                    DEFAULT 1,
-    Timestamp               TEXT    NOT NULL
+    Id                         INTEGER PRIMARY KEY AUTOINCREMENT,
+    MIUString                  TEXT    NOT NULL,
+    Hash                       TEXT    NOT NULL
+                                       UNIQUE,
+    FirstDiscoveredByRuleId    INTEGER NOT NULL,
+    Depth                      INTEGER NOT NULL,
+    TimesFound                 INTEGER NOT NULL
+                                       DEFAULT 1,
+    Timestamp                  TEXT    NOT NULL,
+    UsageCount                 INTEGER,
+    DetectedPatternHashes_SCSV TEXT
 );
 
 CREATE TABLE MIUParameterConfigurator (
@@ -256,3 +239,9 @@ CREATE TABLE RegoleMIU (
     StimaProfonditaMedia REAL
 );
 
+CREATE TABLE RuleTaxonomy (
+    TaxonomyID    INTEGER PRIMARY KEY AUTOINCREMENT,
+    Name          TEXT    NOT NULL,
+    Description   TEXT,
+    LastGenerated TEXT    NOT NULL
+);

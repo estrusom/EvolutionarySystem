@@ -11,7 +11,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Data.SQLite;
-using MIU.Core; // Assicurati che questo namespace sia corretto per le classi MIU.Core come RegolaMIU, RuleStatistics, TransitionStatistics
 using MasterLog;
 using System.Globalization;
 using System.Text; // Necessario per StringBuilder in LoadRegoleMIU o altri metodi di utilità
@@ -47,6 +46,80 @@ namespace EvolutiveSystem.SQL.Core
             _schemaLoader = schemaLoader ?? throw new ArgumentNullException(nameof(schemaLoader), "SQLiteSchemaLoader non può essere nullo.");
             _logger = logger ?? throw new ArgumentNullException(nameof(logger), "Logger non può essere nullo.");
             _logger.Log(LogLevel.DEBUG, "MIUDatabaseManager istanziato e ottiene ConnectionString da SQLiteSchemaLoader.");
+        }
+
+        public async Task<List<MIUState>> GetAllMIUStatesAsync()
+        {
+            var states = new List<MIUState>();
+            // Query modificata: selezioniamo solo la colonna che ci serve.
+            string query = "SELECT CurrentString FROM MIU_States;";
+
+            try
+            {
+                // Uso del tuo pattern reale per la gestione della connessione
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var command = new SQLiteCommand(query, connection))
+                    {
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                // Creazione dell'oggetto corretta: usiamo il costruttore
+                                // esistente nella tua classe MIUState.
+                                states.Add(new MIUState(reader.GetString(0)));
+                            }
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.INFO, $"[MIUDatabaseManager] Caricati {states.Count} stati dalla tabella MIU_States.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager] Errore in GetAllMIUStatesAsync: {ex.Message}");
+            }
+            return states;
+        }
+
+        public async Task<List<MIURuleApplication>> GetAllRuleApplicationsAsync()
+        {
+            var applications = new List<MIURuleApplication>();
+            // Query corretta: selezioniamo solo le colonne che esistono nella tua classe MIURuleApplication.
+            string query = "SELECT SearchID, ParentStateID, NewStateID, AppliedRuleID, CurrentDepth, Timestamp FROM MIU_RuleApplications;";
+
+            try
+            {
+                using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var command = new SQLiteCommand(query, connection))
+                    {
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                // Mapping corretto basato sulle proprietà reali della tua classe.
+                                applications.Add(new MIURuleApplication
+                                {
+                                    SearchID = reader.GetInt64(0),
+                                    ParentStateID = reader.GetInt64(1),
+                                    NewStateID = reader.GetInt64(2),
+                                    AppliedRuleID = reader.GetInt64(3),
+                                    CurrentDepth = reader.GetInt32(4),
+                                    Timestamp = reader.GetDateTime(5)
+                                });
+                            }
+                        }
+                    }
+                }
+                _logger.Log(LogLevel.INFO, $"[MIUDatabaseManager] Caricate {applications.Count} applicazioni di regole.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUDatabaseManager] Errore in GetAllRuleApplicationsAsync: {ex.Message}");
+            }
+            return applications;
         }
 
         // --- Metodi di Persistenza (Implementazione dell'interfaccia IMIUDataManager) ---
@@ -158,7 +231,7 @@ namespace EvolutiveSystem.SQL.Core
                 _logger.Log(LogLevel.ERROR, $"Errore in UpdateSearch: {ex.Message}");
             }
         }
-
+        /* 25.09.03 Pesante ristrutturazione per garantire la separazione dei compiti
         /// <summary>
         /// Inserisce o aggiorna uno stato MIU nel database.
         /// L'implementazione rispetta la firma dell'interfaccia e il pattern di gestione
@@ -169,6 +242,27 @@ namespace EvolutiveSystem.SQL.Core
         /// <returns>Una tupla contenente l'ID dello stato e un booleano che indica se lo stato è nuovo (true) o aggiornato (false).</returns>
         public Tuple<long, bool> UpsertMIUStateHistory(string miuString)
         {
+            if (string.IsNullOrEmpty(miuString))
+            {
+                throw new ArgumentException("La stringa MIU non può essere nulla o vuota.", nameof(miuString));
+            }
+
+            var newState = new MIUStateHistoryDb
+            {
+                // 25.09.03 MIUString = MIUStringConverter.DeflateMIUString(miuString),
+                // 25.09.03 Hash = MIUStringConverter.DeflateMIUString(miuString),
+                FirstDiscoveredByRuleId = -1,
+                Depth = 0,
+                TimesFound = 1,
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                UsageCount = 0, // Valore di default
+                DetectedPatternHashes_SCSV = "" // Valore di default
+            };
+
+            return InternalUpsertMIUState(newState);
+        }
+        */
+        /*
             if (string.IsNullOrEmpty(miuString))
             {
                 throw new ArgumentException("La stringa MIU non può essere nulla o vuota.", nameof(miuString));
@@ -252,7 +346,122 @@ namespace EvolutiveSystem.SQL.Core
                     }
                 }
             }
+            */
+        public Tuple<long, bool> UpsertMIUStateHistory(MIUStateHistoryDb state)
+        {
+            if (state == null)
+            {
+                throw new ArgumentNullException(nameof(state), "Lo stato MIU non può essere nullo.");
+            }
+            // Assicurati che la stringa MIU e l'hash siano valorizzati
+            if (string.IsNullOrEmpty(state.MIUString) || string.IsNullOrEmpty(state.Hash))
+            {
+                throw new ArgumentException("La stringa MIU e l'hash non possono essere nulli o vuoti.", nameof(state));
+            }
+            return InternalUpsertMIUState(state);
         }
+        /// <summary>
+        /// Metodo privato per mantenere la compatibilità con UpsertMIUStateHistory esposta dall'interfaccia IMIUDataManager.
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        private Tuple<long, bool> InternalUpsertMIUState(MIUStateHistoryDb state)
+        {
+            long id = -1;
+            bool isNewState = false;
+
+            using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+            {
+                connection.Open();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    try
+                    {
+                        // La logica di verifica, aggiornamento e inserimento è qui
+                        string checkSql = "SELECT Id, UsageCount, DetectedPatternHashes_SCSV FROM MIU_States_History WHERE Hash = @hash;";
+                        using (var checkCmd = new SQLiteCommand(checkSql, connection, transaction))
+                        {
+                            checkCmd.Parameters.AddWithValue("@hash", state.Hash);
+
+                            // Esegui una lettura completa dei dati esistenti per un aggiornamento sicuro
+                            using (var reader = checkCmd.ExecuteReader())
+                            {
+                                if (reader.Read())
+                                {
+                                    isNewState = false;
+                                    id = reader.GetInt64(0);
+                                    int existingUsageCount = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                                    string existingDetectedPatternHashes = reader.IsDBNull(2) ? "" : reader.GetString(2);
+
+                                    string updateSql = @"
+                                        UPDATE MIU_States_History
+                                        SET TimesFound = TimesFound + 1,
+                                            UsageCount = @usageCount,
+                                            DetectedPatternHashes_SCSV = @detectedPatternHashes
+                                        WHERE Id = @id;";
+
+                                    using (var updateCmd = new SQLiteCommand(updateSql, connection, transaction))
+                                    {
+                                        updateCmd.Parameters.AddWithValue("@id", id);
+
+                                        // ✅ Logica di protezione: aggiorna solo se il valore in ingresso è valido
+                                        // Se il valore in ingresso è un default, mantieni quello esistente.
+                                        int usageCountToUpdate = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                                        string detectedHashesToUpdate = (!string.IsNullOrEmpty(state.DetectedPatternHashes_SCSV)) ? state.DetectedPatternHashes_SCSV : existingDetectedPatternHashes;
+
+                                        existingDetectedPatternHashes = reader.IsDBNull(2) ? "" : reader.GetString(2);
+
+                                        updateCmd.Parameters.AddWithValue("@usageCount", usageCountToUpdate);
+                                        updateCmd.Parameters.AddWithValue("@detectedPatternHashes", detectedHashesToUpdate);
+                                        updateCmd.ExecuteNonQuery();
+                                    }
+                                    _logger.Log(LogLevel.DEBUG, $"MIUState '{state.MIUString}' aggiornato. ID: {id}", true);
+                                }
+                                else
+                                {
+                                    // Logica di INSERT
+                                    isNewState = true;
+                                    string insertSql = @"
+                                        INSERT INTO MIU_States_History (
+                                            MIUString, Hash, FirstDiscoveredByRuleId, Depth, TimesFound, Timestamp, UsageCount, DetectedPatternHashes_SCSV
+                                        )
+                                        VALUES (
+                                            @miuString, @hash, @ruleId, @depth, @timesFound, @timestamp, @usageCount, @detectedPatternHashes
+                                        );
+                                        SELECT last_insert_rowid();";
+
+                                    using (var insertCmd = new SQLiteCommand(insertSql, connection, transaction))
+                                    {
+                                        insertCmd.Parameters.AddWithValue("@miuString", state.MIUString);
+                                        insertCmd.Parameters.AddWithValue("@hash", state.Hash);
+                                        insertCmd.Parameters.AddWithValue("@ruleId", state.FirstDiscoveredByRuleId);
+                                        insertCmd.Parameters.AddWithValue("@depth", state.Depth);
+
+                                        // ✅ Inserisci i valori iniziali se non sono stati forniti
+                                        insertCmd.Parameters.AddWithValue("@timesFound", state.TimesFound > 0 ? state.TimesFound : 1);
+                                        insertCmd.Parameters.AddWithValue("@timestamp", !string.IsNullOrEmpty(state.Timestamp) ? state.Timestamp : DateTime.UtcNow.ToString("o"));
+                                        insertCmd.Parameters.AddWithValue("@usageCount", state.UsageCount > 0 ? state.UsageCount : 0);
+                                        insertCmd.Parameters.AddWithValue("@detectedPatternHashes", !string.IsNullOrEmpty(state.DetectedPatternHashes_SCSV) ? state.DetectedPatternHashes_SCSV : "");
+
+                                        id = (long)insertCmd.ExecuteScalar();
+                                    }
+                                    _logger.Log(LogLevel.DEBUG, $"Nuova stringa individuata: '{state.MIUString}'. ID: {id}");
+                                }
+                            }
+                        }
+                        transaction.Commit();
+                        return Tuple.Create(id, isNewState);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        _logger.Log(LogLevel.ERROR, $"Errore in InternalUpsertMIUState: {ex.Message}");
+                        return Tuple.Create(-1L, false);
+                    }
+                }
+            }
+        }
+        /*
         /// <summary>
         /// metodo privato per mantenere la compatibilità con UpsertMIUStateHistory esposta dall'interfaccia IMIUDataManager.
         /// </summary>
@@ -283,11 +492,11 @@ namespace EvolutiveSystem.SQL.Core
                                 id = (long)result;
 
                                 string updateSql = @"
-                        UPDATE MIU_States_History
-                        SET TimesFound = TimesFound + 1,
-                            UsageCount = @usageCount,
-                            DetectedPatternHashes_SCSV = @detectedPatternHashes
-                        WHERE Id = @id;";
+                                    UPDATE MIU_States_History
+                                    SET TimesFound = TimesFound + 1,
+                                        UsageCount = @usageCount,
+                                        DetectedPatternHashes_SCSV = @detectedPatternHashes
+                                    WHERE Id = @id;";
 
                                 using (var updateCmd = new SQLiteCommand(updateSql, connection, transaction))
                                 {
@@ -302,13 +511,13 @@ namespace EvolutiveSystem.SQL.Core
                             {
                                 isNewState = true;
                                 string insertSql = @"
-                        INSERT INTO MIU_States_History (
-                            MIUString, Hash, FirstDiscoveredByRuleId, Depth, TimesFound, Timestamp, UsageCount, DetectedPatternHashes_SCSV
-                        )
-                        VALUES (
-                            @miuString, @hash, @ruleId, @depth, @timesFound, @timestamp, @usageCount, @detectedPatternHashes
-                        );
-                        SELECT last_insert_rowid();";
+                                    INSERT INTO MIU_States_History (
+                                        MIUString, Hash, FirstDiscoveredByRuleId, Depth, TimesFound, Timestamp, UsageCount, DetectedPatternHashes_SCSV
+                                    )
+                                    VALUES (
+                                        @miuString, @hash, @ruleId, @depth, @timesFound, @timestamp, @usageCount, @detectedPatternHashes
+                                    );
+                                    SELECT last_insert_rowid();";
 
                                 using (var insertCmd = new SQLiteCommand(insertSql, connection, transaction))
                                 {
@@ -338,6 +547,7 @@ namespace EvolutiveSystem.SQL.Core
                 }
             }
         }
+        */
         /// <summary>
         /// Registra un'applicazione di una regola MIU come parte di una ricerca.
         /// </summary>
@@ -454,6 +664,11 @@ namespace EvolutiveSystem.SQL.Core
             }
             return regole;
         }
+        // Implementazione asincrona
+        public async Task<List<RegolaMIU>> LoadRegoleMIUAsync()
+        {
+            return await Task.Run(() => LoadRegoleMIU());
+        }
         /// <summary>
         /// Inserisce o aggiorna un elenco di regole MIU nel database.
         /// Utilizza una transazione per garantire l'atomicità dell'operazione.
@@ -469,7 +684,7 @@ namespace EvolutiveSystem.SQL.Core
                     {
                         foreach (var regola in regole)
                         {
-                            var existingRule = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == regola.ID);
+                            // 25.09.03 var existingRule = RegoleMIUManager.Regole.FirstOrDefault(r => r.ID == regola.ID); NON SERRVIVA A UNA MAZZA
 
                             string sql = "INSERT OR REPLACE INTO RegoleMIU (ID, Nome, Pattern, Sostituzione, Descrizione, StimaProfonditaMedia) VALUES (@id, @nome, @pattern, @sostituzione, @descrizione, @stimaProfonditaMedia)"; // 2025.28.07
                             using (var command = new SQLiteCommand(sql, connection, transaction))
@@ -908,7 +1123,7 @@ namespace EvolutiveSystem.SQL.Core
                 using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
                 {
                     await connection.OpenAsync(); // <-- UTILIZZA await OpenAsync()
-                    string sql = "SELECT StateID, CurrentString, StringLength, DeflateString, Hash, DiscoveryTime_Int, DiscoveryTime_Text, UsageCount FROM MIU_States";
+                    string sql = "SELECT StateID, CurrentString, StringLength, DeflateString, Hash, DiscoveryTime_Int, DiscoveryTime_Text FROM MIU_States";
                     using (var command = new SQLiteCommand(sql, connection))
                     using (var reader = await command.ExecuteReaderAsync()) // <-- UTILIZZA await ExecuteReaderAsync()
                     {
@@ -923,7 +1138,7 @@ namespace EvolutiveSystem.SQL.Core
                                 Hash = reader.GetString(reader.GetOrdinal("Hash")),
                                 DiscoveryTime_Int = reader.GetInt64(reader.GetOrdinal("DiscoveryTime_Int")),
                                 DiscoveryTime_Text = reader.GetString(reader.GetOrdinal("DiscoveryTime_Text")),
-                                UsageCount = reader.GetInt32(reader.GetOrdinal("UsageCount"))
+                                //UsageCount = reader.GetInt32(reader.GetOrdinal("UsageCount"))
                             });
                         }
                     }

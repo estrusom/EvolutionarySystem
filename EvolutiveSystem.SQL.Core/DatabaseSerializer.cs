@@ -29,7 +29,7 @@ namespace EvolutiveSystem.SQL.Core
         }
 
         // Il metodo GetKnownTypes non esiste più, ora usiamo l'interfaccia
-        private Type[] GetKnownTypes()
+        public Type[] GetKnownTypes()
         {
             return _knownTypeProvider.GetKnownTypes();
         }
@@ -138,7 +138,7 @@ namespace EvolutiveSystem.SQL.Core
             }
         }
     }
-
+    /* 25.09.03 Pesante ristrutturazione per garantire la separazione dei compiti
     /// <summary>
     /// Classe helper per serializzare Dictionary<TKey, TValue> con XmlSerializer.
     /// Eredita da Dictionary e implementa IXmlSerializable.
@@ -211,4 +211,5 @@ namespace EvolutiveSystem.SQL.Core
             }
         }
     }
+    */
 }

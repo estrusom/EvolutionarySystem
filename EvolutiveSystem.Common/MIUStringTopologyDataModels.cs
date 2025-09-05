@@ -48,6 +48,7 @@ namespace EvolutiveSystem.Common
         /// Statistiche aggiuntive associate a questo stato, per la "pesatura" avanzata.
         /// Potrebbero includere: conteggio delle visite, numero di regole applicabili, ecc.
         /// </summary>
+        [System.Xml.Serialization.XmlIgnore]
         public Dictionary<string, object> AdditionalStats { get; set; } = new Dictionary<string, object>();
 
         /// <summary>

@@ -59,7 +59,7 @@ namespace EvolutiveSystem.Common
         /// </summary>
         /// <param name="miuString">La stringa MIU da inserire/aggiornare.</param>
         /// <returns>Un Tuple dove Item1 è l'ID dello stato e Item2 è true se la stringa è stata appena inserita (nuova), false se esisteva già.</returns>
-        Tuple<long, bool> UpsertMIUStateHistory(string miuString);
+        // Tuple<long, bool> UpsertMIUStateHistory(string miuString); 2025.08.03
 
         /// <summary>
         /// Inserisce o aggiorna uno stato MIU completo, inclusi i nuovi campi.
@@ -81,6 +81,7 @@ namespace EvolutiveSystem.Common
 
         // Operazioni per RegoleMIU
         List<RegolaMIU> LoadRegoleMIU();
+        Task<List<RegolaMIU>> LoadRegoleMIUAsync(); // Nuovo metodo asincrono
         void UpsertRegoleMIU(List<RegolaMIU> regole);
         /// <summary>
         /// 2025.08.22
@@ -151,5 +152,7 @@ namespace EvolutiveSystem.Common
         /// </summary>
         /// <returns>Una lista di oggetti MIURuleApplication.</returns>
         List<MIURuleApplication> LoadAllRuleApplications();
+        Task<List<MIUState>> GetAllMIUStatesAsync();
+        Task<List<MIURuleApplication>> GetAllRuleApplicationsAsync();
     }
 }

@@ -30,6 +30,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using EvolutiveSystem.SQL;
 
 namespace CommandHandlers
 {
@@ -44,16 +45,18 @@ namespace CommandHandlers
         private readonly List<EvolutiveSystem.SQL.Core.Database> _loadedDatabases = new List<EvolutiveSystem.SQL.Core.Database>(); // Esempio: Gestione interna semplice
         private static SQLiteConnection dbConnection;
         private MIUDerivationEngine _miuDerivationEngine;
+        private readonly DatabaseSerializer _databaseSerializer;
         //private readonly MIU.Core.IMIURepository _miuRepository; // Nuovo campo per IMIURepository
-        
+
 
         public ClsCommandHandlers()
         {
 
         }
-        public ClsCommandHandlers(Logger Log)
+        public ClsCommandHandlers(Logger Log, DatabaseSerializer databaseSerializer)
         {
             _logger = Log;
+            _databaseSerializer = databaseSerializer;
         }
         //public  ClsCommandHandlers(Logger Log, ConcurrentDictionary<string, string> connectedUiEndpoints)
         //{
@@ -554,7 +557,7 @@ namespace CommandHandlers
                 }
 
                 _logger.Log(LogLevel.INFO, $"Salvataggio database '{databaseToSave.DatabaseName}' in corso su: {saveFilePath}");
-                DatabaseSerializer.SerializeToXmlFile(databaseToSave, saveFilePath);
+                _databaseSerializer.SerializeToXmlFile(databaseToSave, saveFilePath);
                 _logger.Log(LogLevel.INFO, $"Database '{databaseToSave.DatabaseName}' salvato con successo.");
 
                 if (string.IsNullOrWhiteSpace(saveFilePath))
@@ -564,7 +567,7 @@ namespace CommandHandlers
                     throw new Exception($"Comando CmdSaveDb ricevuto da {asl.CallerIpAddress} ma percorso file salvataggio mancante.");
                 }
 
-                DatabaseSerializer.SerializeToXmlFile(databaseToSave, saveFilePath);
+                _databaseSerializer.SerializeToXmlFile(databaseToSave, saveFilePath);
 
                 response.BufferDati = new XElement("SyncDetails",
                                         new XElement("ServerTime", DateTime.UtcNow.ToString("o")), // Orario del server in formato ISO 8601
@@ -698,7 +701,7 @@ namespace CommandHandlers
                 if (requestDetails.Equals("Full", StringComparison.OrdinalIgnoreCase) || requestDetails.Equals("StructureOnly", StringComparison.OrdinalIgnoreCase))
                 {
                     EvolutiveSystem.SQL.Core.Database dbToSerialize = CloneDatabaseForSerialization(databaseToReport, requestDetails.Equals("StructureOnly", StringComparison.OrdinalIgnoreCase));
-                    string dbXmlContent = DatabaseSerializer.SerializeToXmlString(dbToSerialize);
+                    string dbXmlContent = _databaseSerializer.SerializeToXmlString(dbToSerialize);
                     try
                     {
                         // Il risultato della serializzazione di un Database è un elemento <Database>
@@ -1005,10 +1008,10 @@ namespace CommandHandlers
             try
             {
                 // Serializza l'originale in una stringa XML
-                string originalXml = DatabaseSerializer.SerializeToXmlString(originalDb);
+                string originalXml = _databaseSerializer.SerializeToXmlString(originalDb);
 
                 // Deserializza la stringa XML in un nuovo oggetto Database
-                EvolutiveSystem.SQL.Core.Database clonedDb = DatabaseSerializer.DeserializeFromXmlString(originalXml);
+                EvolutiveSystem.SQL.Core.Database clonedDb = _databaseSerializer.DeserializeFromXmlString(originalXml);
 
                 // Se richiesto solo la struttura, rimuovi i DataRecords dal clone
                 if (structureOnly && clonedDb != null && clonedDb.Tables != null)

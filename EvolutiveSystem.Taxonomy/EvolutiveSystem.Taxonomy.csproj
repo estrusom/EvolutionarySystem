@@ -64,6 +64,14 @@
       <Project>{9d613c08-ba04-4f37-8cce-628bfa9256d4}</Project>
       <Name>EvolutiveSystem.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.Learning\EvolutiveSystem.Learning.csproj">
+      <Project>{65834756-c570-4269-afec-759b174fc02e}</Project>
+      <Name>EvolutiveSystem.Learning</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\EvolutiveSystem.SQL.Core\EvolutiveSystem.SQL.Core.csproj">
+      <Project>{59f3126f-6fed-40d0-ab71-5439fe3f161f}</Project>
+      <Name>EvolutiveSystem.SQL.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MIU.Core\MIU.Core.csproj">
       <Project>{08be24df-cae2-4056-a14e-80aae6d10c87}</Project>
       <Name>MIU.Core</Name>

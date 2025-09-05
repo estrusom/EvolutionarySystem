@@ -124,7 +124,19 @@ namespace MIU.Core
         {
             _logger.Log(LogLevel.DEBUG, $"[Repository DEBUG] Richiesta UpsertMIUState per '{miuString}'.");
             // *** MODIFICA QUI: ORA RESTITUISCE IL Tuple COMPLETO ***
-            return _dataManager.UpsertMIUStateHistory(miuString); // Nessun errore di conversione implicita
+            //2025.08.23 rifattorizzato per salvaguardare i dati nulli non modificati in caso di update
+            MIUStateHistoryDb misStH = new MIUStateHistoryDb()
+            {
+                MIUString = miuString,
+                Hash = MIUStringConverter.ComputeHash(miuString),
+                FirstDiscoveredByRuleId = -1,
+                Depth = 0,
+                TimesFound = 1, // ✅ Inizializzato a 1, perché è stato trovato per la prima volta
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                UsageCount = 0, // ✅ Inizializzato a 0
+                DetectedPatternHashes_SCSV = "" // ✅ Inizializzato a stringa vuota
+            };
+            return _dataManager.UpsertMIUStateHistory(misStH); // Nessun errore di conversione implicita
         }
 
         /// <summary>

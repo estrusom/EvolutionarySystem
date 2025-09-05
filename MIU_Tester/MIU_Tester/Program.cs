@@ -21,7 +21,10 @@ using EvolutiveSystem.Automation;
 using System.Threading;
 using System.Security.Cryptography;
 using System.Text;
-using MiuSeederTool.Core; // Contiene Logger
+using MiuSeederTool.Core;
+using EvolutiveSystem.Services;
+using EvolutiveSystem.Taxonomy;
+using System.Runtime.InteropServices; // Contiene Logger
 
 public class Program
 {
@@ -36,6 +39,7 @@ public class Program
         StartManualBFS,
         BuildTopology,
         DetectAnomaly, // Nuova opzione per la rilevazione delle anomalie
+        LoadTaxonomy,
         DeleteTable,
         Exit
     }
@@ -47,10 +51,15 @@ public class Program
     protected static Mutex SyncMtxLogger = new Mutex();
     public static Logger logger = null;
     public static IMIUDataManager iMiuDataManagerInstance;
+    private static ILearningStatisticsManager _learningStatsManager; // <-- Modifica questa riga
     private static  CancellationTokenSource _cancellationTokenSource;
-    private static AnomalyDetectionManager _anomalyDetectionManager; // MODIFICA: Dichiarazione della variabile a livello di classe
     private static EventBus _eventBus; // MODIFICA: Dichiarazione della variabile a livello di classe
-
+    private static AnomalyDetectionManager _anomalyDetectionManager; // MODIFICA: Dichiarazione della variabile a livello di classe
+    private static LearningStatisticsManager learningStatsManager;
+    private static RuleTaxonomyGenerator _taxonomyGenerator;
+    private static MIUTopologyService _topologyService; // <--- AGGIUNGI QUESTA RIGA
+    private static TassonomiaAnalyticsManager _tassonomiaAnalytics; // Nuovo: Istanza dell'interfaccia
+   
     public static async Task Main(string[] args)
     {
         //MIUDatabaseManager miuDataManagerInstance = null; // Dichiarazione qui per scope
@@ -103,8 +112,13 @@ public class Program
             _eventBus = new EventBus(logger);
             iMiuDataManagerInstance = new MIUDatabaseManager(schemaLoader, logger);
             learningStatsManager = new LearningStatisticsManager(iMiuDataManagerInstance, logger);
+            _taxonomyGenerator = new RuleTaxonomyGenerator(learningStatsManager, logger);
+            _topologyService = new MIUTopologyService(iMiuDataManagerInstance, learningStatsManager, _taxonomyGenerator, logger);
             _anomalyDetectionManager = new AnomalyDetectionManager(iMiuDataManagerInstance, logger, _eventBus); // MODIFICA: Inizializza AnomalyDetectionManager
-                        
+            
+            // Nuovo: Instanziare la classe concreta e assegnarla all'interfaccia
+            _tassonomiaAnalytics = new TassonomiaAnalyticsManager(dbFileName, logger); // 25/08/24
+
             RegoleMIUManager.LoggerInstance = logger;
             miuDerivationEngine = new MIUDerivationEngine(iMiuDataManagerInstance, learningStatsManager, logger, _eventBus);
             miuRepositoryInstance = new MIU.Core.MIURepository(iMiuDataManagerInstance, logger);
@@ -240,12 +254,106 @@ public class Program
                         case MenuOption.BuildTopology:
                             {
                                 // MODIFICA: Chiamata al metodo corretto BuildTopology sul manager
-                                await _anomalyDetectionManager.BuildTopology();
-                                Console.WriteLine("Costruzione della topologia completata.");
+                                Console.WriteLine("Creazione topologia avviata");
+                                var topology = await _topologyService.LoadMIUStringTopologyAsync();
+                                if (topology != null && topology.Nodes.Any())
+                                {
+                                    Console.WriteLine("Creazione dei files");
+                                    /*
+                                    //topology = await _topologyService.LoadMIUStringTopologyAsync();
+                                    Logger tLog = new Logger(_path, "MIU_TYopology");
+                                    tLog.SwLogLevel = 3;
+                                    tLog.Log(LogLevel.INFO, "Topology");
+                                    tLog.Log(LogLevel.INFO, $"SearchID: {topology.SearchID}");
+                                    tLog.Log(LogLevel.INFO, $"InitialString: {topology.InitialString}");
+                                    tLog.Log(LogLevel.INFO, $"GenerationTimestamp: {topology.GenerationTimestamp}");
+                                    tLog.Log(LogLevel.INFO, $"MaxDepthExplored: {topology.MaxDepthExplored}");
+                                    tLog.Log(LogLevel.INFO, $"Edges.Count: {topology.Edges.Count}");
+                                    foreach (MIUStringTopologyEdge miuStringTopologyEdge in topology.Edges)
+                                    {
+                                        tLog.Log(LogLevel.INFO, $"ApplicationID: {miuStringTopologyEdge.ApplicationID}");
+                                        tLog.Log(LogLevel.INFO, $"AppliedRuleID: {miuStringTopologyEdge.AppliedRuleID}");
+                                        tLog.Log(LogLevel.INFO, $"CurrentDepth: {miuStringTopologyEdge.CurrentDepth}");
+                                        tLog.Log(LogLevel.INFO, $"NewStateID: {miuStringTopologyEdge.NewStateID}");
+                                        tLog.Log(LogLevel.INFO, $"ParentStateID: {miuStringTopologyEdge.ParentStateID}");
+                                        tLog.Log(LogLevel.INFO, $"SearchID: {miuStringTopologyEdge.SearchID}");
+                                        tLog.Log(LogLevel.INFO, $"Timestamp: {miuStringTopologyEdge.Timestamp}");
+                                        tLog.Log(LogLevel.INFO, $"Weight: {miuStringTopologyEdge.Weight}");
+                                    }
+                                    tLog.Log(LogLevel.INFO, $"Nodes.Count: {topology.Nodes.Count}");
+                                    foreach (var n in topology.Nodes)
+                                    {
+                                        tLog.Log(LogLevel.INFO, $"AdditionalStats: {n.AdditionalStats}");
+                                        tLog.Log(LogLevel.INFO, $"CurrentString: {n.CurrentString}");
+                                        tLog.Log(LogLevel.INFO, $"Depth: {n.Depth}");
+                                        tLog.Log(LogLevel.INFO, $"DiscoveryTimeInt: {n.DiscoveryTimeInt}");
+                                        tLog.Log(LogLevel.INFO, $"DiscoveryTimeText: {n.DiscoveryTimeText}");
+                                        tLog.Log(LogLevel.INFO, $"StateID: {n.StateID}");
+                                        tLog.Log(LogLevel.INFO, $"X: {n.X}");
+                                        tLog.Log(LogLevel.INFO, $"Y: {n.Y}");
+                                        tLog.Log(LogLevel.INFO, $"Z: {n.Z}");
+                                    }
+                                    */
+                                    // =============================================================
+                                    // ▼▼▼ INCOLLA IL NUOVO CODICE DA QUI ▼▼▼
+                                    // =============================================================
+
+                                    try
+                                    {
+                                        // 1. Definisci il percorso e il nome del file di output
+                                        string outputDirectory = Path.Combine(_path, "output");
+                                        string xmlFilePath = Path.Combine(outputDirectory, "topology.xml");
+
+                                        // 2. Crea la cartella "output" se non esiste
+                                        Directory.CreateDirectory(outputDirectory);
+
+                                        // 3. Serializza l'oggetto 'topology' in un file XML
+                                        var serializer = new System.Xml.Serialization.XmlSerializer(typeof(MIUStringTopologyData));
+                                        using (var writer = new System.IO.StreamWriter(xmlFilePath))
+                                        {
+                                            serializer.Serialize(writer, topology);
+                                        }
+
+                                        Console.WriteLine($"File XML generato con successo in: {xmlFilePath}");
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine($"ERRORE durante la creazione del file XML: {ex.Message}");
+                                    }
+
+                                    Console.WriteLine("Costruzione della topologia completata.");
+                                }else
+                                {
+                                    Console.WriteLine("La topologia generata è vuota o si è verificato un errore.");
+                                }
+                            }
+                            break;
+                        case MenuOption.LoadTaxonomy:
+                            Console.WriteLine("Avvio della generazione della tassonomia...");
+                            var fullTaxonomy = _taxonomyGenerator.GenerateFullTaxonomy();
+
+                            if (fullTaxonomy != null && fullTaxonomy.Any())
+                            {
+                                string fileName = $"taxonomy_{DateTime.Now:yyyyMMdd_HHmmss}.xml";
+                                await _taxonomyGenerator.SaveTaxonomyAsXmlAsync(fullTaxonomy, fileName);
+                                Console.WriteLine($"Tassonomia salvata con successo nel file: {fileName}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("La tassonomia generata è vuota o si è verificato un errore.");
                             }
                             break;
                         case MenuOption.DeleteTable:
-                            await iMiuDataManagerInstance.ResetExplorationDataAsync();
+                            Console.WriteLine("Attenzione: questa operazione eliminerà tutti i dati nella tabella ExplorationAnomalies. Procedere? (s/n)");
+                            if(Console.ReadLine()== "s")
+                            {
+                                await iMiuDataManagerInstance.ResetExplorationDataAsync();
+                                Console.WriteLine("Tabella ExplorationAnomalies eliminata.");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Operazione annullata.");
+                            }
                             break;
                         default:
                             Console.WriteLine("Scelta non valida. Riprova.");
@@ -438,6 +546,7 @@ public class Program
         logger.Log(LogLevel.INFO, msg);
         Console.WriteLine(msg);
     }
+
     private static async Task StartManualDerivation(MIUDerivationEngine engine, SearchAlgorithmType algorithmType)
     {
         List<MIU.Core.PathStepInfo> pathStepInfos = new List<MIU.Core.PathStepInfo>();
@@ -480,6 +589,39 @@ public class Program
             Console.WriteLine("Impossibile avviare la ricerca. Controlla i log per i dettagli.");
         }
     }
+
+    // Nuovo metodo per visualizzare le query della tassonomia
+    private static async void DisplayTaxonomyQueries(ITassonomiaAnalytics analytics)
+    {
+        Logger tLog = new Logger($"{Environment.CurrentDirectory}\\log" , "TaxonomyQueries");
+        tLog.SwLogLevel = 3; // Imposta il livello di log a DEBUG
+        // Chiama il metodo asincrono per ottenere i risultati dell'analisi.
+        // La query viene eseguita internamente dal manager.
+        var risultati = await _tassonomiaAnalytics.GetTaxonomyResultsAsync();
+
+        if (risultati != null && risultati.Any())
+        {
+
+            tLog.Log(LogLevel.INFO, "---------------------------------------");
+            tLog.Log(LogLevel.INFO, "Risultati dell'analisi della tassonomia:");
+            tLog.Log(LogLevel.INFO, "---------------------------------------");
+
+            // Itera su ogni riga del risultato (ogni dizionario)
+            foreach (var riga in risultati)
+            {
+                // Itera su ogni coppia chiave-valore (nome colonna, valore) all'interno di ogni riga.
+                foreach (var colonna in riga)
+                {
+                    tLog.Log(LogLevel.INFO, $"  {colonna.Key}: {colonna.Value}");
+                }
+                tLog.Log(LogLevel.INFO, "---------------------------------------");
+            }
+        }
+        else
+        {
+            tLog.Log(LogLevel.INFO, "Nessun dato di tassonomia trovato. Verifica che il database contenga i dati necessari.");
+        }
+    }
     /// <summary>
     /// Mostra le opzioni del menu all'utente.
     /// </summary>
@@ -489,13 +631,14 @@ public class Program
         Console.WriteLine("1. Carica e visualizza Regole MIU");
         Console.WriteLine("2. Carica e visualizza Parametri di Configurazione");
         Console.WriteLine("3. Avvia Flusso di Derivazione MIU");
-        Console.WriteLine("4. Carica tabella MIU_States");
+        Console.WriteLine("4. Popola tabella MIU_States");
         Console.WriteLine("5. Avvia Derivazione Manuale (DFS)");
         Console.WriteLine("6. Avvia Derivazione Manuale (BFS)");
-        Console.WriteLine("7. Costruisci la Topologia del Sistema"); // 2025/07/15: Etichetta aggiornata
-        Console.WriteLine("8. Simula Rilevamento Anomalia"); // 2025/07/15: Etichetta aggiornata
-        Console.WriteLine("9 Cancella dati tabelle");
-        Console.WriteLine("10. Esci");
+        Console.WriteLine("7. Costruisci la Topologia del Sistema");
+        Console.WriteLine("8. Simula Rilevamento Anomalia");
+        Console.WriteLine("9. Carica Query Tassonomia");
+        Console.WriteLine("10. Cancella Tabella (non implementato)");
+        Console.WriteLine("11. Esci");
         Console.Write("Scegli un'opzione: ");
     }
 }

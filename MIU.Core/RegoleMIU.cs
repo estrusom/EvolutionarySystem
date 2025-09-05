@@ -335,6 +335,19 @@ namespace MIU.Core
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            //2025.08.23 rifattorizzato per salvaguardare i dati nulli non modificati in caso di update
+            MIUStateHistoryDb misStH = new MIUStateHistoryDb()
+            {
+                MIUString = startStringCompressed,
+                Hash = MIUStringConverter.ComputeHash(startStringCompressed),
+                FirstDiscoveredByRuleId = -1,
+                Depth = 0,
+                TimesFound = 1, // ✅ Inizializzato a 1, perché è stato trovato per la prima volta
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                UsageCount = 0, // ✅ Inizializzato a 0
+                DetectedPatternHashes_SCSV = "" // ✅ Inizializzato a stringa vuota
+            };
+
             // Add initial state to path
             var initialPathStep = new PathStepInfo
             {
@@ -342,7 +355,7 @@ namespace MIU.Core
                 AppliedRuleID = null, // No rule applied for initial state
                 ParentStateStringStandard = null, // No parent for initial state
                 // Inizializzazione delle nuove proprietà per il passo inizialecv 
-                StateID = dataManager.UpsertMIUStateHistory(startStringCompressed).Item1,
+                StateID = dataManager.UpsertMIUStateHistory(misStH).Item1,
                 ParentStateID = null, // Verrà aggiornato dal repository
                 Depth = 0,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,
@@ -707,13 +720,26 @@ namespace MIU.Core
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
+            //2025.08.23 rifattorizzato per salvaguardare i dati nulli non modificati in caso di update
+            MIUStateHistoryDb misStH = new MIUStateHistoryDb()
+            {
+                MIUString = startStringCompressed,
+                Hash = MIUStringConverter.ComputeHash(startStringCompressed),
+                FirstDiscoveredByRuleId = -1,
+                Depth = 0,
+                TimesFound = 1, // ✅ Inizializzato a 1, perché è stato trovato per la prima volta
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                UsageCount = 0, // ✅ Inizializzato a 0
+                DetectedPatternHashes_SCSV = "" // ✅ Inizializzato a stringa vuota
+            };
+
             // Add initial state to path
             var initialPathStep = new PathStepInfo
             {
                 StateStringStandard = startStringStandard,
                 AppliedRuleID = null, // No rule applied for initial state
                 ParentStateStringStandard = null, // No parent for initial state
-                StateID = dataManager.UpsertMIUStateHistory(startStringCompressed).Item1,
+                StateID = dataManager.UpsertMIUStateHistory(misStH).Item1,
                 ParentStateID = null, // Verrà aggiornato dal repository
                 Depth = 0,
                 ElapsedMilliseconds = stopwatch.ElapsedMilliseconds,

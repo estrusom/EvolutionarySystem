@@ -11,9 +11,9 @@ using System.Linq; // Per LINQ (Where, Select, ToDictionary, Any)
 using System.Threading.Tasks;
 using EvolutiveSystem.Common; // Per MIUStringTopologyData, MIUStringTopologyNode, MIUStringTopologyEdge, MiuStateInfo, RegolaMIU, RuleStatistics, TransitionStatistics
 using EvolutiveSystem.Learning; // Per LearningStatisticsManager
+using EvolutiveSystem.Taxonomy; // Per RuleTaxonomyGenerator
 using MasterLog; // Per Logger
 using MIU.Core; // Per IMIUDataManager, MIUStringConverter (dall'aggiunta precedente)
-// Assicurati che MIU.Core sia referenziato nel progetto EvolutiveSystem.Services per IMIUDataManager e MIUStringConverter
 
 namespace EvolutiveSystem.Services // Namespace specifico per il progetto EvolutiveSystem.Services
 {
@@ -26,6 +26,7 @@ namespace EvolutiveSystem.Services // Namespace specifico per il progetto Evolut
     {
         private readonly IMIUDataManager _dataManager;
         private readonly LearningStatisticsManager _learningStatsManager;
+        private readonly RuleTaxonomyGenerator _taxonomyGenerator; // Nuovo campo per il RuleTaxonomyGenerator
         private readonly Logger _logger;
 
         /// <summary>
@@ -33,11 +34,13 @@ namespace EvolutiveSystem.Services // Namespace specifico per il progetto Evolut
         /// </summary>
         /// <param name="dataManager">Istanza del gestore dati per l'accesso al database.</param>
         /// <param name="learningStatsManager">Istanza del gestore statistiche di apprendimento per i pesi.</param>
+        /// <param name="taxonomyGenerator">Istanza del generatore di tassonomia per l'analisi dei pattern.</param>
         /// <param name="logger">Istanza del logger.</param>
-        public MIUTopologyService(IMIUDataManager dataManager, LearningStatisticsManager learningStatsManager, Logger logger)
+        public MIUTopologyService(IMIUDataManager dataManager, LearningStatisticsManager learningStatsManager, RuleTaxonomyGenerator taxonomyGenerator, Logger logger)
         {
             _dataManager = dataManager ?? throw new ArgumentNullException(nameof(dataManager));
             _learningStatsManager = learningStatsManager ?? throw new ArgumentNullException(nameof(learningStatsManager));
+            _taxonomyGenerator = taxonomyGenerator ?? throw new ArgumentNullException(nameof(taxonomyGenerator)); // Aggiunto per il costruttore
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
             _logger.Log(LogLevel.INFO, "[MIUTopologyService] Servizio di topologia inizializzato.");
@@ -68,53 +71,41 @@ namespace EvolutiveSystem.Services // Namespace specifico per il progetto Evolut
             try
             {
                 // 1. Carica tutte le regole MIU per associare RuleID a RuleName
-                // Nota: RegoleMIUManager è statico.
-                // Carichiamo le regole per popolare la cache interna di RegoleMIUManager se non già fatto.
-                // Oppure, se RegoleMIUManager.Regole è già popolato, lo usiamo direttamente.
-                var allRules = RegoleMIUManager.Regole.ToDictionary(r => r.ID, r => r.Nome);
-                if (!allRules.Any())
-                {
-                    // Se RegoleMIUManager.Regole non è popolato, caricalo dal DB.
-                    var loadedRules = _dataManager.LoadRegoleMIU();
-                    RegoleMIUManager.CaricaRegoleDaOggettoRepository(loadedRules);
-                    allRules = RegoleMIUManager.Regole.ToDictionary(r => r.ID, r => r.Nome);
-                }
-                _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Caricate {allRules.Count} regole MIU per lookup.");
+                var allRules = await _dataManager.LoadRegoleMIUAsync(); // Usiamo la versione asincrona se disponibile
+                var ruleLookup = allRules.ToDictionary(r => r.ID, r => r.Nome);
+                var transitionProbabilities = await _learningStatsManager.GetTransitionProbabilitiesAsync();
+                _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Caricate {ruleLookup.Count} regole MIU per lookup.");
 
-
+                /*
                 // 2. Carica le statistiche di transizione aggregate (per i pesi)
-                var transitionProbabilities = _learningStatsManager.GetTransitionProbabilities();
+                var transitionProbabilities = await _learningStatsManager.GetTransitionProbabilitiesAsync();
                 _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Caricate {transitionProbabilities.Count} statistiche di transizione.");
 
-                // 3. Carica tutti gli stati (nodi) che rientrano nel filtro temporale (per DiscoveryTime)
+                // 3. Carica tutti gli stati (nodi) che rientrano nel filtro temporale
                 var allMiuStates = await _dataManager.LoadMIUStatesAsync();
-
                 var filteredStates = allMiuStates.Where(s =>
                 {
                     DateTime discoveryTime;
-                    // Tenta di parsare DiscoveryTime_Text, se fallisce usa DateTime.MinValue per escludere
                     if (!DateTime.TryParse(s.DiscoveryTime_Text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out discoveryTime))
                     {
                         _logger.Log(LogLevel.WARNING, $"[MIUTopologyService] Impossibile parsare DiscoveryTime_Text '{s.DiscoveryTime_Text}' per StateID {s.StateID}. Stato escluso.");
-                        return false; // Escludi se il tempo non è parsabile
+                        return false;
                     }
 
                     bool matchesDateRange = true;
-                    if (startDate.HasValue && discoveryTime < startDate.Value)
-                        matchesDateRange = false;
-                    if (endDate.HasValue && discoveryTime > endDate.Value)
-                        matchesDateRange = false;
+                    if (startDate.HasValue && discoveryTime < startDate.Value) matchesDateRange = false;
+                    if (endDate.HasValue && discoveryTime > endDate.Value) matchesDateRange = false;
 
                     return matchesDateRange;
                 }).ToList();
-
+                
                 foreach (var s in filteredStates)
                 {
                     var node = new MIUStringTopologyNode
                     {
                         StateID = s.StateID,
                         CurrentString = s.CurrentString,
-                        Depth = -1, // La profondità verrà calcolata dagli archi (se presenti)
+                        Depth = -1,
                         DiscoveryTimeInt = s.DiscoveryTime_Int,
                         DiscoveryTimeText = s.DiscoveryTime_Text,
                         AdditionalStats = { { "UsageCount", s.UsageCount } }
@@ -122,40 +113,80 @@ namespace EvolutiveSystem.Services // Namespace specifico per il progetto Evolut
                     nodesDict[node.StateID] = node;
                 }
                 _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Caricati {nodesDict.Count} stati (nodi) basati sul filtro temporale.");
+                */
 
+                // 3. Carica tutti gli stati (nodi) che rientrano nel filtro temporale
+                var allMiuStates = await _dataManager.LoadMIUStatesAsync(); // <-- ECCO LA RIGA MANCANTE, ORA INCLUSA
+                var filteredStates = new List<MiuStateInfo>();
+                const string expectedDateFormat = "yyyy-MM-dd HH:mm:ss";
 
-                // 4. Carica le applicazioni di regole (bordi) usando il nuovo metodo di IMIUDataManager
-                // Questo metodo carica direttamente gli archi con SearchID, Timestamp, CurrentDepth
+                foreach (var s in allMiuStates)
+                {
+                    if (string.IsNullOrWhiteSpace(s.DiscoveryTime_Text))
+                    {
+                        _logger.Log(LogLevel.WARNING, $"[MIUTopologyService] DiscoveryTime_Text è vuoto per StateID {s.StateID}. Stato escluso.");
+                        continue;
+                    }
+
+                    if (DateTime.TryParseExact(s.DiscoveryTime_Text, expectedDateFormat, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime discoveryTime))
+                    {
+                        bool matchesDateRange = true;
+                        if (startDate.HasValue && discoveryTime < startDate.Value) matchesDateRange = false;
+                        if (endDate.HasValue && discoveryTime > endDate.Value) matchesDateRange = false;
+
+                        if (matchesDateRange)
+                        {
+                            filteredStates.Add(s);
+                        }
+                    }
+                    else
+                    {
+                        _logger.Log(LogLevel.WARNING, $"[MIUTopologyService] Impossibile parsare DiscoveryTime_Text '{s.DiscoveryTime_Text}' per StateID {s.StateID} con il formato atteso '{expectedDateFormat}'. Stato escluso.");
+                    }
+                }
+
+                // Aggiungiamo i nodi filtrati al dizionario
+                foreach (var s in filteredStates)
+                {
+                    var node = new MIUStringTopologyNode
+                    {
+                        StateID = s.StateID,
+                        CurrentString = s.CurrentString,
+                        Depth = -1,
+                        DiscoveryTimeInt = s.DiscoveryTime_Int,
+                        DiscoveryTimeText = s.DiscoveryTime_Text,
+                        AdditionalStats = { { "UsageCount", s.UsageCount } }
+                    };
+                    nodesDict[node.StateID] = node;
+                }
+                _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Caricati {nodesDict.Count} stati (nodi) basati sul filtro temporale.");
+                // 4. Carica le applicazioni di regole (bordi)
                 var rawEdges = await _dataManager.LoadRawRuleApplicationsForTopologyAsync(
                     initialString, startDate, endDate, maxDepth
                 );
                 _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Caricati {rawEdges.Count} raw edges dal data manager.");
 
-                // Filtra e prepara gli archi finali, assicurandoti che i nodi associati esistano
                 var finalEdges = new List<MIUStringTopologyEdge>();
                 foreach (var ra in rawEdges)
                 {
-                    // Assicurati che i nodi genitore e figlio esistano nel nostro set filtrato.
-                    // Se un nodo non è nel nodesDict, significa che non rientra nel filtro temporale dei nodi.
                     if (nodesDict.ContainsKey(ra.ParentStateID) && nodesDict.ContainsKey(ra.NewStateID))
                     {
-                        string ruleName = allRules.TryGetValue(ra.AppliedRuleID, out string name) ? name : "Sconosciuta";
+                        string ruleName = ruleLookup.TryGetValue(ra.AppliedRuleID, out string name) ? name : "Sconosciuta";
 
                         var edge = new MIUStringTopologyEdge
                         {
                             ApplicationID = ra.ApplicationID,
-                            SearchID = ra.SearchID, // Ora disponibile direttamente da LoadRawRuleApplicationsForTopologyAsync
+                            SearchID = ra.SearchID,
                             ParentStateID = ra.ParentStateID,
                             NewStateID = ra.NewStateID,
                             AppliedRuleID = ra.AppliedRuleID,
                             AppliedRuleName = ruleName,
                             CurrentDepth = ra.CurrentDepth,
-                            Timestamp = ra.Timestamp, // Ora disponibile direttamente
-                            Weight = 0.0 // Calcolato sotto
+                            Timestamp = ra.Timestamp,
+                            Weight = 0.0
                         };
                         finalEdges.Add(edge);
 
-                        // Aggiorna la profondità del nodo di destinazione se questa derivazione ha una profondità minore
                         if (nodesDict.TryGetValue(edge.NewStateID, out var targetNode))
                         {
                             if (targetNode.Depth == -1 || edge.CurrentDepth < targetNode.Depth)
@@ -171,11 +202,9 @@ namespace EvolutiveSystem.Services // Namespace specifico per il progetto Evolut
                 }
                 _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Finalizzati {finalEdges.Count} bordi dopo il filtering dei nodi.");
 
-
-                // 5. Applica i pesi ai bordi
+                // 5. Perfezionare la matematica della topologia e applicare i pesi
                 foreach (var edge in finalEdges)
                 {
-                    // Assicurati che il nodo genitore esista in nodesDict per ottenere la stringa
                     if (nodesDict.TryGetValue(edge.ParentStateID, out var parentNode))
                     {
                         string parentCompressedString = MIUStringConverter.DeflateMIUString(parentNode.CurrentString);
@@ -183,90 +212,67 @@ namespace EvolutiveSystem.Services // Namespace specifico per il progetto Evolut
 
                         if (transitionProbabilities.TryGetValue(key, out TransitionStatistics stats))
                         {
-                            // Formula di pesatura (SuccessRate + bonus per frequenza + decadimento temporale)
-                            double timeDecayFactor = 1.0;
-                            // Il decadimento temporale si basa sulla "freschezza" dell'applicazione della regola
-                            TimeSpan ageFromEndDate = (endDate.HasValue ? endDate.Value : DateTime.UtcNow) - edge.Timestamp;
+                            // --- Nuova Formula per il Peso dell'Arco ---
+                            // La nuova formula si basa sul SuccessRate (efficacia) e sull'ApplicationCount (frequenza)
+                            // La formula precedente non aveva una base matematica solida.
+                            // Invece di usare un fattore di decadimento arbitrario,
+                            // usiamo un punteggio normalizzato basato su metriche esistenti.
 
-                            // Un esempio più robusto di decadimento, usando la normalizzazione dell'età.
-                            // Supponiamo che gli eventi molto vecchi (es. > 1 anno) abbiano un peso molto basso.
-                            double daysOld = ageFromEndDate.TotalDays;
-                            if (daysOld > 0)
-                            {
-                                timeDecayFactor = Math.Max(0.01, 1.0 - (daysOld / 365.0)); // Decadimento lineare su 1 anno
-                            }
-                            else
-                            {
-                                timeDecayFactor = 1.0; // Eventi recenti o futuri non decadono
-                            }
+                            double successRatio = (double)stats.SuccessfulCount / stats.ApplicationCount;
+                            double frequencyBonus = Math.Log(stats.ApplicationCount + 1, 2); // Logaritmo per attenuare l'effetto di conteggi molto grandi
 
-
-                            // Formula combinata: SuccessRate, Frequenza, Recenza
-                            edge.Weight = stats.SuccessRate * (1.0 + (stats.ApplicationCount / 50.0)) * timeDecayFactor;
-                            // Assicura un peso minimo per evitare divisioni per zero o pesi negativi
+                            // Il peso dell'arco riflette l'utilità e la frequenza della transizione
+                            edge.Weight = successRatio * frequencyBonus;
+                            // Assicura un peso minimo per evitare valori nulli
                             edge.Weight = Math.Max(0.01, edge.Weight);
                         }
                         else
                         {
-                            edge.Weight = 0.01; // Peso minimo se non ci sono statistiche per la transizione specifica
+                            edge.Weight = 0.01; // Peso minimo se non ci sono statistiche per la transizione
                         }
                     }
                     else
                     {
-                        // Questo caso non dovrebbe accadere se il filtering iniziale dei nodi è corretto,
-                        // ma per sicurezza logghiamo.
-                        _logger.Log(LogLevel.WARNING, $"[MIUTopologyService] Arco {edge.ApplicationID} ha un ParentStateID {edge.ParentStateID} non trovato nel dizionario dei nodi filtrati durante il calcolo del peso.");
-                        edge.Weight = 0.0; // Nessun peso se il nodo genitore non è valido
+                        _logger.Log(LogLevel.WARNING, $"[MIUTopologyService] Arco {edge.ApplicationID} ha un ParentStateID {edge.ParentStateID} non trovato nel dizionario dei nodi.");
+                        edge.Weight = 0.0;
                     }
                 }
                 _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Pesi applicati ai bordi.");
 
-                // 6. Finalizza la collezione di nodi, includendo solo quelli effettivamente connessi da un bordo
-                // e quelli che hanno una profondità valida.
+                // 6. Finalizza la collezione di nodi, includendo solo quelli connessi da un bordo
                 var connectedNodeIds = new HashSet<long>();
                 foreach (var edge in finalEdges)
                 {
                     connectedNodeIds.Add(edge.ParentStateID);
                     connectedNodeIds.Add(edge.NewStateID);
                 }
-                topologyData.Nodes = nodesDict.Values
-                    .Where(node => connectedNodeIds.Contains(node.StateID) && node.Depth != -1) // Includi solo nodi connessi e con profondità calcolata
-                    .ToList();
+                //topologyData.Nodes = nodesDict.Values .Where(node => connectedNodeIds.Contains(node.StateID) && node.Depth != -1).ToList();
+                topologyData.Nodes = nodesDict.Values.Where(node => connectedNodeIds.Contains(node.StateID)).ToList();
                 topologyData.Edges = finalEdges;
-
-                // Popola i dati della ricerca di riferimento (se specificata)
-                if (!string.IsNullOrEmpty(initialString))
-                {
-                    // Carichiamo la stringa iniziale della ricerca dal database.
-                    // Idealmente, questo dovrebbe essere un metodo specifico in IMIUDataManager
-                    // per caricare i dettagli di una singola SearchID (es. GetSearchById).
-                    // Per ora, lo facciamo trovando uno stato iniziale che corrisponda,
-                    // che è un po' un workaround ma sufficiente per il display.
-                    var searchRecord = (await _dataManager.LoadMIUStatesAsync())
-                                     .FirstOrDefault(s => s.CurrentString == initialString);
-
-                    if (searchRecord != null)
-                    {
-                        topologyData.InitialString = initialString;
-                        // Nota: SearchID e MaxDepthExplored provengono da MIU_Searches, non da MIU_States.
-                        // Il MIUTopologyService non ha ancora accesso diretto ai dati completi di una singola ricerca.
-                        // Questo potrebbe essere un perfezionamento futuro:
-                        // aggiungere GetSearchInfo(initialString, targetString) a IMIUDataManager.
-                        // Per ora, questi campi rimarranno non popolati o useranno placeholder se non essenziali.
-                    }
-                }
-
                 _logger.Log(LogLevel.INFO, $"[MIUTopologyService] Topologia MIU caricata con {topologyData.Nodes.Count} nodi e {topologyData.Edges.Count} bordi.");
             }
             catch (Exception ex)
             {
                 _logger.Log(LogLevel.ERROR, $"[MIUTopologyService] Errore durante il caricamento della topologia MIU: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
-                return new MIUStringTopologyData(); // Restituisce un oggetto vuoto in caso di errore
+                return new MIUStringTopologyData();
             }
             return topologyData;
         }
 
-        // Rimosso il metodo temporaneo LoadAllRuleApplicationsTemporarily
-        // Rimosso il metodo temporaneo GetInitialStringForSearch
+        // Questo metodo carica le regole in modo asincrono, utile per il nuovo codice
+        public async Task<List<RegolaMIU>> LoadRegoleMIUAsync()
+        {
+            var regole = new List<RegolaMIU>();
+            try
+            {
+                regole = _dataManager.LoadRegoleMIU();
+                _logger.Log(LogLevel.DEBUG, "[MIUTopologyService] RegoleMIU caricate dal database.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUTopologyService] Errore caricamento RegoleMIU: {ex.Message}. Restituisco lista vuota.");
+            }
+            return await Task.FromResult(regole);
+        }
     }
 }

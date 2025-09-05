@@ -138,7 +138,19 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     // Se non ci sono ID salvati nel cursore, persistiamo la stringa iniziale
                     if (!string.IsNullOrEmpty(initialString)) // Se lo scheduler ha fornito una stringa iniziale valida
                     {
-                        Tuple<long, bool> result = _dataManager.UpsertMIUStateHistory(initialString);
+                        //2025.08.23 rifattorizzato per salvaguardare i dati nulli non modificati in caso di update
+                        MIUStateHistoryDb misStH = new MIUStateHistoryDb()
+                        {
+                            MIUString = initialString,
+                            Hash = MIUStringConverter.ComputeHash(initialString),
+                            FirstDiscoveredByRuleId = -1,
+                            Depth = 0,
+                            TimesFound = 1, // ✅ Inizializzato a 1, perché è stato trovato per la prima volta
+                            Timestamp = DateTime.UtcNow.ToString("o"),
+                            UsageCount = 0, // ✅ Inizializzato a 0
+                            DetectedPatternHashes_SCSV = "" // ✅ Inizializzato a stringa vuota
+                        };
+                        Tuple<long, bool> result = _dataManager.UpsertMIUStateHistory(misStH);
                         initialStringStateId = result.Item1;
                         actualInitialString = initialString; // Assicurati che sia la stringa passata
 
@@ -157,7 +169,19 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                         else
                         {
                             _logger.Log(LogLevel.WARNING, $"[MIUDerivationEngine] Impossibile trovare stato con ID {cursor.CurrentSourceIndex}. Riavvio da '{initialString}'.");
-                            Tuple<long, bool> result = _dataManager.UpsertMIUStateHistory(string.Empty);
+                            //2025.08.23 rifattorizzato per salvaguardare i dati nulli non modificati in caso di update
+                            MIUStateHistoryDb misStH = new MIUStateHistoryDb()
+                            {
+                                MIUString = string.Empty,
+                                Hash = MIUStringConverter.ComputeHash(string.Empty),
+                                FirstDiscoveredByRuleId = -1,
+                                Depth = 0,
+                                TimesFound = 1, // ✅ Inizializzato a 1, perché è stato trovato per la prima volta
+                                Timestamp = DateTime.UtcNow.ToString("o"),
+                                UsageCount = 0, // ✅ Inizializzato a 0
+                                DetectedPatternHashes_SCSV = "" // ✅ Inizializzato a stringa vuota
+                            };
+                            Tuple<long, bool> result = _dataManager.UpsertMIUStateHistory(misStH);
                             initialStringStateId = result.Item1;
                             actualInitialString = string.Empty;
                         }
@@ -165,7 +189,19 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
                     else
                     {
                         _logger.Log(LogLevel.INFO, "[MIUDerivationEngine] Inizializzato stato di partenza (nessun input/cursore). Inizio da stringa vuota.", true, 250);
-                        Tuple<long, bool> result = _dataManager.UpsertMIUStateHistory(string.Empty); // Inizia con stringa vuota
+                        //2025.08.23 rifattorizzato per salvaguardare i dati nulli non modificati in caso di update
+                        MIUStateHistoryDb misStH = new MIUStateHistoryDb()
+                        {
+                            MIUString = string.Empty,
+                            Hash = MIUStringConverter.ComputeHash(string.Empty),
+                            FirstDiscoveredByRuleId = -1,
+                            Depth = 0,
+                            TimesFound = 1, // ✅ Inizializzato a 1, perché è stato trovato per la prima volta
+                            Timestamp = DateTime.UtcNow.ToString("o"),
+                            UsageCount = 0, // ✅ Inizializzato a 0
+                            DetectedPatternHashes_SCSV = "" // ✅ Inizializzato a stringa vuota
+                        };
+                        Tuple<long, bool> result = _dataManager.UpsertMIUStateHistory(misStH); // Inizia con stringa vuota
                         initialStringStateId = result.Item1;
                         actualInitialString = string.Empty;
                     }
@@ -371,11 +407,35 @@ namespace EvolutiveSystem.Engine // Namespace specifico per questo nuovo progett
             _logger.Log(LogLevel.DEBUG, $"[MIUDerivationEngine - Rule Applied] {message}", true);
 
             // Persistenza dello stato originale e del nuovo stato
-
-            Tuple<long, bool> parentStateResult = _dataManager.UpsertMIUStateHistory(e.OriginalString);
+            //2025.08.23 rifattorizzato per salvaguardare i dati nulli non modificati in caso di update
+            MIUStateHistoryDb misStH = new MIUStateHistoryDb()
+            {
+                MIUString = e.OriginalString,
+                Hash = MIUStringConverter.ComputeHash(e.OriginalString),
+                FirstDiscoveredByRuleId = -1,
+                Depth = 0,
+                TimesFound = 1, // ✅ Inizializzato a 1, perché è stato trovato per la prima volta
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                UsageCount = 0, // ✅ Inizializzato a 0
+                DetectedPatternHashes_SCSV = "" // ✅ Inizializzato a stringa vuota
+            };
+            Tuple<long, bool> parentStateResult = _dataManager.UpsertMIUStateHistory(misStH);
             long parentStateId = parentStateResult.Item1;
 
-            Tuple<long, bool> newStateResult = _dataManager.UpsertMIUStateHistory(e.NewString);
+            //2025.08.23 rifattorizzato per salvaguardare i dati nulli non modificati in caso di update
+            misStH = new MIUStateHistoryDb()
+            {
+                MIUString = e.NewString,
+                Hash = MIUStringConverter.ComputeHash(e.NewString),
+                FirstDiscoveredByRuleId = -1,
+                Depth = 0,
+                TimesFound = 1, // ✅ Inizializzato a 1, perché è stato trovato per la prima volta
+                Timestamp = DateTime.UtcNow.ToString("o"),
+                UsageCount = 0, // ✅ Inizializzato a 0
+                DetectedPatternHashes_SCSV = "" // ✅ Inizializzato a stringa vuota
+            };
+
+            Tuple<long, bool> newStateResult = _dataManager.UpsertMIUStateHistory(misStH);
             long newStateId = newStateResult.Item1;
             bool isNewString = newStateResult.Item2; // Questo flag ci dice se la stringa è nuova
 

@@ -15,7 +15,8 @@ using System.Threading.Tasks;
 using MasterLog; // AGGIUNTO: Necessario per la tua classe Logger
 using System.IO;
 using System.Threading;
-using System.Xml.Serialization; // AGGIUNTO: Necessario per File.Exists
+using System.Xml.Serialization;
+using EvolutiveSystem.Common; // AGGIUNTO: Necessario per File.Exists
 
 namespace EvolutiveSystem.SQL.Core
 {
