@@ -1,0 +1,92 @@
+TABELLE PER TOPOLOGIA
+CREATE TABLE Topology_Edges (
+    TopologyEdgeID INTEGER NOT NULL
+                           PRIMARY KEY AUTOINCREMENT,
+    TopologyID     INTEGER NOT NULL,
+    ApplicationID  INTEGER NOT NULL,
+    ParentStateID  INTEGER NOT NULL,
+    NewStateID     INTEGER NOT NULL,
+    AppliedRuleID  INTEGER NOT NULL,
+    Weight         REAL,
+    FOREIGN KEY (
+        TopologyID
+    )
+    REFERENCES Topology_Runs (TopologyID),
+    FOREIGN KEY (
+        ApplicationID
+    )
+    REFERENCES MIU_RuleApplications (ID),
+    FOREIGN KEY (
+        ParentStateID
+    )
+    REFERENCES MIU_StateHistory (ID),
+    FOREIGN KEY (
+        NewStateID
+    )
+    REFERENCES MIU_StateHistory (ID) 
+);
+
+CREATE TABLE Topology_Nodes (
+    TopologyNodeID INTEGER NOT NULL
+                           PRIMARY KEY AUTOINCREMENT,
+    TopologyID     INTEGER NOT NULL,
+    StateID        INTEGER NOT NULL,
+    FOREIGN KEY (
+        TopologyID
+    )
+    REFERENCES Topology_Runs (TopologyID),
+    FOREIGN KEY (
+        StateID
+    )
+    REFERENCES MIU_StateHistory (ID) 
+);
+
+CREATE TABLE Topology_Runs (
+    TopologyID          INTEGER NOT NULL
+                                PRIMARY KEY AUTOINCREMENT,
+    GenerationTimestamp TEXT    NOT NULL,
+    Description         TEXT,
+    NodeCount           INTEGER,
+    EdgeCount           INTEGER
+);
+
+
+TABELLE PER TASSONOMIA
+CREATE TABLE Taxonomy_Runs (
+    TaxonomyRunID       INTEGER NOT NULL
+                                PRIMARY KEY AUTOINCREMENT,
+    GenerationTimestamp TEXT    NOT NULL,
+    TaxonomyType        TEXT    NOT NULL,
+    Description         TEXT
+);
+
+CREATE TABLE Taxonomy_Rule_Classification (
+    RuleClassificationID INTEGER NOT NULL
+                                 PRIMARY KEY AUTOINCREMENT,
+    TaxonomyRunID        INTEGER NOT NULL,
+    ParentStateID        INTEGER NOT NULL,
+    AppliedRuleID        INTEGER NOT NULL,
+    Classification       TEXT,
+    SuccessRate          REAL,
+    ApplicationCount     INTEGER,
+    FOREIGN KEY (
+        TaxonomyRunID
+    )
+    REFERENCES Taxonomy_Runs (TaxonomyRunID),
+    FOREIGN KEY (
+        ParentStateID
+    )
+    REFERENCES MIU_StateHistory (ID),
+    FOREIGN KEY (
+        AppliedRuleID
+    )
+    REFERENCES MIU_Rules (ID) 
+);
+
+CREATE TABLE Taxonomy_Runs (
+    TaxonomyRunID       INTEGER NOT NULL
+                                PRIMARY KEY AUTOINCREMENT,
+    GenerationTimestamp TEXT    NOT NULL,
+    TaxonomyType        TEXT    NOT NULL,
+    Description         TEXT
+);

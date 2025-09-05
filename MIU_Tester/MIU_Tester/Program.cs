@@ -297,10 +297,6 @@ public class Program
                                         tLog.Log(LogLevel.INFO, $"Z: {n.Z}");
                                     }
                                     */
-                                    // =============================================================
-                                    // ▼▼▼ INCOLLA IL NUOVO CODICE DA QUI ▼▼▼
-                                    // =============================================================
-
                                     try
                                     {
                                         // 1. Definisci il percorso e il nome del file di output

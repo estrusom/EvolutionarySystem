@@ -20,7 +20,7 @@ using System.Web; // NECESSARIO PER I METODI ASINCRONI
 
 namespace EvolutiveSystem.SQL.Core
 {
-    
+
     /// <summary>
     /// Gestore del database MIU. Questa classe fornisce un'interfaccia di alto livello
     /// per la persistenza dei dati relativi al sistema MIU (ricerche, stati, regole, statistiche, configurazione).
@@ -29,7 +29,7 @@ namespace EvolutiveSystem.SQL.Core
     /// garantendo il controllo delle transazioni e l'uso di query parametrizzate.
     /// Implementa l'interfaccia IMIUDataManager.
     /// </summary>
-    public class MIUDatabaseManager : IMIUDataManager  
+    public class MIUDatabaseManager : IMIUDataManager
     {
         private readonly SQLiteSchemaLoader _schemaLoader;
         private readonly Logger _logger;
@@ -1632,5 +1632,87 @@ namespace EvolutiveSystem.SQL.Core
             }
             return ruleApplications;
         }
+
+        #region 25.09.05 funzione per la gestione della persistenza della topologia nel database
+        public async Task<long> CreateTopologyRunAsync(string description)
+        {
+            string query = "INSERT INTO Topology_Runs (GenerationTimestamp, Description) VALUES (@Timestamp, @Description); SELECT last_insert_rowid();";
+            using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Timestamp", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                    command.Parameters.AddWithValue("@Description", description);
+                    var newId = (long)await command.ExecuteScalarAsync();
+                    return newId;
+                }
+            }
+        }
+
+        public async Task SaveTopologyNodesAsync(long topologyRunId, IEnumerable<MIUStringTopologyNode> nodes)
+        {
+            string query = "INSERT INTO Topology_Nodes (TopologyID, StateID) VALUES (@TopologyID, @StateID);";
+            using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+            {
+                await connection.OpenAsync();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    foreach (var node in nodes)
+                    {
+                        using (var command = new SQLiteCommand(query, connection, transaction))
+                        {
+                            command.Parameters.AddWithValue("@TopologyID", topologyRunId);
+                            command.Parameters.AddWithValue("@StateID", node.StateID);
+                            await command.ExecuteNonQueryAsync();
+                        }
+                    }
+                    transaction.Commit();
+                }
+            }
+        }
+
+        public async Task SaveTopologyEdgesAsync(long topologyRunId, IEnumerable<MIUStringTopologyEdge> edges)
+        {
+            string query = "INSERT INTO Topology_Edges (TopologyID, ApplicationID, ParentStateID, NewStateID, AppliedRuleID, Weight) VALUES (@TopologyID, @ApplicationID, @ParentStateID, @NewStateID, @AppliedRuleID, @Weight);";
+            using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+            {
+                await connection.OpenAsync();
+                using (var transaction = connection.BeginTransaction())
+                {
+                    foreach (var edge in edges)
+                    {
+                        using (var command = new SQLiteCommand(query, connection, transaction))
+                        {
+                            command.Parameters.AddWithValue("@TopologyID", topologyRunId);
+                            command.Parameters.AddWithValue("@ApplicationID", edge.ApplicationID);
+                            command.Parameters.AddWithValue("@ParentStateID", edge.ParentStateID);
+                            command.Parameters.AddWithValue("@NewStateID", edge.NewStateID);
+                            command.Parameters.AddWithValue("@AppliedRuleID", edge.AppliedRuleID);
+                            command.Parameters.AddWithValue("@Weight", edge.Weight);
+                            await command.ExecuteNonQueryAsync();
+                        }
+                    }
+                    transaction.Commit();
+                }
+            }
+        }
+
+        public async Task UpdateTopologyRunCountsAsync(long topologyRunId, int nodeCount, int edgeCount)
+        {
+            string query = "UPDATE Topology_Runs SET NodeCount = @NodeCount, EdgeCount = @EdgeCount WHERE TopologyID = @TopologyID;";
+            using (var connection = new SQLiteConnection(_schemaLoader.ConnectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@NodeCount", nodeCount);
+                    command.Parameters.AddWithValue("@EdgeCount", edgeCount);
+                    command.Parameters.AddWithValue("@TopologyID", topologyRunId);
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+        #endregion
     }
 }

@@ -76,46 +76,7 @@ namespace EvolutiveSystem.Services // Namespace specifico per il progetto Evolut
                 var transitionProbabilities = await _learningStatsManager.GetTransitionProbabilitiesAsync();
                 _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Caricate {ruleLookup.Count} regole MIU per lookup.");
 
-                /*
-                // 2. Carica le statistiche di transizione aggregate (per i pesi)
-                var transitionProbabilities = await _learningStatsManager.GetTransitionProbabilitiesAsync();
-                _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Caricate {transitionProbabilities.Count} statistiche di transizione.");
-
-                // 3. Carica tutti gli stati (nodi) che rientrano nel filtro temporale
-                var allMiuStates = await _dataManager.LoadMIUStatesAsync();
-                var filteredStates = allMiuStates.Where(s =>
-                {
-                    DateTime discoveryTime;
-                    if (!DateTime.TryParse(s.DiscoveryTime_Text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out discoveryTime))
-                    {
-                        _logger.Log(LogLevel.WARNING, $"[MIUTopologyService] Impossibile parsare DiscoveryTime_Text '{s.DiscoveryTime_Text}' per StateID {s.StateID}. Stato escluso.");
-                        return false;
-                    }
-
-                    bool matchesDateRange = true;
-                    if (startDate.HasValue && discoveryTime < startDate.Value) matchesDateRange = false;
-                    if (endDate.HasValue && discoveryTime > endDate.Value) matchesDateRange = false;
-
-                    return matchesDateRange;
-                }).ToList();
-                
-                foreach (var s in filteredStates)
-                {
-                    var node = new MIUStringTopologyNode
-                    {
-                        StateID = s.StateID,
-                        CurrentString = s.CurrentString,
-                        Depth = -1,
-                        DiscoveryTimeInt = s.DiscoveryTime_Int,
-                        DiscoveryTimeText = s.DiscoveryTime_Text,
-                        AdditionalStats = { { "UsageCount", s.UsageCount } }
-                    };
-                    nodesDict[node.StateID] = node;
-                }
-                _logger.Log(LogLevel.DEBUG, $"[MIUTopologyService] Caricati {nodesDict.Count} stati (nodi) basati sul filtro temporale.");
-                */
-
-                // 3. Carica tutti gli stati (nodi) che rientrano nel filtro temporale
+                // 2. Carica tutti gli stati (nodi) che rientrano nel filtro temporale
                 var allMiuStates = await _dataManager.LoadMIUStatesAsync(); // <-- ECCO LA RIGA MANCANTE, ORA INCLUSA
                 var filteredStates = new List<MiuStateInfo>();
                 const string expectedDateFormat = "yyyy-MM-dd HH:mm:ss";
@@ -256,6 +217,36 @@ namespace EvolutiveSystem.Services // Namespace specifico per il progetto Evolut
                 _logger.Log(LogLevel.ERROR, $"[MIUTopologyService] Errore durante il caricamento della topologia MIU: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
                 return new MIUStringTopologyData();
             }
+            #region 25.09.05 Persistenza della topologia nel database
+            try
+            {
+                // 1. Crea un nuovo "Run"
+                string description = $"Topologia generata per Initial='{initialString ?? "Tutte"}'";
+                long topologyRunId = await _dataManager.CreateTopologyRunAsync(description);
+                _logger.Log(LogLevel.INFO, $"[MIUTopologyService] Creato Topology Run con ID: {topologyRunId}");
+
+                // 2. Salva Nodi e Archi
+                if (topologyData.Nodes.Any())
+                {
+                    await _dataManager.SaveTopologyNodesAsync(topologyRunId, topologyData.Nodes);
+                    _logger.Log(LogLevel.INFO, $"[MIUTopologyService] Salvati {topologyData.Nodes.Count} nodi nel database.");
+                }
+                if (topologyData.Edges.Any())
+                {
+                    await _dataManager.SaveTopologyEdgesAsync(topologyRunId, topologyData.Edges);
+                    _logger.Log(LogLevel.INFO, $"[MIUTopologyService] Salvati {topologyData.Edges.Count} archi nel database.");
+                }
+
+                // 3. Aggiorna il "Run" con i conteggi finali
+                await _dataManager.UpdateTopologyRunCountsAsync(topologyRunId, topologyData.Nodes.Count, topologyData.Edges.Count);
+                _logger.Log(LogLevel.INFO, $"[MIUTopologyService] Run {topologyRunId} finalizzato con successo.");
+            }
+            catch (Exception ex)
+            {
+                _logger.Log(LogLevel.ERROR, $"[MIUTopologyService] Errore critico durante la persistenza della topologia nel database: {ex.Message}");
+                // Puoi decidere se propagare l'eccezione o gestirla qui
+            }
+            #endregion
             return topologyData;
         }
 
@@ -274,5 +265,7 @@ namespace EvolutiveSystem.Services // Namespace specifico per il progetto Evolut
             }
             return await Task.FromResult(regole);
         }
+
+        
     }
 }

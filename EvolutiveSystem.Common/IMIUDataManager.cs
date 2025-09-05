@@ -154,5 +154,26 @@ namespace EvolutiveSystem.Common
         List<MIURuleApplication> LoadAllRuleApplications();
         Task<List<MIUState>> GetAllMIUStatesAsync();
         Task<List<MIURuleApplication>> GetAllRuleApplicationsAsync();
+        // --- METODI DA AGGIUNGERE PER LA PERSISTENZA DELLA TOPOLOGIA ---
+
+        /// <summary>
+        /// Crea un nuovo record in Topology_Runs e restituisce il suo ID.
+        /// </summary>
+        Task<long> CreateTopologyRunAsync(string description);
+
+        /// <summary>
+        /// Salva in blocco una lista di nodi della topologia.
+        /// </summary>
+        Task SaveTopologyNodesAsync(long topologyRunId, IEnumerable<MIUStringTopologyNode> nodes);
+
+        /// <summary>
+        /// Salva in blocco una lista di archi della topologia.
+        /// </summary>
+        Task SaveTopologyEdgesAsync(long topologyRunId, IEnumerable<MIUStringTopologyEdge> edges);
+
+        /// <summary>
+        /// Aggiorna un record esistente in Topology_Runs con i conteggi finali.
+        /// </summary>
+        Task UpdateTopologyRunCountsAsync(long topologyRunId, int nodeCount, int edgeCount);
     }
 }
